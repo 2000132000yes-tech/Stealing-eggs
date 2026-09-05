@@ -40,7 +40,7 @@
             will-change: transform;
         }
 
-        /* 월드 맵 전체 (총 세로 5200px = 구역 4200px + 베이스 1000px) */
+        /* 월드 맵 전체 */
         #world-map {
             position: absolute;
             top: 0;
@@ -73,7 +73,7 @@
         .zone-2 { background-color: #1e5c1e; }
         .zone-1 { background-color: #72bf44; }
 
-        /* 확장된 메인 베이스 (세로 1000px) */
+        /* 세로 1000px 메인 베이스 */
         .base-wrapper {
             position: relative;
             width: 2000px;
@@ -90,7 +90,7 @@
             border-radius: 0 0 32px 32px;
         }
 
-        /* 베이스 상단 좌/우 막힘 벽 */
+        /* 베이스 상단 좌/우 어깨 벽 */
         .shoulder-wall-left {
             position: absolute;
             top: 0;
@@ -109,7 +109,7 @@
             background-color: #000000;
         }
 
-        /* 화면 중앙 고정 캐릭터 */
+        /* 화면 중앙 플레이어 */
         #player {
             position: absolute;
             top: 50%;
@@ -198,51 +198,58 @@
         const joystickStick = document.getElementById('joystick-stick');
 
         let playerX = 1000;
-        let playerY = 4700; // 베이스 내부 시작
+        let playerY = 4700;
         const speed = 8;
 
         let isDragging = false;
         let moveX = 0;
         let moveY = 0;
 
-        // 절대 충돌 한계선 (벽 두께 24px + 캐릭터 반경 25px = 49px 여유)
-        const MARGIN = 49;
-        const MIN_X_BASE = MARGIN;                 // 49px
-        const MAX_X_BASE = 2000 - MARGIN;          // 1951px
-        const MIN_X_ZONE = 500 + MARGIN;           // 549px
-        const MAX_X_ZONE = 1500 - MARGIN;          // 1451px
+        const RADIUS = 25; // 플레이어 반지름
+        const WALL_THICK = 24; // 벽 두께
 
-        const MIN_Y_WORLD = MARGIN;                // 49px (최상단)
-        const MAX_Y_WORLD = 5200 - MARGIN;         // 5151px (확장된 최하단 바닥)
-        const GATE_Y = 4200;                       // 구역과 베이스의 경계선 Y값
+        // 위치가 이동 가능한 땅 위인지 정확히 판단 (순간이동 없는 충돌 알고리즘)
+        function isValidPosition(x, y) {
+            // 1. 최외곽 바운더리 체크
+            if (y < WALL_THICK + RADIUS || y > 5200 - WALL_THICK - RADIUS) return false;
 
-        // 값 구속 함수 (Clamping)
-        function clamp(val, min, max) {
-            return Math.max(min, Math.min(max, val));
-        }
-
-        // 완벽 클램핑 이동 처리 (벽 절대 통과 불가)
-        function updatePlayerPosition(dx, dy) {
-            let nextX = playerX + dx;
-            let nextY = playerY + dy;
-
-            // 1. Y축 클램핑 (전체 맵 세로 범위 내)
-            nextY = clamp(nextY, MIN_Y_WORLD, MAX_Y_WORLD);
-
-            // 2. 위치 영역에 따른 X축 강제 클램핑
-            if (nextY < GATE_Y) {
-                // 구역 영역 (Zone 1~6): X축 549px ~ 1451px 구속
-                nextX = clamp(nextX, MIN_X_ZONE, MAX_X_ZONE);
-            } else if (nextY > GATE_Y + 24) {
-                // 베이스 영역: X축 49px ~ 1951px 구속
-                nextX = clamp(nextX, MIN_X_BASE, MAX_X_BASE);
-            } else {
-                // 통로 경계 구간 (Y=4200 ~ 4224): 베이스 좌우 어깨 벽에 막힘
-                nextX = clamp(nextX, MIN_X_ZONE, MAX_X_ZONE);
+            // 2. 1~6 구역 내부 (Y: 24 ~ 4200)
+            if (y < 4200) {
+                return (x >= 500 + WALL_THICK + RADIUS && x <= 1500 - WALL_THICK - RADIUS);
             }
 
-            playerX = nextX;
-            playerY = nextY;
+            // 3. 메인 베이스 영역 (Y: 4200 ~ 5200)
+            if (x < WALL_THICK + RADIUS || x > 2000 - WALL_THICK - RADIUS) return false;
+
+            // 4. 베이스 상단 좌/우 어깨 벽 충돌 판정 (Y: 4200~4224 영역)
+            if (y - RADIUS < 4200 + WALL_THICK) {
+                // 좌측 어깨 벽 또는 우측 어깨 벽 위치면 이동 불가
+                const inLeftShoulder = (x - RADIUS < 500 + WALL_THICK);
+                const inRightShoulder = (x + RADIUS > 1500 - WALL_THICK);
+                if (inLeftShoulder || inRightShoulder) return false;
+            }
+
+            return true;
+        }
+
+        // X축과 Y축 독립 이동 처리 (벽면 슬라이딩 지원, 순간이동 방지)
+        function movePlayer(dx, dy) {
+            const steps = Math.ceil(Math.hypot(dx, dy));
+            if (steps === 0) return;
+
+            const stepX = dx / steps;
+            const stepY = dy / steps;
+
+            for (let i = 0; i < steps; i++) {
+                // X축 이동 테스트
+                if (isValidPosition(playerX + stepX, playerY)) {
+                    playerX += stepX;
+                }
+                // Y축 이동 테스트
+                if (isValidPosition(playerX, playerY + stepY)) {
+                    playerY += stepY;
+                }
+            }
         }
 
         function renderMap() {
@@ -297,7 +304,7 @@
 
         function gameLoop() {
             if (isDragging) {
-                updatePlayerPosition(moveX * speed, moveY * speed);
+                movePlayer(moveX * speed, moveY * speed);
                 renderMap();
             }
             requestAnimationFrame(gameLoop);
