@@ -29,18 +29,19 @@
             background-color: #ffffff;
         }
 
-        /* 이동하는 전체 월드 맵 */
+        /* 월드 맵 Container */
         #world-map {
             position: absolute;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            top: 0;
+            left: 0;
+            width: 2000px; /* 전체 맵 너비 기준 */
             will-change: transform;
         }
 
-        /* 위쪽 세로 연결 구역들 */
+        /* 위쪽 구역 컨테이너 */
         .zone-container {
             width: 1000px;
+            margin: 0 auto; /* 중앙 정렬 */
             display: flex;
             flex-direction: column;
             border: 6px solid #333333;
@@ -52,15 +53,15 @@
             height: 700px;
         }
 
-        /* 구역 색상 (위 -> 아래: 살구 -> 초록) */
-        .zone-6 { background-color: #f7a37b; } /* 6. 약간 진한 살구색 */
-        .zone-5 { background-color: #00a8e8; } /* 5. 바다색 */
-        .zone-4 { background-color: #121212; } /* 4. 검은색 */
-        .zone-3 { background-color: #ffffff; } /* 3. 하얀색 */
-        .zone-2 { background-color: #1e5c1e; } /* 2. 진한 초록 */
-        .zone-1 { background-color: #72bf44; } /* 1. 초록 (베이스 직상단) */
+        /* 구역 색상 (위: 살구색 ~ 아래: 초록색) */
+        .zone-6 { background-color: #f7a37b; }
+        .zone-5 { background-color: #00a8e8; }
+        .zone-4 { background-color: #121212; }
+        .zone-3 { background-color: #ffffff; }
+        .zone-2 { background-color: #1e5c1e; }
+        .zone-1 { background-color: #72bf44; }
 
-        /* 아래 넓은 연두색 메인 베이스 */
+        /* 메인 베이스 */
         .main-base {
             width: 2000px;
             height: 600px;
@@ -69,7 +70,7 @@
             border-radius: 32px 32px 0 0;
         }
 
-        /* 화면 중앙 고정 캐릭터 */
+        /* 화면 중앙 플레이어 */
         #player {
             position: absolute;
             top: 50%;
@@ -96,10 +97,10 @@
             box-shadow: 18px 0 0 #333;
         }
 
-        /* 하단 조이스틱 (위치 상향 조정) */
+        /* 조이스틱 */
         #joystick-wrapper {
             position: absolute;
-            bottom: 90px; /* 기존 40px -> 90px로 높임 */
+            bottom: 90px;
             left: 50%;
             transform: translateX(-50%);
             width: 120px;
@@ -127,7 +128,6 @@
 <body>
 
     <div id="game-viewport">
-        <!-- 월드 맵 -->
         <div id="world-map">
             <div class="zone-container">
                 <div class="zone zone-6"></div>
@@ -140,10 +140,8 @@
             <div class="main-base"></div>
         </div>
 
-        <!-- 플레이어 -->
         <div id="player"></div>
 
-        <!-- 조이스틱 -->
         <div id="joystick-wrapper">
             <div id="joystick-stick"></div>
         </div>
@@ -154,73 +152,51 @@
         const joystickWrapper = document.getElementById('joystick-wrapper');
         const joystickStick = document.getElementById('joystick-stick');
 
-        let mapX = 0;
-        let mapY = 0;
+        // 플레이어 맵 내부 좌표 (월드 좌표계)
+        let playerX = 1000; // 베이스 중앙 (0 ~ 2000px)
+        let playerY = 4500; // 베이스 내부 (0 ~ 4800px)
         const speed = 7;
 
         let isDragging = false;
         let moveX = 0;
         let moveY = 0;
 
-        // 맵 치수 정의
-        const baseWidth = 2000;
-        const baseHeight = 600;
-        const zoneWidth = 1000;
-        const zoneHeight = 700 * 6; // 4200px
-        const totalHeight = zoneHeight + baseHeight; // 4800px
+        // 맵 영역 치수 정의
+        const BASE_W = 2000;
+        const BASE_H = 600;
+        const ZONE_W = 1000;
+        const ZONE_H = 4200; // 700 * 6
+        const TOTAL_H = 4800;
+        const ZONE_LEFT = 500; // (2000 - 1000) / 2
+        const ZONE_RIGHT = 1500; // 500 + 1000
+        const P_RADIUS = 20; // 플레이어 충돌 반경
 
-        window.onload = () => {
-            const vpW = window.innerWidth;
-            const vpH = window.innerHeight;
-
-            // 시작 위치: 베이스 중앙
-            mapX = (vpW / 2) - (baseWidth / 2);
-            mapY = (vpH / 2) - (totalHeight - (baseHeight / 2));
-
-            updateMapPosition();
-        };
-
-        // 정확한 벽 및 이동 범위 제한 처리
-        function clampPosition(targetX, targetY) {
-            const vpW = window.innerWidth;
-            const vpH = window.innerHeight;
-
-            // 전체 세로 범위 제한 (최상단: zone6 끝, 최하단: base 끝)
-            const minY = (vpH / 2) - totalHeight + 25; // 상단 여유
-            const maxY = (vpH / 2) - 25;              // 하단 여유
-            const clampedY = Math.max(minY, Math.min(maxY, targetY));
-
-            // 현재 플레이어가 위치한 높이 (월드 상단 기준 offset)
-            const playerWorldY = (vpH / 2) - clampedY;
-
-            let minX, maxX;
-
-            // 구역(Zone) 영역 내부에 있을 때
-            if (playerWorldY <= zoneHeight) {
-                const zoneLeftOffset = (baseWidth - zoneWidth) / 2;
-                minX = (vpW / 2) - zoneLeftOffset - zoneWidth + 25;
-                maxX = (vpW / 2) - zoneLeftOffset - 25;
-            } 
-            // 베이스(Base) 영역 내부에 있을 때
-            else {
-                minX = (vpW / 2) - baseWidth + 25;
-                maxX = (vpW / 2) - 25;
+        // 위치 검사: 주어진 (x, y)가 맵 땅 내부에 있는지 정확히 확인
+        function isInsideMap(x, y) {
+            // 1. 위쪽 세로 구역 영역
+            if (y >= P_RADIUS && y <= ZONE_H) {
+                return (x >= ZONE_LEFT + P_RADIUS && x <= ZONE_RIGHT - P_RADIUS);
             }
-
-            const clampedX = Math.max(minX, Math.min(maxX, targetX));
-
-            return { x: clampedX, y: clampedY };
+            // 2. 아래쪽 메인 베이스 영역
+            if (y > ZONE_H && y <= TOTAL_H - P_RADIUS) {
+                return (x >= P_RADIUS && x <= BASE_W - P_RADIUS);
+            }
+            return false;
         }
 
-        function updateMapPosition() {
-            const clamped = clampPosition(mapX, mapY);
-            mapX = clamped.x;
-            mapY = clamped.y;
+        // 화면 이동 렌더링
+        function renderMap() {
+            const vpW = window.innerWidth;
+            const vpH = window.innerHeight;
 
-            map.style.left = `${mapX}px`;
-            map.style.top = `${mapY}px`;
+            // 플레이어를 항상 화면 중앙에 고정하도록 맵 좌표 역산
+            const mapLeft = (vpW / 2) - playerX;
+            const mapTop = (vpH / 2) - playerY;
+
+            map.style.transform = `translate3d(${mapLeft}px, ${mapTop}px, 0)`;
         }
 
+        // 조이스틱 핸들러
         function handleStart(e) {
             isDragging = true;
             handleMove(e);
@@ -267,15 +243,28 @@
         window.addEventListener('touchmove', handleMove);
         window.addEventListener('touchend', handleEnd);
 
+        // 메인 게임 루프 (독립 축 슬라이딩 이동 처리)
         function gameLoop() {
             if (isDragging) {
-                mapX -= moveX * speed;
-                mapY -= moveY * speed;
-                updateMapPosition();
+                const nextX = playerX + (moveX * speed);
+                const nextY = playerY + (moveY * speed);
+
+                // X축 이동 시도
+                if (isInsideMap(nextX, playerY)) {
+                    playerX = nextX;
+                }
+                // Y축 이동 시도 (벽에 부딪혀도 한쪽 방향으로 부드럽게 미끄러짐)
+                if (isInsideMap(playerX, nextY)) {
+                    playerY = nextY;
+                }
+
+                renderMap();
             }
             requestAnimationFrame(gameLoop);
         }
 
+        // 초기 화면 배치
+        renderMap();
         gameLoop();
     </script>
 </body>
