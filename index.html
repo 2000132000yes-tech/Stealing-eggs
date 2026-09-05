@@ -40,17 +40,17 @@
             will-change: transform;
         }
 
-        /* 월드 맵 전체 */
+        /* 월드 맵 전체 (총 세로 5200px = 구역 4200px + 베이스 1000px) */
         #world-map {
             position: absolute;
             top: 0;
             left: 0;
             width: 2000px;
-            height: 4800px;
+            height: 5200px;
             will-change: transform;
         }
 
-        /* 1~6 구역 (검은색 테두리 벽) */
+        /* 1~6 구역 (검은색 테두리 벽 24px) */
         .zone-container {
             width: 1000px;
             margin: 0 auto;
@@ -73,11 +73,11 @@
         .zone-2 { background-color: #1e5c1e; }
         .zone-1 { background-color: #72bf44; }
 
-        /* 베이스 영역 (검은색 테두리 벽) */
+        /* 확장된 메인 베이스 (세로 1000px) */
         .base-wrapper {
             position: relative;
             width: 2000px;
-            height: 600px;
+            height: 1000px;
         }
 
         .main-base {
@@ -87,10 +87,10 @@
             border-left: 24px solid #000000;
             border-right: 24px solid #000000;
             border-bottom: 24px solid #000000;
-            border-radius: 0 0 24px 24px;
+            border-radius: 0 0 32px 32px;
         }
 
-        /* 베이스 위쪽 막혀있는 좌/우 어깨 벽 */
+        /* 베이스 상단 좌/우 막힘 벽 */
         .shoulder-wall-left {
             position: absolute;
             top: 0;
@@ -198,45 +198,51 @@
         const joystickStick = document.getElementById('joystick-stick');
 
         let playerX = 1000;
-        let playerY = 4500;
+        let playerY = 4700; // 베이스 내부 시작
         const speed = 8;
 
         let isDragging = false;
         let moveX = 0;
         let moveY = 0;
 
-        // 안전 마진을 적용한 절대 바운더리 선언 (캐릭터 반지름 25px + 안전 두께)
-        const P_PAD = 30; // 충돌 반지름을 30px로 늘려 완벽 차단
+        // 절대 충돌 한계선 (벽 두께 24px + 캐릭터 반경 25px = 49px 여유)
+        const MARGIN = 49;
+        const MIN_X_BASE = MARGIN;                 // 49px
+        const MAX_X_BASE = 2000 - MARGIN;          // 1951px
+        const MIN_X_ZONE = 500 + MARGIN;           // 549px
+        const MAX_X_ZONE = 1500 - MARGIN;          // 1451px
 
-        const MIN_X_BASE = 24 + P_PAD;            // 54px
-        const MAX_X_BASE = 2000 - 24 - P_PAD;     // 1946px
-        
-        const MIN_X_ZONE = 500 + 24 + P_PAD;       // 554px
-        const MAX_X_ZONE = 1500 - 24 - P_PAD;      // 1446px
+        const MIN_Y_WORLD = MARGIN;                // 49px (최상단)
+        const MAX_Y_WORLD = 5200 - MARGIN;         // 5151px (확장된 최하단 바닥)
+        const GATE_Y = 4200;                       // 구역과 베이스의 경계선 Y값
 
-        const MIN_Y_WORLD = 24 + P_PAD;           // 54px
-        const MAX_Y_WORLD = 4800 - 24 - P_PAD;    // 4746px
-        
-        const ZONE_BOTTOM_Y = 4200 - P_PAD;       // 4170px (1구역 영역)
-        const BASE_TOP_Y = 4200 + 24 + P_PAD;     // 4254px (메인 베이스 내부 영역)
+        // 값 구속 함수 (Clamping)
+        function clamp(val, min, max) {
+            return Math.max(min, Math.min(max, val));
+        }
 
-        // 1픽셀 위치의 유효성 검증 함수
-        function isValidPosition(x, y) {
-            // 맵 최외곽 천장/바닥
-            if (y < MIN_Y_WORLD || y > MAX_Y_WORLD) return false;
+        // 완벽 클램핑 이동 처리 (벽 절대 통과 불가)
+        function updatePlayerPosition(dx, dy) {
+            let nextX = playerX + dx;
+            let nextY = playerY + dy;
 
-            // 위쪽 1~6구역
-            if (y <= ZONE_BOTTOM_Y) {
-                return (x >= MIN_X_ZONE && x <= MAX_X_ZONE);
+            // 1. Y축 클램핑 (전체 맵 세로 범위 내)
+            nextY = clamp(nextY, MIN_Y_WORLD, MAX_Y_WORLD);
+
+            // 2. 위치 영역에 따른 X축 강제 클램핑
+            if (nextY < GATE_Y) {
+                // 구역 영역 (Zone 1~6): X축 549px ~ 1451px 구속
+                nextX = clamp(nextX, MIN_X_ZONE, MAX_X_ZONE);
+            } else if (nextY > GATE_Y + 24) {
+                // 베이스 영역: X축 49px ~ 1951px 구속
+                nextX = clamp(nextX, MIN_X_BASE, MAX_X_BASE);
+            } else {
+                // 통로 경계 구간 (Y=4200 ~ 4224): 베이스 좌우 어깨 벽에 막힘
+                nextX = clamp(nextX, MIN_X_ZONE, MAX_X_ZONE);
             }
 
-            // 아래쪽 메인 베이스
-            if (y >= BASE_TOP_Y) {
-                return (x >= MIN_X_BASE && x <= MAX_X_BASE);
-            }
-
-            // 베이스-구역 연결 통로 (Y: 4170px ~ 4254px)
-            return (x >= MIN_X_ZONE && x <= MAX_X_ZONE);
+            playerX = nextX;
+            playerY = nextY;
         }
 
         function renderMap() {
@@ -289,30 +295,9 @@
         window.addEventListener('touchmove', handleMove);
         window.addEventListener('touchend', handleEnd);
 
-        // Sub-stepping (세분화 검사) 루프
         function gameLoop() {
             if (isDragging) {
-                const targetDx = moveX * speed;
-                const targetDy = moveY * speed;
-                const steps = Math.ceil(Math.hypot(targetDx, targetDy)); // Step 계산
-
-                if (steps > 0) {
-                    const stepDx = targetDx / steps;
-                    const stepDy = targetDy / steps;
-
-                    // 이동거리만큼 1픽셀 단위 미세 분할 검사
-                    for (let i = 0; i < steps; i++) {
-                        // X축 스텝 이동
-                        if (isValidPosition(playerX + stepDx, playerY)) {
-                            playerX += stepDx;
-                        }
-                        // Y축 스텝 이동
-                        if (isValidPosition(playerX, playerY + stepDy)) {
-                            playerY += stepDy;
-                        }
-                    }
-                }
-
+                updatePlayerPosition(moveX * speed, moveY * speed);
                 renderMap();
             }
             requestAnimationFrame(gameLoop);
