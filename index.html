@@ -56,9 +56,9 @@
             margin: 0 auto;
             display: flex;
             flex-direction: column;
-            border-top: 20px solid #000000;
-            border-left: 20px solid #000000;
-            border-right: 20px solid #000000;
+            border-top: 24px solid #000000;
+            border-left: 24px solid #000000;
+            border-right: 24px solid #000000;
         }
 
         .zone {
@@ -84,10 +84,10 @@
             width: 100%;
             height: 100%;
             background-color: #9cd645;
-            border-left: 20px solid #000000;
-            border-right: 20px solid #000000;
-            border-bottom: 20px solid #000000;
-            border-radius: 0 0 20px 20px;
+            border-left: 24px solid #000000;
+            border-right: 24px solid #000000;
+            border-bottom: 24px solid #000000;
+            border-radius: 0 0 24px 24px;
         }
 
         /* 베이스 위쪽 막혀있는 좌/우 어깨 벽 */
@@ -96,7 +96,7 @@
             top: 0;
             left: 0;
             width: 500px;
-            height: 20px;
+            height: 24px;
             background-color: #000000;
         }
 
@@ -105,7 +105,7 @@
             top: 0;
             right: 0;
             width: 500px;
-            height: 20px;
+            height: 24px;
             background-color: #000000;
         }
 
@@ -205,39 +205,37 @@
         let moveX = 0;
         let moveY = 0;
 
-        // 경계 정밀 좌표 선언 (캐릭터 반지름 25px + 벽 두께 20px)
-        const P_RADIUS = 25;
-        const WALL_THICK = 20;
+        // 안전 마진을 적용한 절대 바운더리 선언 (캐릭터 반지름 25px + 안전 두께)
+        const P_PAD = 30; // 충돌 반지름을 30px로 늘려 완벽 차단
 
-        const MIN_X_BASE = WALL_THICK + P_RADIUS;             // 45px (베이스 좌측)
-        const MAX_X_BASE = 2000 - WALL_THICK - P_RADIUS;      // 1955px (베이스 우측)
+        const MIN_X_BASE = 24 + P_PAD;            // 54px
+        const MAX_X_BASE = 2000 - 24 - P_PAD;     // 1946px
         
-        const MIN_X_ZONE = 500 + WALL_THICK + P_RADIUS;        // 545px (구역 좌측)
-        const MAX_X_ZONE = 1500 - WALL_THICK - P_RADIUS;       // 1455px (구역 우측)
+        const MIN_X_ZONE = 500 + 24 + P_PAD;       // 554px
+        const MAX_X_ZONE = 1500 - 24 - P_PAD;      // 1446px
 
-        const MIN_Y_WORLD = WALL_THICK + P_RADIUS;            // 45px (최상단 천장)
-        const MAX_Y_WORLD = 4800 - WALL_THICK - P_RADIUS;     // 4755px (최하단 바닥)
+        const MIN_Y_WORLD = 24 + P_PAD;           // 54px
+        const MAX_Y_WORLD = 4800 - 24 - P_PAD;    // 4746px
         
-        const BASE_TOP_Y = 4200 + WALL_THICK + P_RADIUS;      // 4245px (베이스 내부 천장)
-        const ZONE_BOTTOM_Y = 4200 - P_RADIUS;                // 4175px (구역 하단 통로)
+        const ZONE_BOTTOM_Y = 4200 - P_PAD;       // 4170px (1구역 영역)
+        const BASE_TOP_Y = 4200 + 24 + P_PAD;     // 4254px (메인 베이스 내부 영역)
 
-        // 완벽한 영역 검사 알고리즘 (어느 방향도 절대 안 뚫림)
-        function canMoveTo(x, y) {
-            // 1. 맵 전체 상하 외곽선
+        // 1픽셀 위치의 유효성 검증 함수
+        function isValidPosition(x, y) {
+            // 맵 최외곽 천장/바닥
             if (y < MIN_Y_WORLD || y > MAX_Y_WORLD) return false;
 
-            // 2. 위쪽 구역 (Y: 45px ~ 4175px)
+            // 위쪽 1~6구역
             if (y <= ZONE_BOTTOM_Y) {
                 return (x >= MIN_X_ZONE && x <= MAX_X_ZONE);
             }
 
-            // 3. 아래쪽 메인 베이스 (Y: 4245px ~ 4755px)
+            // 아래쪽 메인 베이스
             if (y >= BASE_TOP_Y) {
                 return (x >= MIN_X_BASE && x <= MAX_X_BASE);
             }
 
-            // 4. 구역 <-> 베이스 통로 연결 구간 (Y: 4175px ~ 4245px)
-            // 이 수직 통로 안에서는 X축이 1구역 통로 폭 안에 있을 때만 이동 허용 (어깨 벽 충돌 방지)
+            // 베이스-구역 연결 통로 (Y: 4170px ~ 4254px)
             return (x >= MIN_X_ZONE && x <= MAX_X_ZONE);
         }
 
@@ -291,18 +289,28 @@
         window.addEventListener('touchmove', handleMove);
         window.addEventListener('touchend', handleEnd);
 
+        // Sub-stepping (세분화 검사) 루프
         function gameLoop() {
             if (isDragging) {
-                const nextX = playerX + (moveX * speed);
-                const nextY = playerY + (moveY * speed);
+                const targetDx = moveX * speed;
+                const targetDy = moveY * speed;
+                const steps = Math.ceil(Math.hypot(targetDx, targetDy)); // Step 계산
 
-                // X축 독립 슬라이딩
-                if (canMoveTo(nextX, playerY)) {
-                    playerX = nextX;
-                }
-                // Y축 독립 슬라이딩
-                if (canMoveTo(playerX, nextY)) {
-                    playerY = nextY;
+                if (steps > 0) {
+                    const stepDx = targetDx / steps;
+                    const stepDy = targetDy / steps;
+
+                    // 이동거리만큼 1픽셀 단위 미세 분할 검사
+                    for (let i = 0; i < steps; i++) {
+                        // X축 스텝 이동
+                        if (isValidPosition(playerX + stepDx, playerY)) {
+                            playerX += stepDx;
+                        }
+                        // Y축 스텝 이동
+                        if (isValidPosition(playerX, playerY + stepDy)) {
+                            playerY += stepDy;
+                        }
+                    }
                 }
 
                 renderMap();
