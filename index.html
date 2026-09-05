@@ -73,6 +73,18 @@
         .zone-2 { background-color: #1e5c1e; }
         .zone-1 { background-color: #72bf44; }
 
+        /* 베이스와 1구역 사이 빨간색 경계선 */
+        .red-divider {
+            position: absolute;
+            top: 4200px;
+            left: 500px;
+            width: 1000px;
+            height: 8px;
+            background-color: #ff2222;
+            z-index: 50;
+            box-shadow: 0 0 10px rgba(255, 0, 0, 0.8);
+        }
+
         /* 세로 1000px 메인 베이스 */
         .base-wrapper {
             position: relative;
@@ -177,6 +189,8 @@
                     <div class="zone zone-2"></div>
                     <div class="zone zone-1"></div>
                 </div>
+                <!-- 1구역과 베이스 경계선 빨간선 -->
+                <div class="red-divider"></div>
                 <div class="base-wrapper">
                     <div class="shoulder-wall-left"></div>
                     <div class="shoulder-wall-right"></div>
@@ -205,25 +219,19 @@
         let moveX = 0;
         let moveY = 0;
 
-        const RADIUS = 25; // 플레이어 반지름
-        const WALL_THICK = 24; // 벽 두께
+        const RADIUS = 25;
+        const WALL_THICK = 24;
 
-        // 위치가 이동 가능한 땅 위인지 정확히 판단 (순간이동 없는 충돌 알고리즘)
         function isValidPosition(x, y) {
-            // 1. 최외곽 바운더리 체크
             if (y < WALL_THICK + RADIUS || y > 5200 - WALL_THICK - RADIUS) return false;
 
-            // 2. 1~6 구역 내부 (Y: 24 ~ 4200)
             if (y < 4200) {
                 return (x >= 500 + WALL_THICK + RADIUS && x <= 1500 - WALL_THICK - RADIUS);
             }
 
-            // 3. 메인 베이스 영역 (Y: 4200 ~ 5200)
             if (x < WALL_THICK + RADIUS || x > 2000 - WALL_THICK - RADIUS) return false;
 
-            // 4. 베이스 상단 좌/우 어깨 벽 충돌 판정 (Y: 4200~4224 영역)
             if (y - RADIUS < 4200 + WALL_THICK) {
-                // 좌측 어깨 벽 또는 우측 어깨 벽 위치면 이동 불가
                 const inLeftShoulder = (x - RADIUS < 500 + WALL_THICK);
                 const inRightShoulder = (x + RADIUS > 1500 - WALL_THICK);
                 if (inLeftShoulder || inRightShoulder) return false;
@@ -232,7 +240,6 @@
             return true;
         }
 
-        // X축과 Y축 독립 이동 처리 (벽면 슬라이딩 지원, 순간이동 방지)
         function movePlayer(dx, dy) {
             const steps = Math.ceil(Math.hypot(dx, dy));
             if (steps === 0) return;
@@ -241,11 +248,9 @@
             const stepY = dy / steps;
 
             for (let i = 0; i < steps; i++) {
-                // X축 이동 테스트
                 if (isValidPosition(playerX + stepX, playerY)) {
                     playerX += stepX;
                 }
-                // Y축 이동 테스트
                 if (isValidPosition(playerX, playerY + stepY)) {
                     playerY += stepY;
                 }
