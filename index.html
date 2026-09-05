@@ -2,98 +2,253 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Steal An Egg - Main Map</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-select=none">
+    <title>Steal An Egg - World Map</title>
     <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
         body {
             margin: 0;
             padding: 0;
             background-color: #ffffff;
             font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: flex-end;
-            min-height: 100vh;
-            overflow-x: hidden;
+            overflow: hidden; /* 화면 스크롤 방지 */
+            width: 100vw;
+            height: 100vh;
         }
 
-        /* 전체 맵 컨테이너 (위로 긴 구역들과 아래 베이스를 감쌈) */
-        .game-map {
+        /* 뷰포트 (화면 창) */
+        #game-viewport {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            background-color: #ffffff;
+        }
+
+        /* 이동하는 전체 월드 맵 */
+        #world-map {
+            position: absolute;
             display: flex;
             flex-direction: column;
             align-items: center;
+            /* 초기 위치는 자바스크립트로 중앙 조절 */
+            will-change: transform;
         }
 
-        /* 1. 위쪽으로 연결된 세로로 긴 직사각형 (구역들의 집합) */
+        /* 1. 위쪽 세로 연결 구역들 (너비/높이 대폭 확대) */
         .zone-container {
-            width: 400px; /* 세로 구역 전체 너비 */
+            width: 800px; /* 기존 400px -> 800px 확대 */
             display: flex;
-            flex-direction: column-reverse; /* 아래부터 위로 순서 배치 */
-            border: 2px solid #ccc;
+            flex-direction: column-reverse; /* DOM 순서상 맨 아래(6구역)가 제일 위로 가도록 */
+            border: 4px solid #333333;
             border-bottom: none;
-            box-shadow: 0 -4px 10px rgba(0,0,0,0.1);
         }
 
-        /* 공통 구역(Zone) 스타일 */
         .zone {
             width: 100%;
-            height: 250px; /* 각 구역의 높이 */
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: #ffffff;
-            font-weight: bold;
-            font-size: 18px;
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.6);
+            height: 600px; /* 각 구역 높이 대폭 확대 (600px) */
         }
 
-        /* 구역별 색상 지정 (아래 -> 위 순서) */
+        /* 구역 색상 (베이스와 가까운 순서: 1 -> 6) */
         .zone-1 { background-color: #72bf44; } /* 1. 초록 */
         .zone-2 { background-color: #1e5c1e; } /* 2. 진한 초록 */
-        .zone-3 { background-color: #ffffff; color: #000000; text-shadow: none; } /* 3. 하얀색 */
+        .zone-3 { background-color: #ffffff; } /* 3. 하얀색 */
         .zone-4 { background-color: #121212; } /* 4. 검은색 */
-        .zone-5 { background-color: #0d233a; } /* 5. 짙은 파란색 */
+        .zone-5 { background-color: #00a8e8; } /* 5. 바다색 (맑은 파랑) */
         .zone-6 { background-color: #f7a37b; } /* 6. 약간 진한 살구색 */
 
-        /* 2. 맨 아래 가로로 긴 연두색 베이스 */
+        /* 2. 맨 아래 연두색 메인 베이스 (구역 중앙 위쪽과 연결) */
         .main-base {
-            width: 700px;  /* 가로가 긴 직사각형 너비 */
-            height: 120px; /* 베이스 높이 */
-            background-color: #9cd645; /* 연두색 땅 */
-            border: 2px solid #7cb32f;
-            border-radius: 12px 12px 0 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
-            z-index: 10;
+            width: 1400px; /* 기존 700px -> 1400px 확대 */
+            height: 350px;  /* 베이스 높이 확대 */
+            background-color: #9cd645;
+            border: 4px solid #5a8a1c;
+            border-radius: 24px 24px 0 0;
         }
 
-        .base-label {
-            font-size: 20px;
-            font-weight: bold;
-            color: #2b4c03;
+        /* 3. 화면 중앙 고정 캐릭터 */
+        #player {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 50px;
+            height: 50px;
+            background-color: #ffda79;
+            border: 3px solid #ccae4f;
+            border-radius: 12px; /* 뭉툭한 네모 */
+            transform: translate(-50%, -50%);
+            z-index: 100;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        /* 캐릭터 눈 장식 (방향감 제공) */
+        #player::after {
+            content: '';
+            position: absolute;
+            top: 12px;
+            left: 10px;
+            width: 8px;
+            height: 8px;
+            background-color: #333;
+            border-radius: 50%;
+            box-shadow: 18px 0 0 #333;
+        }
+
+        /* 4. 하단 조이스틱 컨트롤러 UI */
+        #joystick-wrapper {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 120px;
+            background: rgba(0, 0, 0, 0.15);
+            border: 2px solid rgba(0, 0, 0, 0.3);
+            border-radius: 50%;
+            touch-action: none;
+            z-index: 200;
+        }
+
+        #joystick-stick {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 50px;
+            height: 50px;
+            background: rgba(50, 50, 50, 0.6);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
         }
     </style>
 </head>
 <body>
 
-    <div class="game-map">
-        
-        <div class="zone-container">
-            <div class="zone zone-6">구역 6 (약간 진한 살구색)</div>
-            <div class="zone zone-5">구역 5 (짙은 파란색)</div>
-            <div class="zone zone-4">구역 4 (검은색)</div>
-            <div class="zone zone-3">구역 3 (하얀색)</div>
-            <div class="zone zone-2">구역 2 (진한 초록)</div>
-            <div class="zone zone-1">구역 1 (초록)</div>
+    <div id="game-viewport">
+        <!-- 움직이는 월드 맵 -->
+        <div id="world-map">
+            <div class="zone-container">
+                <div class="zone zone-6"></div>
+                <div class="zone zone-5"></div>
+                <div class="zone zone-4"></div>
+                <div class="zone zone-3"></div>
+                <div class="zone zone-2"></div>
+                <div class="zone zone-1"></div>
+            </div>
+            <div class="main-base"></div>
         </div>
 
-        <div class="main-base">
-            <span class="base-label">메인 베이스 (연두색)</span>
-        </div>
+        <!-- 화면 고정 캐릭터 -->
+        <div id="player"></div>
 
+        <!-- 하단 조이스틱 -->
+        <div id="joystick-wrapper">
+            <div id="joystick-stick"></div>
+        </div>
     </div>
 
+    <script>
+        const map = document.getElementById('world-map');
+        const joystickWrapper = document.getElementById('joystick-wrapper');
+        const joystickStick = document.getElementById('joystick-stick');
+
+        // 맵 위치 좌표
+        let mapX = 0;
+        let mapY = 0;
+        const speed = 6; // 이동 속도
+
+        // 조이스틱 상태
+        let isDragging = false;
+        let moveX = 0;
+        let moveY = 0;
+
+        // 초기 위치 세팅: 캐릭터가 연두색 베이스 중앙에 오도록 맵 위치 조정
+        window.onload = () => {
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+            
+            // 맵의 전체 높이 및 너비 기준 초기화
+            const mapWidth = 1400;
+            const mapHeight = 3950; // (600px * 6구역) + 350px 베이스
+            
+            mapX = (viewportWidth / 2) - (mapWidth / 2);
+            mapY = (viewportHeight / 2) - (mapHeight - 175); // 베이스 중앙
+            
+            updateMapPosition();
+        };
+
+        function updateMapPosition() {
+            map.style.left = `${mapX}px`;
+            map.style.top = `${mapY}px`;
+        }
+
+        // 조이스틱 이벤트 핸들러 (마우스 & 터치 겸용)
+        function handleStart(e) {
+            isDragging = true;
+            handleMove(e);
+        }
+
+        function handleMove(e) {
+            if (!isDragging) return;
+
+            const rect = joystickWrapper.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+            let deltaX = clientX - centerX;
+            let deltaY = clientY - centerY;
+            const distance = Math.hypot(deltaX, deltaY);
+            const maxRadius = 35;
+
+            if (distance > maxRadius) {
+                deltaX = (deltaX / distance) * maxRadius;
+                deltaY = (deltaY / distance) * maxRadius;
+            }
+
+            // 조이스틱 노브 이동
+            joystickStick.style.transform = `translate(calc(-50% + ${deltaX}px), calc(-50% + ${deltaY}px))`;
+
+            // 이동 방향 벡터 계산 (-1 ~ 1)
+            moveX = deltaX / maxRadius;
+            moveY = deltaY / maxRadius;
+        }
+
+        function handleEnd() {
+            isDragging = false;
+            moveX = 0;
+            moveY = 0;
+            joystickStick.style.transform = 'translate(-50%, -50%)';
+        }
+
+        // 조이스틱 이벤트 등록
+        joystickWrapper.addEventListener('mousedown', handleStart);
+        window.addEventListener('mousemove', handleMove);
+        window.addEventListener('mouseup', handleEnd);
+
+        joystickWrapper.addEventListener('touchstart', handleStart);
+        window.addEventListener('touchmove', handleMove);
+        window.addEventListener('touchend', handleEnd);
+
+        // 게임 메인 루프 (배경 이동 처리)
+        function gameLoop() {
+            if (isDragging) {
+                // 캐릭터가 움직이는 대신, 맵 전체가 반대 방향으로 이동
+                mapX -= moveX * speed;
+                mapY -= moveY * speed;
+                updateMapPosition();
+            }
+            requestAnimationFrame(gameLoop);
+        }
+
+        gameLoop();
+    </script>
 </body>
 </html>
