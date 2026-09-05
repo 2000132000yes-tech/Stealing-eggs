@@ -16,12 +16,12 @@
             padding: 0;
             background-color: #ffffff;
             font-family: Arial, sans-serif;
-            overflow: hidden; /* 화면 스크롤 방지 */
+            overflow: hidden;
             width: 100vw;
             height: 100vh;
         }
 
-        /* 뷰포트 (화면 창) */
+        /* 뷰포트 (화면) */
         #game-viewport {
             position: relative;
             width: 100vw;
@@ -36,42 +36,41 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            /* 초기 위치는 자바스크립트로 중앙 조절 */
             will-change: transform;
         }
 
-        /* 1. 위쪽 세로 연결 구역들 (너비/높이 대폭 확대) */
+        /* 위쪽 세로 연결 구역들 */
         .zone-container {
-            width: 800px; /* 기존 400px -> 800px 확대 */
+            width: 1000px; /* 구역 너비 */
             display: flex;
-            flex-direction: column-reverse; /* DOM 순서상 맨 아래(6구역)가 제일 위로 가도록 */
-            border: 4px solid #333333;
+            flex-direction: column; /* 아래로 갈수록 숫자가 커지도록(베이스와 가까움) */
+            border: 6px solid #333333;
             border-bottom: none;
         }
 
         .zone {
             width: 100%;
-            height: 600px; /* 각 구역 높이 대폭 확대 (600px) */
+            height: 700px; /* 각 구역 높이 */
         }
 
-        /* 구역 색상 (베이스와 가까운 순서: 1 -> 6) */
-        .zone-1 { background-color: #72bf44; } /* 1. 초록 */
-        .zone-2 { background-color: #1e5c1e; } /* 2. 진한 초록 */
-        .zone-3 { background-color: #ffffff; } /* 3. 하얀색 */
+        /* 구역 색상 (베이스와 가까운 순서: 초록(1) -> 살구(6)) */
+        .zone-6 { background-color: #f7a37b; } /* 6. 약간 진한 살구색 (가장 멂) */
+        .zone-5 { background-color: #00a8e8; } /* 5. 바다색 */
         .zone-4 { background-color: #121212; } /* 4. 검은색 */
-        .zone-5 { background-color: #00a8e8; } /* 5. 바다색 (맑은 파랑) */
-        .zone-6 { background-color: #f7a37b; } /* 6. 약간 진한 살구색 */
+        .zone-3 { background-color: #ffffff; } /* 3. 하얀색 */
+        .zone-2 { background-color: #1e5c1e; } /* 2. 진한 초록 */
+        .zone-1 { background-color: #72bf44; } /* 1. 초록 (베이스와 바로 연결) */
 
-        /* 2. 맨 아래 연두색 메인 베이스 (구역 중앙 위쪽과 연결) */
+        /* 맨 아래 넓어진 연두색 메인 베이스 */
         .main-base {
-            width: 1400px; /* 기존 700px -> 1400px 확대 */
-            height: 350px;  /* 베이스 높이 확대 */
+            width: 2000px; /* 베이스 가로 크기 확대 */
+            height: 600px;  /* 베이스 세로 크기 확대 */
             background-color: #9cd645;
-            border: 4px solid #5a8a1c;
-            border-radius: 24px 24px 0 0;
+            border: 6px solid #5a8a1c;
+            border-radius: 32px 32px 0 0;
         }
 
-        /* 3. 화면 중앙 고정 캐릭터 */
+        /* 화면 중앙 고정 캐릭터 */
         #player {
             position: absolute;
             top: 50%;
@@ -80,13 +79,12 @@
             height: 50px;
             background-color: #ffda79;
             border: 3px solid #ccae4f;
-            border-radius: 12px; /* 뭉툭한 네모 */
+            border-radius: 12px;
             transform: translate(-50%, -50%);
             z-index: 100;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
 
-        /* 캐릭터 눈 장식 (방향감 제공) */
         #player::after {
             content: '';
             position: absolute;
@@ -99,7 +97,7 @@
             box-shadow: 18px 0 0 #333;
         }
 
-        /* 4. 하단 조이스틱 컨트롤러 UI */
+        /* 하단 조이스틱 */
         #joystick-wrapper {
             position: absolute;
             bottom: 40px;
@@ -132,6 +130,7 @@
     <div id="game-viewport">
         <!-- 움직이는 월드 맵 -->
         <div id="world-map">
+            <!-- 위쪽 구역 (살구색이 맨 위, 초록색이 맨 아래) -->
             <div class="zone-container">
                 <div class="zone zone-6"></div>
                 <div class="zone zone-5"></div>
@@ -140,13 +139,14 @@
                 <div class="zone zone-2"></div>
                 <div class="zone zone-1"></div>
             </div>
+            <!-- 아래 메인 베이스 -->
             <div class="main-base"></div>
         </div>
 
         <!-- 화면 고정 캐릭터 -->
         <div id="player"></div>
 
-        <!-- 하단 조이스틱 -->
+        <!-- 조이스틱 -->
         <div id="joystick-wrapper">
             <div id="joystick-stick"></div>
         </div>
@@ -157,37 +157,72 @@
         const joystickWrapper = document.getElementById('joystick-wrapper');
         const joystickStick = document.getElementById('joystick-stick');
 
-        // 맵 위치 좌표
         let mapX = 0;
         let mapY = 0;
-        const speed = 6; // 이동 속도
+        const speed = 7;
 
-        // 조이스틱 상태
         let isDragging = false;
         let moveX = 0;
         let moveY = 0;
 
-        // 초기 위치 세팅: 캐릭터가 연두색 베이스 중앙에 오도록 맵 위치 조정
+        // 맵 치수 정보
+        const baseWidth = 2000;
+        const baseHeight = 600;
+        const zoneWidth = 1000;
+        const zoneHeight = 700 * 6; // 4200px
+        const totalHeight = zoneHeight + baseHeight; // 4800px
+
         window.onload = () => {
             const viewportWidth = window.innerWidth;
             const viewportHeight = window.innerHeight;
-            
-            // 맵의 전체 높이 및 너비 기준 초기화
-            const mapWidth = 1400;
-            const mapHeight = 3950; // (600px * 6구역) + 350px 베이스
-            
-            mapX = (viewportWidth / 2) - (mapWidth / 2);
-            mapY = (viewportHeight / 2) - (mapHeight - 175); // 베이스 중앙
-            
+
+            // 시작 위치: 베이스 중앙
+            mapX = (viewportWidth / 2) - (baseWidth / 2);
+            mapY = (viewportHeight / 2) - (totalHeight - (baseHeight / 2));
+
             updateMapPosition();
         };
 
+        // 이동 제한 (벽 경계 로직)
+        function clampPosition(targetX, targetY) {
+            const centerX = window.innerWidth / 2;
+            const centerY = window.innerHeight / 2;
+
+            // 현재 캐릭터의 relative Y 위치 (맵 기준)
+            const playerRelY = centerY - targetY;
+
+            let minX, maxX;
+
+            // 베이스 영역에 위치할 때와 구역 영역에 위치할 때의 벽 가로 범위 분기
+            if (playerRelY >= zoneHeight) {
+                // 베이스 내부
+                minX = centerX - baseWidth;
+                maxX = centerX;
+            } else {
+                // 구역(Zone) 내부
+                minX = centerX - (baseWidth / 2) - (zoneWidth / 2);
+                maxX = centerX - (baseWidth / 2) + (zoneWidth / 2);
+            }
+
+            // 세로 경계 제한 (6구역 맨 위 ~ 베이스 맨 아래)
+            const minY = centerY - totalHeight;
+            const maxY = centerY;
+
+            const clampedX = Math.max(minX, Math.min(maxX, targetX));
+            const clampedY = Math.max(minY, Math.min(maxY, targetY));
+
+            return { x: clampedX, y: clampedY };
+        }
+
         function updateMapPosition() {
+            const clamped = clampPosition(mapX, mapY);
+            mapX = clamped.x;
+            mapY = clamped.y;
+
             map.style.left = `${mapX}px`;
             map.style.top = `${mapY}px`;
         }
 
-        // 조이스틱 이벤트 핸들러 (마우스 & 터치 겸용)
         function handleStart(e) {
             isDragging = true;
             handleMove(e);
@@ -213,10 +248,8 @@
                 deltaY = (deltaY / distance) * maxRadius;
             }
 
-            // 조이스틱 노브 이동
             joystickStick.style.transform = `translate(calc(-50% + ${deltaX}px), calc(-50% + ${deltaY}px))`;
 
-            // 이동 방향 벡터 계산 (-1 ~ 1)
             moveX = deltaX / maxRadius;
             moveY = deltaY / maxRadius;
         }
@@ -228,7 +261,6 @@
             joystickStick.style.transform = 'translate(-50%, -50%)';
         }
 
-        // 조이스틱 이벤트 등록
         joystickWrapper.addEventListener('mousedown', handleStart);
         window.addEventListener('mousemove', handleMove);
         window.addEventListener('mouseup', handleEnd);
@@ -237,10 +269,8 @@
         window.addEventListener('touchmove', handleMove);
         window.addEventListener('touchend', handleEnd);
 
-        // 게임 메인 루프 (배경 이동 처리)
         function gameLoop() {
             if (isDragging) {
-                // 캐릭터가 움직이는 대신, 맵 전체가 반대 방향으로 이동
                 mapX -= moveX * speed;
                 mapY -= moveY * speed;
                 updateMapPosition();
