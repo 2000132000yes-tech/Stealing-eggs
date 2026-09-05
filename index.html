@@ -14,7 +14,7 @@
         body {
             margin: 0;
             padding: 0;
-            background-color: #ffffff;
+            background-color: #1a1a1a; /* 맵 외곽을 어둡게 처리 */
             font-family: Arial, sans-serif;
             overflow: hidden;
             width: 100vw;
@@ -26,7 +26,6 @@
             width: 100vw;
             height: 100vh;
             overflow: hidden;
-            background-color: #ffffff;
         }
 
         /* 월드 맵 Container */
@@ -34,18 +33,19 @@
             position: absolute;
             top: 0;
             left: 0;
-            width: 2000px; /* 전체 맵 너비 기준 */
+            width: 2000px;
             will-change: transform;
         }
 
-        /* 위쪽 구역 컨테이너 */
+        /* 위쪽 구역 컨테이너 (실제 검은색 벽 적용) */
         .zone-container {
             width: 1000px;
-            margin: 0 auto; /* 중앙 정렬 */
+            margin: 0 auto;
             display: flex;
             flex-direction: column;
-            border: 6px solid #333333;
-            border-bottom: none;
+            border-top: 16px solid #000000;
+            border-left: 16px solid #000000;
+            border-right: 16px solid #000000;
         }
 
         .zone {
@@ -53,21 +53,48 @@
             height: 700px;
         }
 
-        /* 구역 색상 (위: 살구색 ~ 아래: 초록색) */
+        /* 구역 색상 */
         .zone-6 { background-color: #f7a37b; }
         .zone-5 { background-color: #00a8e8; }
-        .zone-4 { background-color: #121212; }
+        .zone-4 { background-color: #262626; } /* 검은색 구역 시각 구분을 위해 약간 조정 */
         .zone-3 { background-color: #ffffff; }
         .zone-2 { background-color: #1e5c1e; }
         .zone-1 { background-color: #72bf44; }
 
-        /* 메인 베이스 */
-        .main-base {
+        /* 메인 베이스 (외곽 검은색 벽 적용) */
+        .base-wrapper {
+            position: relative;
             width: 2000px;
             height: 600px;
+        }
+
+        .main-base {
+            width: 100%;
+            height: 100%;
             background-color: #9cd645;
-            border: 6px solid #5a8a1c;
-            border-radius: 32px 32px 0 0;
+            border-left: 16px solid #000000;
+            border-right: 16px solid #000000;
+            border-bottom: 16px solid #000000;
+            border-radius: 0 0 16px 16px;
+        }
+
+        /* 베이스 위쪽 중 1구역으로 통하지 않는 좌우 어깨 벽 */
+        .shoulder-wall-left {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 500px;
+            height: 16px;
+            background-color: #000000;
+        }
+
+        .shoulder-wall-right {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 500px;
+            height: 16px;
+            background-color: #000000;
         }
 
         /* 화면 중앙 플레이어 */
@@ -82,7 +109,7 @@
             border-radius: 12px;
             transform: translate(-50%, -50%);
             z-index: 100;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
         }
 
         #player::after {
@@ -105,8 +132,8 @@
             transform: translateX(-50%);
             width: 120px;
             height: 120px;
-            background: rgba(0, 0, 0, 0.15);
-            border: 2px solid rgba(0, 0, 0, 0.3);
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.4);
             border-radius: 50%;
             touch-action: none;
             z-index: 200;
@@ -118,7 +145,7 @@
             left: 50%;
             width: 50px;
             height: 50px;
-            background: rgba(50, 50, 50, 0.6);
+            background: rgba(255, 255, 255, 0.8);
             border-radius: 50%;
             transform: translate(-50%, -50%);
             pointer-events: none;
@@ -137,7 +164,11 @@
                 <div class="zone zone-2"></div>
                 <div class="zone zone-1"></div>
             </div>
-            <div class="main-base"></div>
+            <div class="base-wrapper">
+                <div class="shoulder-wall-left"></div>
+                <div class="shoulder-wall-right"></div>
+                <div class="main-base"></div>
+            </div>
         </div>
 
         <div id="player"></div>
@@ -152,51 +183,53 @@
         const joystickWrapper = document.getElementById('joystick-wrapper');
         const joystickStick = document.getElementById('joystick-stick');
 
-        // 플레이어 맵 내부 좌표 (월드 좌표계)
-        let playerX = 1000; // 베이스 중앙 (0 ~ 2000px)
-        let playerY = 4500; // 베이스 내부 (0 ~ 4800px)
+        let playerX = 1000;
+        let playerY = 4500;
         const speed = 7;
 
         let isDragging = false;
         let moveX = 0;
         let moveY = 0;
 
-        // 맵 영역 치수 정의
-        const BASE_W = 2000;
-        const BASE_H = 600;
-        const ZONE_W = 1000;
-        const ZONE_H = 4200; // 700 * 6
-        const TOTAL_H = 4800;
-        const ZONE_LEFT = 500; // (2000 - 1000) / 2
-        const ZONE_RIGHT = 1500; // 500 + 1000
-        const P_RADIUS = 20; // 플레이어 충돌 반경
+        // 치수 및 완벽한 벽 판정 오프셋 (벽 두께 고려)
+        const WALL = 20; // 벽 두께 여유값
+        const P_PAD = 25; // 캐릭터 반지름
+        const LIMIT_LEFT_BASE = WALL + P_PAD;            // 45px
+        const LIMIT_RIGHT_BASE = 2000 - WALL - P_PAD;     // 1955px
+        const LIMIT_LEFT_ZONE = 500 + WALL + P_PAD;       // 545px
+        const LIMIT_RIGHT_ZONE = 1500 - WALL - P_PAD;     // 1455px
+        const LIMIT_TOP = WALL + P_PAD;                   // 45px
+        const LIMIT_BOTTOM = 4800 - WALL - P_PAD;         // 4755px
+        const ZONE_BOTTOM = 4200;                         // 1구역 하단 경계
 
-        // 위치 검사: 주어진 (x, y)가 맵 땅 내부에 있는지 정확히 확인
-        function isInsideMap(x, y) {
-            // 1. 위쪽 세로 구역 영역
-            if (y >= P_RADIUS && y <= ZONE_H) {
-                return (x >= ZONE_LEFT + P_RADIUS && x <= ZONE_RIGHT - P_RADIUS);
+        // 이동하려는 위치가 맵 땅 내부인지 검사하는 정밀 로직
+        function canMoveTo(x, y) {
+            // 1. 전체 상하 세로 한계 검사
+            if (y < LIMIT_TOP || y > LIMIT_BOTTOM) return false;
+
+            // 2. 구역(Zone 1~6) 내부
+            if (y <= ZONE_BOTTOM) {
+                return (x >= LIMIT_LEFT_ZONE && x <= LIMIT_RIGHT_ZONE);
             }
-            // 2. 아래쪽 메인 베이스 영역
-            if (y > ZONE_H && y <= TOTAL_H - P_RADIUS) {
-                return (x >= P_RADIUS && x <= BASE_W - P_RADIUS);
+
+            // 3. 메인 베이스 내부
+            if (y > ZONE_BOTTOM) {
+                return (x >= LIMIT_LEFT_BASE && x <= LIMIT_RIGHT_BASE);
             }
+
             return false;
         }
 
-        // 화면 이동 렌더링
         function renderMap() {
             const vpW = window.innerWidth;
             const vpH = window.innerHeight;
 
-            // 플레이어를 항상 화면 중앙에 고정하도록 맵 좌표 역산
             const mapLeft = (vpW / 2) - playerX;
             const mapTop = (vpH / 2) - playerY;
 
             map.style.transform = `translate3d(${mapLeft}px, ${mapTop}px, 0)`;
         }
 
-        // 조이스틱 핸들러
         function handleStart(e) {
             isDragging = true;
             handleMove(e);
@@ -243,18 +276,17 @@
         window.addEventListener('touchmove', handleMove);
         window.addEventListener('touchend', handleEnd);
 
-        // 메인 게임 루프 (독립 축 슬라이딩 이동 처리)
         function gameLoop() {
             if (isDragging) {
                 const nextX = playerX + (moveX * speed);
                 const nextY = playerY + (moveY * speed);
 
-                // X축 이동 시도
-                if (isInsideMap(nextX, playerY)) {
+                // X축 이동
+                if (canMoveTo(nextX, playerY)) {
                     playerX = nextX;
                 }
-                // Y축 이동 시도 (벽에 부딪혀도 한쪽 방향으로 부드럽게 미끄러짐)
-                if (isInsideMap(playerX, nextY)) {
+                // Y축 이동
+                if (canMoveTo(playerX, nextY)) {
                     playerY = nextY;
                 }
 
@@ -263,7 +295,6 @@
             requestAnimationFrame(gameLoop);
         }
 
-        // 초기 화면 배치
         renderMap();
         gameLoop();
     </script>
