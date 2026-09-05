@@ -1,1 +1,99 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Steal An Egg - Main Map</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #ffffff;
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
 
+        /* 전체 맵 컨테이너 (위로 긴 구역들과 아래 베이스를 감쌈) */
+        .game-map {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* 1. 위쪽으로 연결된 세로로 긴 직사각형 (구역들의 집합) */
+        .zone-container {
+            width: 400px; /* 세로 구역 전체 너비 */
+            display: flex;
+            flex-direction: column-reverse; /* 아래부터 위로 순서 배치 */
+            border: 2px solid #ccc;
+            border-bottom: none;
+            box-shadow: 0 -4px 10px rgba(0,0,0,0.1);
+        }
+
+        /* 공통 구역(Zone) 스타일 */
+        .zone {
+            width: 100%;
+            height: 250px; /* 각 구역의 높이 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #ffffff;
+            font-weight: bold;
+            font-size: 18px;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.6);
+        }
+
+        /* 구역별 색상 지정 (아래 -> 위 순서) */
+        .zone-1 { background-color: #72bf44; } /* 1. 초록 */
+        .zone-2 { background-color: #1e5c1e; } /* 2. 진한 초록 */
+        .zone-3 { background-color: #ffffff; color: #000000; text-shadow: none; } /* 3. 하얀색 */
+        .zone-4 { background-color: #121212; } /* 4. 검은색 */
+        .zone-5 { background-color: #0d233a; } /* 5. 짙은 파란색 */
+        .zone-6 { background-color: #f7a37b; } /* 6. 약간 진한 살구색 */
+
+        /* 2. 맨 아래 가로로 긴 연두색 베이스 */
+        .main-base {
+            width: 700px;  /* 가로가 긴 직사각형 너비 */
+            height: 120px; /* 베이스 높이 */
+            background-color: #9cd645; /* 연두색 땅 */
+            border: 2px solid #7cb32f;
+            border-radius: 12px 12px 0 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
+            z-index: 10;
+        }
+
+        .base-label {
+            font-size: 20px;
+            font-weight: bold;
+            color: #2b4c03;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="game-map">
+        
+        <div class="zone-container">
+            <div class="zone zone-6">구역 6 (약간 진한 살구색)</div>
+            <div class="zone zone-5">구역 5 (짙은 파란색)</div>
+            <div class="zone zone-4">구역 4 (검은색)</div>
+            <div class="zone zone-3">구역 3 (하얀색)</div>
+            <div class="zone zone-2">구역 2 (진한 초록)</div>
+            <div class="zone zone-1">구역 1 (초록)</div>
+        </div>
+
+        <div class="main-base">
+            <span class="base-label">메인 베이스 (연두색)</span>
+        </div>
+
+    </div>
+
+</body>
+</html>
