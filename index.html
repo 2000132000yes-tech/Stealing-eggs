@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-select=none">
-    <title>Steal An Egg - Clean Map Alignment</title>
+    <title>Steal An Egg - UI & Speed Integration</title>
     <style>
         * {
             box-sizing: border-box;
@@ -50,7 +50,7 @@
             will-change: transform;
         }
 
-        /* 1~6 구역 (검은색 테두리 벽 24px 정밀 연결) */
+        /* 1~6 구역 */
         .zone-container {
             position: absolute;
             top: 0;
@@ -66,7 +66,7 @@
 
         .zone {
             width: 100%;
-            height: 696px; /* 4176px / 6 구역 정확 구분 */
+            height: 696px;
         }
 
         .zone-6 { background-color: #f7a37b; }
@@ -76,19 +76,19 @@
         .zone-2 { background-color: #1e5c1e; }
         .zone-1 { background-color: #72bf44; }
 
-        /* 베이스와 1구역 통로 사이의 정확한 빨간선 */
+        /* 베이스 경계 빨간선 */
         .red-divider {
             position: absolute;
             top: 4192px;
-            left: 524px; /* 1구역 안쪽 벽 위치에 정확히 맞춤 */
-            width: 952px; /* 좌우 벽 두께 24px씩 제외한 순수 이동 통로 폭 */
+            left: 524px;
+            width: 952px;
             height: 8px;
             background-color: #ff2222;
             z-index: 50;
             box-shadow: 0 0 8px rgba(255, 0, 0, 0.8);
         }
 
-        /* 메인 베이스 영역 (2000px x 1000px) */
+        /* 메인 베이스 영역 */
         .base-wrapper {
             position: absolute;
             top: 4200px;
@@ -107,7 +107,6 @@
             border-radius: 0 0 32px 32px;
         }
 
-        /* 베이스 상단 좌/우 어깨 벽 (구역 테두리와 딱 맞아떨어짐) */
         .shoulder-wall-left {
             position: absolute;
             top: 0;
@@ -126,7 +125,7 @@
             background-color: #000000;
         }
 
-        /* 플레이어 캐릭터 */
+        /* 플레이어 캐릭 */
         #player {
             position: absolute;
             top: 50%;
@@ -151,6 +150,53 @@
             background-color: #333;
             border-radius: 50%;
             box-shadow: 18px 0 0 #333;
+        }
+
+        /* 좌측 하단 스탯 UI */
+        #hud-container {
+            position: absolute;
+            bottom: 25px;
+            left: 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 300;
+            pointer-events: none;
+        }
+
+        .hud-item {
+            display: flex;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.65);
+            backdrop-filter: blur(8px);
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            padding: 8px 16px 8px 12px;
+            border-radius: 16px;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+        }
+
+        .hud-icon {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 8px;
+        }
+
+        .hud-icon svg {
+            width: 100%;
+            height: 100%;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+        }
+
+        .hud-text {
+            color: #ffffff;
+            font-size: 22px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            font-family: 'Arial Black', sans-serif;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
         }
 
         /* 조이스틱 UI */
@@ -194,7 +240,6 @@
                     <div class="zone zone-2"></div>
                     <div class="zone zone-1"></div>
                 </div>
-                <!-- 1구역 통로 안쪽에 정밀 배치된 빨간선 -->
                 <div class="red-divider"></div>
                 <div class="base-wrapper">
                     <div class="shoulder-wall-left"></div>
@@ -206,6 +251,37 @@
 
         <div id="player"></div>
 
+        <!-- 좌측 하단 스탯 UI -->
+        <div id="hud-container">
+            <!-- 상단: 스피드 (파란색 신발) -->
+            <div class="hud-item">
+                <div class="hud-icon">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M4 16L8 12L12 15L19 7" stroke="#38ef7d" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:none;"/>
+                        <!-- 파란색 운동화 아이콘 -->
+                        <path d="M2 17C2 17 4 17 6 15C8 13 10 9 13 9C15 9 17 10 18 12C19 13 21 13.5 22 14V18H2V17Z" fill="#3a86ff" stroke="#004e92" stroke-width="1.5"/>
+                        <path d="M2 18H22V20H2V18Z" fill="#e0e1dd"/>
+                        <path d="M10 12L12 14" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"/>
+                        <path d="M12 10.5L14 12.5" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"/>
+                    </svg>
+                </div>
+                <div class="hud-text" id="speed-display">:10</div>
+            </div>
+
+            <!-- 하단: 골드 (돈 모양) -->
+            <div class="hud-item">
+                <div class="hud-icon">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <!-- 코인 아이콘 -->
+                        <circle cx="12" cy="12" r="9" fill="#ffb703" stroke="#fb8500" stroke-width="2"/>
+                        <circle cx="12" cy="12" r="6" fill="#ffd166" stroke="#fb8500" stroke-width="1"/>
+                        <text x="12" y="16" font-size="11" font-weight="900" fill="#d48b00" text-anchor="middle">$</text>
+                    </svg>
+                </div>
+                <div class="hud-text" id="money-display">:000</div>
+            </div>
+        </div>
+
         <div id="joystick-wrapper">
             <div id="joystick-stick"></div>
         </div>
@@ -215,10 +291,14 @@
         const map = document.getElementById('world-map');
         const joystickWrapper = document.getElementById('joystick-wrapper');
         const joystickStick = document.getElementById('joystick-stick');
+        const speedDisplay = document.getElementById('speed-display');
 
         let playerX = 1000;
         let playerY = 4700;
-        const speed = 8;
+
+        // UI에 적힌 숫자를 가져와 이동 속도(speed)로 설정
+        let baseSpeedVal = parseInt(speedDisplay.innerText.replace(':', '')) || 10;
+        let speed = baseSpeedVal;
 
         let isDragging = false;
         let moveX = 0;
@@ -230,15 +310,12 @@
         function isValidPosition(x, y) {
             if (y < WALL_THICK + RADIUS || y > 5200 - WALL_THICK - RADIUS) return false;
 
-            // 1~6 구역 이동 범위
             if (y < 4200) {
                 return (x >= 500 + WALL_THICK + RADIUS && x <= 1500 - WALL_THICK - RADIUS);
             }
 
-            // 베이스 내부 이동 범위
             if (x < WALL_THICK + RADIUS || x > 2000 - WALL_THICK - RADIUS) return false;
 
-            // 베이스 상단 어깨 벽 충돌
             if (y - RADIUS < 4200 + WALL_THICK) {
                 const inLeftShoulder = (x - RADIUS < 500 + WALL_THICK);
                 const inRightShoulder = (x + RADIUS > 1500 - WALL_THICK);
