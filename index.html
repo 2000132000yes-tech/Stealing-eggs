@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-select=none">
-    <title>Steal An Egg - Random Eggs & Lifting</title>
+    <title>Steal An Egg - Egg Size & UI Fixed</title>
     <style>
         * {
             box-sizing: border-box;
@@ -74,11 +74,11 @@
         /* --- 알(Egg) 스타일 --- */
         .egg-item {
             position: absolute;
-            /* 기본 크기는 1.0 기준, JS에서 transform scale로 무작위 크기 조정 */
-            width: 36px; 
-            height: 46px;
+            /* 기본 SVG 크기 정의, JS에서 scale로 실제 크기 조정 */
+            width: 100px; 
+            height: 130px;
             transform-origin: center bottom; /* 크기 조정 기준점: 하단 중앙 */
-            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4));
+            filter: drop-shadow(0 6px 10px rgba(0,0,0,0.5));
             z-index: 80;
             pointer-events: none;
             will-change: transform, left, top;
@@ -243,7 +243,7 @@
             opacity: 1;
         }
 
-        /* 캐릭터 */
+        /* 캐릭터 (40px * 40px) */
         #player {
             position: absolute;
             width: 40px;
@@ -255,7 +255,7 @@
             z-index: 100;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
             will-change: left, top;
-            transition: transform 0.2s ease, height 0.2s ease; /* 집기 모션용 */
+            transition: transform 0.2s ease, height 0.2s ease;
         }
 
         #player::after {
@@ -270,11 +270,11 @@
             box-shadow: 15px 0 0 #333;
         }
 
-        /* 알 들기 모션 애니메이션 (굽혔다 펴기) */
+        /* 알 들기 모션 애니메이션 */
         @keyframes pickUpActive {
             0% { transform: translate(-50%, -50%) scaleY(1); }
-            50% { transform: translate(-50%, -30%) scaleY(0.7); } /* 굽힘 */
-            100% { transform: translate(-50%, -50%) scaleY(1); } /* 원복 */
+            50% { transform: translate(-50%, -30%) scaleY(0.7); }
+            100% { transform: translate(-50%, -50%) scaleY(1); }
         }
 
         .player-picking {
@@ -299,11 +299,7 @@
             box-shadow: 0 4px 8px rgba(0,0,0,0.5);
         }
 
-        #settings-btn:active {
-            transform: scale(0.92);
-        }
-
-        #settings-btn svg {
+        #settings-btn SVG {
             width: 24px;
             height: 24px;
             fill: #edf2f4;
@@ -332,17 +328,11 @@
             height: 14px;
             background-color: #ffffff;
             border-radius: 50%;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.4);
             transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        #speed-toggle-switch.active {
-            background-color: #e63946;
-        }
-
-        #speed-toggle-switch.active #speed-toggle-knob {
-            transform: translateX(20px);
-        }
+        #speed-toggle-switch.active { background-color: #e63946; }
+        #speed-toggle-switch.active #speed-toggle-knob { transform: translateX(20px); }
 
         /* 설정 Modal */
         #settings-modal {
@@ -366,7 +356,6 @@
             border: 3px solid #2b2d42;
             border-radius: 16px;
             padding: 20px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.8);
             color: #ffffff;
         }
 
@@ -380,76 +369,27 @@
             color: #fff;
             border: none;
             border-radius: 8px;
-            font-size: 18px;
-            font-weight: bold;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-        }
-
-        #close-settings-btn:active {
-            transform: scale(0.9);
-        }
-
-        .modal-title {
-            text-align: center;
-            font-size: 20px;
-            font-weight: bold;
-            margin-bottom: 24px;
-            color: #edf2f4;
-        }
-
-        .setting-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            margin-top: 10px;
-        }
-
-        .setting-label {
-            font-weight: bold;
-            font-size: 14px;
-            color: #8d99ae;
-        }
-
-        .slider-container {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex-grow: 1;
         }
 
         .zoom-slider {
             -webkit-appearance: none;
-            appearance: none;
             width: 100%;
             height: 8px;
             border-radius: 4px;
             background: #2b2d42;
-            outline: none;
         }
 
         .zoom-slider::-webkit-slider-thumb {
             -webkit-appearance: none;
-            appearance: none;
             width: 20px;
             height: 20px;
             border-radius: 50%;
             background: #00e5ff;
             cursor: pointer;
-            box-shadow: 0 0 8px rgba(0,229,255,0.8);
-        }
-
-        .zoom-value {
-            font-size: 16px;
-            font-weight: bold;
-            color: #00e5ff;
-            width: 36px;
-            text-align: right;
-            font-family: monospace;
         }
 
         #hud-container {
@@ -463,87 +403,61 @@
             pointer-events: none;
         }
 
-        .hud-item {
-            display: flex;
-            align-items: center;
-            background: none;
-            padding: 2px 0;
-        }
-
-        .hud-icon {
-            width: 24px;
-            height: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 6px;
-        }
-
-        .hud-icon svg {
-            width: 100%;
-            height: 100%;
-            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8));
-        }
-
-        .hud-text {
-            font-size: 18px;
-            font-weight: 900;
-            letter-spacing: 0.5px;
-            font-family: 'Arial Black', sans-serif;
-            text-shadow: 0 2px 5px rgba(0,0,0,0.9), 0 0 2px rgba(0,0,0,0.9);
-        }
+        .hud-item { display: flex; align-items: center; }
+        .hud-icon { width: 24px; height: 24px; margin-right: 6px; }
+        .hud-icon svg { width: 100%; height: 100%; }
+        .hud-text { font-size: 18px; font-weight: 900; font-family: 'Arial Black', sans-serif; text-shadow: 0 2px 5px rgba(0,0,0,0.9); }
 
         #speed-display { color: #3a86ff; }
         #money-display { color: #70e000; }
 
-        /* 조이스틱 및 집기 버튼 영역 */
+        /* --- 컨트롤 UI 레이아웃 변경 (우측 하단 정렬) --- */
         #controls-container {
             position: absolute;
-            bottom: 120px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 100%;
-            max-width: 600px;
+            bottom: 30px; /* 화면 하단 여백 */
+            right: 30px;  /* 화면 우측 여백 */
             display: flex;
+            flex-direction: column; /* 세로 배치 (위: 버튼, 아래: 조이스틱) */
             align-items: center;
-            justify-content: center;
-            gap: 80px; /* 조이스틱과 버튼 사이 간격 */
+            gap: 15px; /* 버튼과 조이스틱 사이 간격 */
             pointer-events: none;
             z-index: 200;
         }
 
+        /* 조이스틱: 크기 절반 단축 (60px * 60px) */
         #joystick-wrapper {
-            width: 120px;
-            height: 120px;
+            width: 60px;
+            height: 60px;
             background: rgba(255, 255, 255, 0.2);
             border: 2px solid rgba(255, 255, 255, 0.4);
             border-radius: 50%;
             touch-action: none;
             pointer-events: auto;
+            position: relative;
         }
 
         #joystick-stick {
             position: absolute;
             top: 50%;
             left: 50%;
-            width: 50px;
-            height: 50px;
+            width: 26px; /* 스틱 크기도 축소 */
+            height: 26px;
             background: rgba(255, 255, 255, 0.85);
             border-radius: 50%;
             transform: translate(-50%, -50%);
             pointer-events: none;
         }
 
-        /* 집기/놓기 버튼 */
+        /* 집기/놓기 버튼: 크기 약간 축소 및 조이스틱 위 배치 */
         #action-btn {
-            display: none; /* 근처에 알이 있을 때만 표시 */
-            width: 100px;
-            height: 100px;
+            display: none;
+            width: 70px; /* 크기 축소 */
+            height: 70px;
             background-color: rgba(255, 218, 121, 0.6);
-            border: 6px solid #ccae4f;
+            border: 4px solid #ccae4f;
             color: #ccae4f;
             border-radius: 50%;
-            font-size: 20px;
+            font-size: 16px; /* 글씨 크기 축소 */
             font-weight: 900;
             cursor: pointer;
             pointer-events: auto;
@@ -553,16 +467,9 @@
             transition: background-color 0.1s, transform 0.1s;
         }
 
-        #action-btn:active {
-            background-color: rgba(255, 218, 121, 0.9);
-            transform: scale(0.95);
-        }
-
-        #action-btn.can-pick {
-            display: flex; /* 알 근처에 가면 표시 */
-        }
+        #action-btn.can-pick { display: flex; }
         #action-btn.is-lifting {
-            background-color: rgba(230, 57, 70, 0.6); /* 놓기 상태는 빨간색 계열 */
+            background-color: rgba(230, 57, 70, 0.6);
             border-color: #b32e38;
             color: #b32e38;
         }
@@ -610,9 +517,7 @@
                     <div class="treadmill-belt"></div>
                 </div>
 
-                <!-- 알(Egg)들이 생성될 곳 -->
                 <div id="egg-layer"></div>
-
                 <div id="player"></div>
             </div>
         </div>
@@ -640,16 +545,17 @@
             </div>
         </div>
 
-        <!-- 하단 컨트롤 영역 (조이스틱 + 집기 버튼) -->
+        <!-- 우측 하단 컨트롤 컨테이너 -->
         <div id="controls-container">
+            <!-- 집기/놓기 버튼 (위) -->
+            <button id="action-btn">집기</button>
+            
+            <!-- 조이스틱 (아래, 크기 축소) -->
             <div id="joystick-wrapper">
                 <div id="joystick-stick"></div>
             </div>
-            <!-- 집기/놓기 버튼 -->
-            <button id="action-btn">집기</button>
         </div>
 
-        <!-- 설정 창 Modal -->
         <div id="settings-modal">
             <div id="settings-card">
                 <button id="close-settings-btn">✕</button>
@@ -672,7 +578,7 @@
         const eggLayer = document.getElementById('egg-layer');
         const joystickWrapper = document.getElementById('joystick-wrapper');
         const joystickStick = document.getElementById('joystick-stick');
-        const actionBtn = document.getElementById('action-btn'); // 집기 버튼
+        const actionBtn = document.getElementById('action-btn');
 
         const speedDisplay = document.getElementById('speed-display');
         const tmScreen = document.getElementById('tm-screen');
@@ -689,32 +595,25 @@
         
         let speedValue = 10.0;
         let isSpeedFixed = false;
-        let isActionFrozen = false; // 집기/놓기 동작 중 이동 멈춤
+        let isActionFrozen = false;
 
         let isDragging = false;
         let moveX = 0;
         let moveY = 0;
 
-        const RADIUS = 20;
+        const RADIUS = 20; // 플레이어 반지름 (크기 40px)
         const WALL_THICK = 24;
         const MAP_HEIGHT = 24100;
 
-        const TM_BOUNDS = {
-            left: 540,
-            right: 650,
-            top: 23260,
-            bottom: 23420
-        };
+        const TM_BOUNDS = { left: 540, right: 650, top: 23260, bottom: 23420 };
 
         let lastTreadmillTime = 0;
 
-        // --- 알(Egg) 상호작용 관련 변수 ---
-        const TOTAL_EGGS = 50; // 생성할 알의 총 개수
-        const eggList = [];    // 전역 알 데이터 목록
-        let nearestEgg = null; // 현재 가장 가까운 알 데이터
-        let liftedEgg = null;  // 현재 들고 있는 알 데이터
+        const TOTAL_EGGS = 50;
+        const eggList = [];
+        let nearestEgg = null;
+        let liftedEgg = null;
 
-        /* 달걀 SVG 템플릿 생성기 (id 중복 방지 위해 인자 추가) */
         function getEggSvgHTML(id) {
             return `
                 <svg viewBox="0 0 100 130" xmlns="http://www.w3.org/2000/svg">
@@ -733,79 +632,73 @@
             `;
         }
 
-        /* 크기 확률 계산: 작은 것이 많이 나오고 큰 것이 적게 나오도록 가중치 적용
-            Math.random()^3을 이용해 0에 가까운 값이 나올 확률을 높임 */
+        /* --- 알 크기 로직 수정 (최소 크기 보장 및 확대) --- */
         function getRandomEggSize() {
-            // 최소 1.00 ~ 최대 100.00
-            const min = 1.0;
-            const max = 100.0;
+            // 플레이어 크기(40px)의 절반인 20px를 최소 기준으로 설정 (SVG 기본 width 100px 기준 scale 0.2)
+            const minScale = 0.2; 
+            const maxScale = 1.5; // 최대 크기 (SVG 기준 150px, 플레이어의 3.75배)
             
-            // 0~1 사이 가중치 무작위값 (세제곱)
+            // 작은 것이 많이 나오는 확률 가중치 (세제곱)
             const weightedRand = Math.pow(Math.random(), 3);
             
-            // 범위로 변환
-            const size = min + (weightedRand * (max - min));
+            // 스케일 범위 계산
+            const scale = minScale + (weightedRand * (maxScale - minScale));
             
-            // 소수점 둘째 자리까지 반올림
-            return parseFloat(size.toFixed(2));
+            // UI 표시용 숫자 (1.00 ~ 100.00 형식으로 변환)
+            // minScale(0.2) -> 1.00, maxScale(1.5) -> 100.00
+            const displaySize = 1 + ((scale - minScale) / (maxScale - minScale)) * 99;
+            
+            return {
+                scale: parseFloat(scale.toFixed(3)),
+                display: parseFloat(displaySize.toFixed(2))
+            };
         }
 
-        /* 맵 전체 영역에 무작위 알 생성 */
         function initRandomEggs() {
-            // Zone 컨테이너 영역: x(500~1500), y(0~22600)
-            const minX = 500 + WALL_THICK + RADIUS;
-            const maxX = 1500 - WALL_THICK - RADIUS;
-            const minY = WALL_THICK + RADIUS;
-            const maxY = 22600 - RADIUS; // 빨간 구별선 바로 위까지
+            const minX = 500 + WALL_THICK + 50; // 알 크기 고려 여백 확대
+            const maxX = 1500 - WALL_THICK - 50;
+            const minY = WALL_THICK + 50;
+            const maxY = 22600 - 50;
 
             for (let i = 0; i < TOTAL_EGGS; i++) {
-                // 무작위 좌표
                 const randX = minX + Math.random() * (maxX - minX);
                 const randY = minY + Math.random() * (maxY - minY);
-                
-                // 확률 가중치 적용된 무작위 크기
-                const randSize = getRandomEggSize();
+                const sizeData = getRandomEggSize();
 
                 const eggItem = document.createElement('div');
                 eggItem.className = 'egg-item';
                 eggItem.innerHTML = getEggSvgHTML(i);
                 
-                // DOM 렌더링 좌표 및 크기 설정 (원래 크기 36x46 기준 scale 적용)
-                // 크기가 크더라도 충돌 기준점은 하단 중앙이므로 y좌표는 그대로 사용
                 eggItem.style.left = `${randX}px`;
                 eggItem.style.top = `${randY}px`;
-                eggItem.style.transform = `translate(-50%, -100%) scale(${randSize / 100})`; // scale 0.01~1.0
+                // 계산된 스케일 적용
+                eggItem.style.transform = `translate(-50%, -100%) scale(${sizeData.scale})`;
 
                 eggLayer.appendChild(eggItem);
 
-                /* 알 데이터 저장 (충돌 감지 및 상호작용용) */
                 eggList.push({
                     id: i,
                     element: eggItem,
                     worldX: randX,
                     worldY: randY,
-                    size: randSize,
-                    isLifted: false // 들고 있는 상태인지 여부
+                    scale: sizeData.scale,
+                    displaySize: sizeData.display,
+                    isLifted: false
                 });
             }
         }
 
-        /* 플레이어 근처의 알 감지 및 인터페이스 업데이트 */
         function checkNearestEgg() {
-            // 이미 알을 들고 있다면 감지 안 함
             if (liftedEgg) return;
 
-            const detectDist = 80; // 알을 감지하여 버튼을 띄울 거리
+            // 알 크기가 커졌으므로 감지 거리 확대
+            const detectDist = 100; 
             let minPlayerDist = Infinity;
             let currentNearest = null;
 
             eggList.forEach(egg => {
-                // 이미 다른 사람이 들고 있는 알은 감지 안 함 (멀티플레이 대비)
                 if (egg.isLifted) return;
-
-                // 플레이어 하단 중앙(발밑)과 알 하단 중앙 좌표 사이 거리 계산
                 const dist = Math.hypot(playerX - egg.worldX, playerY - egg.worldY);
-
                 if (dist < detectDist && dist < minPlayerDist) {
                     minPlayerDist = dist;
                     currentNearest = egg;
@@ -814,314 +707,152 @@
 
             nearestEgg = currentNearest;
 
-            // 버튼 UI 업데이트
             if (nearestEgg) {
                 actionBtn.innerText = "집기";
-                actionBtn.classList.add('can-pick'); // 버튼 표시
+                actionBtn.classList.add('can-pick');
                 actionBtn.classList.remove('is-lifting');
             } else {
-                actionBtn.classList.remove('can-pick'); // 버튼 숨김
+                actionBtn.classList.remove('can-pick');
             }
         }
 
-        /* [집기/놓기] 버튼 동작 */
         actionBtn.addEventListener('click', handleAction);
 
         function handleAction() {
-            // 버튼 광클 방지 및 동작 중 정지
             if (isActionFrozen) return;
 
             if (!liftedEgg) {
-                // --- 알 집기 동작 ---
-                if (!nearestEgg) return; // 근처에 알이 없으면 무시
-
+                if (!nearestEgg) return;
                 liftedEgg = nearestEgg;
-                liftedEgg.isLifted = true; // 알 상태 변경 (다른 감지에서 제외)
-                nearestEgg = null; // 감지된 알 초기화
-
-                isActionFrozen = true; // 이동 멈춤
-
-                // 플레이어 집기 애니메이션 트리거
+                liftedEgg.isLifted = true;
+                nearestEgg = null;
+                isActionFrozen = true;
                 player.classList.add('player-picking');
-                
-                // 버튼 상태 변경
                 actionBtn.innerText = "놓기";
                 actionBtn.classList.add('is-lifting');
-
-                // 0.2초 굽혔다 펴는 동작 후 알을 머리 위로 연결
                 setTimeout(() => {
-                    // 알의 z-index를 높여 플레이어보다 위에 오도록 함
                     liftedEgg.element.style.zIndex = '110';
-                    isActionFrozen = false; // 이동 가능
+                    isActionFrozen = false;
                 }, 200);
-
-                // 애니메이션 클래스 제거 (0.3초 후)
-                setTimeout(() => {
-                    player.classList.remove('player-picking');
-                }, 300);
-
+                setTimeout(() => { player.classList.remove('player-picking'); }, 300);
             } else {
-                // --- 알 놓기 동작 ---
                 const dropEgg = liftedEgg;
-                liftedEgg = null; // 드는 상태 해제
-
-                isActionFrozen = true; // 이동 멈춤
-
-                // 플레이어 굽히기 애니메이션 트리거 (놓는 동작)
+                liftedEgg = null;
+                isActionFrozen = true;
                 player.classList.add('player-picking');
-
-                // 버튼 상태 변경
                 actionBtn.innerText = "집기";
                 actionBtn.classList.remove('is-lifting');
-
-                // 0.2초 후 알을 발밑 좌표에 배치
                 setTimeout(() => {
                     dropEgg.worldX = playerX;
                     dropEgg.worldY = playerY;
-                    
-                    // 알 스타일 복구 (원래 위치 및 scale)
-                    dropEgg.element.style.zIndex = '80'; // 원래 z-index
-
-                    // 물리 좌표 업데이트
+                    dropEgg.element.style.zIndex = '80';
                     dropEgg.element.style.left = `${playerX}px`;
                     dropEgg.element.style.top = `${playerY}px`;
-                    
-                    // 맵 좌표 업데이트 적용 위해 렌더링
                     renderSingleEgg(dropEgg);
-
-                    isActionFrozen = false; // 이동 가능
+                    isActionFrozen = false;
                 }, 200);
-
-                // 애니메이션 클래스 제거
-                setTimeout(() => {
-                    player.classList.remove('player-picking');
-                    // 놓은 직후 바로 감지되지 않도록 잠시 대기 후 감지 재개는 루프에서 처리
-                }, 300);
+                setTimeout(() => { player.classList.remove('player-picking'); }, 300);
             }
         }
 
-        /* 알 하나에 대한 렌더링 업데이트 (위치 및 들고 있는 상태) */
         function renderSingleEgg(eggData) {
             if (eggData.isLifted && liftedEgg === eggData) {
-                // 들고 있는 상태: 플레이어 좌표 기준 머리 위 고정 위치 (CSS transform translate 사용)
-                // 원래 scale 값을 유지하면서 위치만 부드럽게 조정
                 eggData.element.style.left = `${playerX}px`;
                 eggData.element.style.top = `${playerY}px`;
-                
-                // 머리 위 고정 좌표 (플레이어 중심 y-40 ~ y-60 정도, 크기 scale 감안)
-                // scale 1.0 기준 46px 높이이므로 머리 위 적당한 높이로 translate
-                eggData.element.style.transform = `translate(-50%, -130%) scale(${eggData.size / 100})`;
+                // 들고 있을 때 높이 조정 (알 크기 scale 반영)
+                const yOffset = -110 - (eggData.scale * 20); 
+                eggData.element.style.transform = `translate(-50%, ${yOffset}%) scale(${eggData.scale})`;
             } else {
-                // 놓여 있는 상태: 자기 전역 좌표에 고정 (transform scale만 유지)
-                eggData.element.style.transform = `translate(-50%, -100%) scale(${eggData.size / 100})`;
-                eggData.isLifted = false; // 혹시 모를 상태 동기화
+                eggData.element.style.transform = `translate(-50%, -100%) scale(${eggData.scale})`;
+                eggData.isLifted = false;
             }
         }
 
         let currentScale = 0.65;
-
         function setZoom(val) {
             currentScale = 1.2 - (val - 1) * (1.0 / 99);
             camera.style.transform = `scale(${currentScale.toFixed(3)})`;
             zoomValueText.innerText = val;
         }
-
-        zoomRange.addEventListener('input', (e) => {
-            setZoom(e.target.value);
-        });
-
-        settingsBtn.addEventListener('click', () => {
-            settingsModal.style.display = 'flex';
-        });
-
-        closeSettingsBtn.addEventListener('click', () => {
-            settingsModal.style.display = 'none';
-        });
-
+        zoomRange.addEventListener('input', (e) => { setZoom(e.target.value); });
+        settingsBtn.addEventListener('click', () => { settingsModal.style.display = 'flex'; });
+        closeSettingsBtn.addEventListener('click', () => { settingsModal.style.display = 'none'; });
         speedToggleSwitch.addEventListener('click', () => {
             isSpeedFixed = !isSpeedFixed;
             speedToggleSwitch.classList.toggle('active', isSpeedFixed);
         });
-
-        function updateSpeedDisplay() {
-            speedDisplay.innerText = `:${speedValue.toFixed(2)}`;
-            speedDisplay.style.color = `#3a86ff`;
-        }
-
+        function updateSpeedDisplay() { speedDisplay.innerText = `:${speedValue.toFixed(2)}`; }
         function createSpeedPopup(amount) {
             const popup = document.createElement('div');
             popup.className = 'speed-popup';
             popup.innerText = `👟 +${amount.toFixed(2)}`;
-
-            const startX = TM_BOUNDS.left + 25;
-            const startY = TM_BOUNDS.top - 10;
-
-            popup.style.left = `${startX}px`;
-            popup.style.top = `${startY}px`;
-
+            popup.style.left = `${TM_BOUNDS.left + 25}px`;
+            popup.style.top = `${TM_BOUNDS.top - 10}px`;
             map.appendChild(popup);
-
-            const randomX = (Math.random() - 0.5) * 100; 
-            const randomY = - (60 + Math.random() * 40);
-
             requestAnimationFrame(() => {
-                popup.style.transform = `translate(${randomX}px, ${randomY}px) scale(1.15)`;
+                popup.style.transform = `translate(${(Math.random() - 0.5) * 100}px, ${-(60 + Math.random() * 40)}px) scale(1.15)`;
                 popup.style.opacity = '0';
             });
-
-            setTimeout(() => {
-                if (popup.parentNode) {
-                    popup.parentNode.removeChild(popup);
-                }
-            }, 800);
+            setTimeout(() => { if (popup.parentNode) popup.parentNode.removeChild(popup); }, 800);
         }
-
         function checkTreadmill(now) {
-            const isOnTM = (
-                playerX >= TM_BOUNDS.left &&
-                playerX <= TM_BOUNDS.right &&
-                playerY >= TM_BOUNDS.top &&
-                playerY <= TM_BOUNDS.bottom
-            );
-
+            const isOnTM = (playerX >= TM_BOUNDS.left && playerX <= TM_BOUNDS.right && playerY >= TM_BOUNDS.top && playerY <= TM_BOUNDS.bottom);
             if (isOnTM) {
-                if (tmScreen.innerText !== "TRAIN..") {
-                    tmScreen.innerText = "TRAIN..";
-                    tmScreen.style.color = "#00ff66";
-                    lastTreadmillTime = now;
-                }
-
-                while (now - lastTreadmillTime >= 100) {
-                    speedValue += 0.01;
-                    updateSpeedDisplay();
-                    createSpeedPopup(0.01);
-                    lastTreadmillTime += 100;
-                }
-            } else {
-                if (tmScreen.innerText !== "READY") {
-                    tmScreen.innerText = "READY";
-                    tmScreen.style.color = "#00ffcc";
-                }
-            }
+                if (tmScreen.innerText !== "TRAIN..") { tmScreen.innerText = "TRAIN.."; lastTreadmillTime = now; }
+                while (now - lastTreadmillTime >= 100) { speedValue += 0.01; updateSpeedDisplay(); createSpeedPopup(0.01); lastTreadmillTime += 100; }
+            } else { tmScreen.innerText = "READY"; }
         }
-
         function isValidPosition(x, y) {
             if (y < WALL_THICK + RADIUS || y > MAP_HEIGHT - WALL_THICK - RADIUS) return false;
-
-            if (y < 22600) {
-                if (x < 500 + WALL_THICK + RADIUS || x > 1500 - WALL_THICK - RADIUS) return false;
-            } else {
-                if (x < WALL_THICK + RADIUS || x > 2000 - WALL_THICK - RADIUS) return false;
-
-                if (y - RADIUS < 22600 + WALL_THICK) {
-                    if (x - RADIUS < 500 + WALL_THICK || x + RADIUS > 1500 - WALL_THICK) return false;
-                }
-            }
-
+            if (y < 22600) { if (x < 500 + WALL_THICK + RADIUS || x > 1500 - WALL_THICK - RADIUS) return false; }
+            else { if (x < WALL_THICK + RADIUS || x > 2000 - WALL_THICK - RADIUS) return false; if (y - RADIUS < 22600 + WALL_THICK) { if (x - RADIUS < 500 + WALL_THICK || x + RADIUS > 1500 - WALL_THICK) return false; } }
             return true;
         }
-
         function movePlayer(dx, dy) {
-            // 동작 중이거나 끄는 중이면 이동 불가
             if (isActionFrozen) return;
-
             const currentMoveSpeed = isSpeedFixed ? 10.0 : speedValue;
-            
             const actualDx = dx * currentMoveSpeed;
             const actualDy = dy * currentMoveSpeed;
-
             const steps = Math.ceil(Math.hypot(actualDx, actualDy));
             if (steps === 0) return;
-
-            const stepX = actualDx / steps;
-            const stepY = actualDy / steps;
-
             for (let i = 0; i < steps; i++) {
-                if (isValidPosition(playerX + stepX, playerY)) {
-                    playerX += stepX;
-                }
-                if (isValidPosition(playerX, playerY + stepY)) {
-                    playerY += stepY;
-                }
+                if (isValidPosition(playerX + actualDx / steps, playerY)) playerX += actualDx / steps;
+                if (isValidPosition(playerX, playerY + actualDy / steps)) playerY += actualDy / steps;
             }
         }
-
         function renderMap() {
             map.style.transform = `translate3d(${-playerX}px, ${-playerY}px, 0)`;
             player.style.left = `${playerX}px`;
             player.style.top = `${playerY}px`;
-            
-            // 들고 있는 알이 있다면 같이 이동 렌더링
-            if (liftedEgg) {
-                renderSingleEgg(liftedEgg);
-            }
+            if (liftedEgg) renderSingleEgg(liftedEgg);
         }
-
-        function handleStart(e) {
-            isDragging = true;
-            handleMove(e);
-        }
-
+        function handleStart(e) { isDragging = true; handleMove(e); }
         function handleMove(e) {
             if (!isDragging) return;
-
             const rect = joystickWrapper.getBoundingClientRect();
-            const centerX = rect.left + rect.width / 2;
-            const centerY = rect.top + rect.height / 2;
-
             const clientX = e.touches ? e.touches[0].clientX : e.clientX;
             const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-
-            let deltaX = clientX - centerX;
-            let deltaY = clientY - centerY;
+            let deltaX = clientX - (rect.left + rect.width / 2);
+            let deltaY = clientY - (rect.top + rect.height / 2);
             const distance = Math.hypot(deltaX, deltaY);
-            const maxRadius = 35;
-
-            if (distance > maxRadius) {
-                deltaX = (deltaX / distance) * maxRadius;
-                deltaY = (deltaY / distance) * maxRadius;
-            }
-
+            // 조이스틱 반지름 축소 반영 (30px)
+            if (distance > 30) { deltaX = (deltaX / distance) * 30; deltaY = (deltaY / distance) * 30; }
             joystickStick.style.transform = `translate(calc(-50% + ${deltaX}px), calc(-50% + ${deltaY}px))`;
-
-            moveX = deltaX / maxRadius;
-            moveY = deltaY / maxRadius;
+            moveX = deltaX / 30; moveY = deltaY / 30;
         }
-
-        function handleEnd() {
-            isDragging = false;
-            moveX = 0;
-            moveY = 0;
-            joystickStick.style.transform = 'translate(-50%, -50%)';
-        }
-
+        function handleEnd() { isDragging = false; moveX = 0; moveY = 0; joystickStick.style.transform = 'translate(-50%, -50%)'; }
         joystickWrapper.addEventListener('mousedown', handleStart);
         window.addEventListener('mousemove', handleMove);
         window.addEventListener('mouseup', handleEnd);
-
         joystickWrapper.addEventListener('touchstart', handleStart);
         window.addEventListener('touchmove', handleMove);
         window.addEventListener('touchend', handleEnd);
-
         function gameLoop(now) {
-            if (isDragging && !isActionFrozen) {
-                movePlayer(moveX, moveY);
-                renderMap();
-            } else if (liftedEgg || isActionFrozen) {
-                // 움직이지 않더라도 들고 있는 알 좌표 업데이트 위해 렌더링
-                renderMap();
-            }
-            checkTreadmill(now);
-            checkNearestEgg(); // 주기적으로 근처 알 감지
-            requestAnimationFrame(gameLoop);
+            if (isDragging && !isActionFrozen) { movePlayer(moveX, moveY); renderMap(); }
+            else if (liftedEgg || isActionFrozen) renderMap();
+            checkTreadmill(now); checkNearestEgg(); requestAnimationFrame(gameLoop);
         }
-
-        // 초기화
-        initRandomEggs(); // 알 무작위 생성
-        setZoom(50);
-        updateSpeedDisplay();
-        renderMap();
-        requestAnimationFrame(gameLoop);
+        initRandomEggs(); setZoom(50); updateSpeedDisplay(); renderMap(); requestAnimationFrame(gameLoop);
     </script>
 </body>
 </html>
