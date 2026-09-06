@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-select=none">
-    <title>Steal An Egg - Treadmill Effect Updated</title>
+    <title>Steal An Egg - Pet & Hatching Update</title>
     <style>
         * {
             box-sizing: border-box;
@@ -85,7 +85,6 @@
             position: absolute;
             top: -28px;
             left: 50%;
-            transform-origin: center center;
             font-size: 15px;
             font-weight: 900;
             color: #ffffff;
@@ -102,10 +101,9 @@
 
         .hatch-ready-icon {
             position: absolute;
-            top: -55px;
+            top: -60px;
             left: 50%;
-            transform: translateX(-50%);
-            font-size: 32px;
+            font-size: 36px;
             font-weight: 900;
             color: #ff2222;
             text-shadow: -2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff, 2px 2px 0 #fff;
@@ -116,8 +114,41 @@
         }
 
         @keyframes bounceReady {
-            0% { transform: translateX(-50%) translateY(0); }
-            100% { transform: translateX(-50%) translateY(-10px); }
+            0% { transform: translate(-50%, 0); }
+            100% { transform: translate(-50%, -12px); }
+        }
+
+        /* --- 펫 스타일 --- */
+        .pet-item {
+            position: absolute;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: 3px solid #111;
+            z-index: 90;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+            transform: translate(-50%, -50%);
+            transition: transform 0.1s linear;
+        }
+
+        .pet-face { font-size: 20px; }
+
+        .pet-weight-tag {
+            position: absolute;
+            bottom: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 11px;
+            font-weight: bold;
+            color: #fff;
+            background: rgba(0,0,0,0.75);
+            padding: 1px 5px;
+            border-radius: 4px;
+            white-space: nowrap;
+            border: 1px solid rgba(255,255,255,0.3);
         }
 
         .red-divider {
@@ -219,7 +250,6 @@
 
         #player::after { content: ''; position: absolute; top: 9px; left: 7px; width: 7px; height: 7px; background-color: #333; border-radius: 50%; box-shadow: 15px 0 0 #333; }
 
-        /* --- 런닝머신 팝업 효과 텍스트 스타일 --- */
         .pop-text {
             position: absolute;
             font-size: 26px;
@@ -234,35 +264,13 @@
         }
 
         @keyframes popupFloat {
-            0% {
-                opacity: 1;
-                transform: translate(-50%, -50%) scale(0.6) translate(0, 0);
-            }
-            50% {
-                opacity: 1;
-                transform: translate(-50%, -50%) scale(1.1) translate(var(--dx), var(--dy-mid));
-            }
-            100% {
-                opacity: 0;
-                transform: translate(-50%, -50%) scale(0.9) translate(calc(var(--dx) * 1.5), var(--dy-end));
-            }
+            0% { opacity: 1; transform: translate(-50%, -50%) scale(0.6) translate(0, 0); }
+            50% { opacity: 1; transform: translate(-50%, -50%) scale(1.1) translate(var(--dx), var(--dy-mid)); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(0.9) translate(calc(var(--dx) * 1.5), var(--dy-end)); }
         }
 
         #settings-btn {
-            position: absolute; 
-            top: 20px; 
-            left: 20px; 
-            width: 44px; 
-            height: 44px; 
-            background: #2b2d42; 
-            border: 3px solid #141522; 
-            border-radius: 10px; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            cursor: pointer; 
-            z-index: 300; 
-            box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+            position: absolute; top: 20px; left: 20px; width: 44px; height: 44px; background: #2b2d42; border: 3px solid #141522; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 300; box-shadow: 0 4px 8px rgba(0,0,0,0.5);
         }
 
         #settings-btn svg { width: 24px; height: 24px; fill: #edf2f4; }
@@ -272,33 +280,15 @@
         }
 
         #speed-toggle-knob { position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; background-color: #ffffff; border-radius: 50%; transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
-
         #speed-toggle-switch.active { background-color: #e63946; }
         #speed-toggle-switch.active #speed-toggle-knob { transform: translateX(20px); }
 
         #settings-modal {
-            display: none; 
-            position: fixed; 
-            top: 0; 
-            left: 0; 
-            width: 100vw; 
-            height: 100vh; 
-            background: rgba(0, 0, 0, 0.65); 
-            backdrop-filter: blur(4px); 
-            z-index: 9999; 
-            align-items: center; 
-            justify-content: center;
+            display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.65); backdrop-filter: blur(4px); z-index: 9999; align-items: center; justify-content: center;
         }
 
         #settings-card { 
-            position: relative; 
-            width: 300px; 
-            background: #1e1e24; 
-            border: 3px solid #3a3d52; 
-            border-radius: 16px; 
-            padding: 24px 20px; 
-            color: #ffffff; 
-            box-shadow: 0 10px 25px rgba(0,0,0,0.8);
+            position: relative; width: 300px; background: #1e1e24; border: 3px solid #3a3d52; border-radius: 16px; padding: 24px 20px; color: #ffffff; box-shadow: 0 10px 25px rgba(0,0,0,0.8);
         }
 
         .modal-title { font-size: 18px; font-weight: bold; margin-bottom: 20px; text-align: center; color: #fff; }
@@ -321,6 +311,23 @@
 
         #speed-display { color: #3a86ff; }
         #money-display { color: #70e000; }
+
+        /* --- 오른쪽 아래 알 리셋 카운트다운 타이머 --- */
+        #reset-timer-hud {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.75);
+            border: 2px solid #ffda79;
+            padding: 8px 14px;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 900;
+            z-index: 300;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            pointer-events: none;
+        }
 
         #controls-container {
             position: absolute;
@@ -391,6 +398,93 @@
         #action-btn.is-lifting { display: flex; background-color: rgba(230, 57, 70, 0.95); border-color: #b32e38; color: #fff; }
         #action-btn.can-hatch { display: flex; background-color: rgba(45, 198, 83, 0.95); border-color: #1b8a37; color: #fff; }
 
+        /* --- 부화 애니메이션 연출 오버레이 --- */
+        #hatch-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background-color: rgba(0, 0, 0, 0.92);
+            z-index: 10000;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #hatch-egg-container {
+            position: relative;
+            width: 180px;
+            height: 220px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #hatch-silhouette {
+            font-size: 110px;
+            filter: brightness(0) drop-shadow(0 0 15px rgba(255,255,255,0.4));
+            transition: transform 0.05s ease-in-out;
+        }
+
+        #hatch-flash {
+            position: absolute;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: #fff;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.1s ease;
+        }
+
+        #pet-reveal-card {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            animation: petPopIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        @keyframes petPopIn {
+            0% { transform: scale(0.2); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        #revealed-pet-avatar {
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            border: 6px solid #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 60px;
+            box-shadow: 0 0 35px rgba(255, 255, 255, 0.8);
+            margin-bottom: 15px;
+        }
+
+        #revealed-pet-name {
+            font-size: 26px;
+            font-weight: 900;
+            color: #fff;
+            margin-bottom: 6px;
+        }
+
+        #revealed-pet-stats {
+            font-size: 18px;
+            font-weight: bold;
+            color: #70e000;
+            margin-bottom: 20px;
+        }
+
+        #confirm-pet-btn {
+            padding: 10px 30px;
+            font-size: 18px;
+            font-weight: 900;
+            color: #111;
+            background: #ffda79;
+            border: 3px solid #ccae4f;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+
     </style>
 </head>
 <body>
@@ -435,6 +529,7 @@
                 </div>
 
                 <div id="egg-layer"></div>
+                <div id="pet-layer"></div>
                 <div id="player"></div>
             </div>
         </div>
@@ -447,8 +542,12 @@
 
             <div class="hud-item">
                 <div class="hud-icon">💰</div>
-                <div class="hud-text" id="money-display">000</div>
+                <div class="hud-text" id="money-display">0</div>
             </div>
+        </div>
+
+        <div id="reset-timer-hud">
+            🔄 리셋까지: <span id="reset-countdown">30</span>초
         </div>
 
         <div id="controls-container">
@@ -471,6 +570,20 @@
                 </div>
             </div>
         </div>
+
+        <!-- 부화 연출 오버레이 -->
+        <div id="hatch-overlay">
+            <div id="hatch-flash"></div>
+            <div id="hatch-egg-container">
+                <div id="hatch-silhouette">🐱</div>
+            </div>
+            <div id="pet-reveal-card">
+                <div id="revealed-pet-avatar">🐱</div>
+                <div id="revealed-pet-name">레전드 야옹이</div>
+                <div id="revealed-pet-stats">+60원/초 (50.0kg)</div>
+                <button id="confirm-pet-btn">확인</button>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -478,11 +591,14 @@
         const camera = document.getElementById('camera');
         const player = document.getElementById('player');
         const eggLayer = document.getElementById('egg-layer');
+        const petLayer = document.getElementById('pet-layer');
         const joystickWrapper = document.getElementById('joystick-wrapper');
         const joystickStick = document.getElementById('joystick-stick');
         const actionBtn = document.getElementById('action-btn');
 
         const speedDisplay = document.getElementById('speed-display');
+        const moneyDisplay = document.getElementById('money-display');
+        const resetCountdown = document.getElementById('reset-countdown');
         const tmScreen = document.getElementById('tm-screen');
         const speedToggleSwitch = document.getElementById('speed-toggle-switch');
 
@@ -492,10 +608,22 @@
         const zoomRange = document.getElementById('zoom-range');
         const zoomValueText = document.getElementById('zoom-value-text');
 
+        // 부화 연출 관련 DOM
+        const hatchOverlay = document.getElementById('hatch-overlay');
+        const hatchEggContainer = document.getElementById('hatch-egg-container');
+        const hatchSilhouette = document.getElementById('hatch-silhouette');
+        const hatchFlash = document.getElementById('hatch-flash');
+        const petRevealCard = document.getElementById('pet-reveal-card');
+        const revealedPetAvatar = document.getElementById('revealed-pet-avatar');
+        const revealedPetName = document.getElementById('revealed-pet-name');
+        const revealedPetStats = document.getElementById('revealed-pet-stats');
+        const confirmPetBtn = document.getElementById('confirm-pet-btn');
+
         let playerX = 1000;
         let playerY = 23100;
         
         let speedValue = 10.00;
+        let moneyValue = 0;
         let isSpeedFixed = false;
 
         let isDragging = false;
@@ -507,15 +635,27 @@
         const MAP_HEIGHT = 24100;
         const RED_LINE_Y = 22592;
 
-        const FENCE_BOUNDS = { left: 500, right: 1500, top: 23440, bottom: 24040 };
+        const FENCE_BOUNDS = { left: 512, right: 1488, top: 23452, bottom: 24028 };
         const TM_BOUNDS = { left: 540, right: 650, top: 23260, bottom: 23420 };
 
         let lastTreadmillTime = 0;
+        let fieldResetTimer = 30;
 
         const eggList = [];
+        const petList = [];
         let nearestEgg = null;
         let nearestHatchEgg = null;
         let liftedEgg = null;
+
+        const PET_PRESETS = [
+            { icon: '🐱', name: '고양이', color: '#ff70a6' },
+            { icon: '🐶', name: '강아지', color: '#ff9770' },
+            { icon: '🐰', name: '토끼', color: '#ffd670' },
+            { icon: '🦊', name: '여우', color: '#e9ff70' },
+            { icon: '🐻', name: '곰돌이', color: '#70d6ff' },
+            { icon: '🐼', name: '판다', color: '#b8c0ff' },
+            { icon: '🦄', name: '유니콘', color: '#ffc6ff' }
+        ];
 
         const ZONES_CONFIG = [
             { level: 6, name: "Zone 6", minY: 24, maxY: 7524 },
@@ -581,57 +721,87 @@
             return { scale: parseFloat(scale.toFixed(3)), weight: parseFloat(weight) };
         }
 
-        function initRandomEggs() {
+        let eggIdCounter = 0;
+
+        function spawnEggInZone(zone) {
             const minX = 500 + WALL_THICK + 60;
             const maxX = 1500 - WALL_THICK - 60;
-            let eggIdCounter = 0;
+            const zoneMinY = zone.minY + 60;
+            const zoneMaxY = zone.maxY - 60;
 
+            const randX = minX + Math.random() * (maxX - minX);
+            const randY = zoneMinY + Math.random() * (zoneMaxY - zoneMinY);
+            const sizeData = getRandomEggSize();
+            
+            const eggItem = document.createElement('div');
+            eggItem.className = 'egg-item';
+            eggItem.innerHTML = `
+                <div class="hatch-ready-icon" id="hatch-icon-${eggIdCounter}">!</div>
+                <div class="egg-weight-label" id="weight-label-${eggIdCounter}">${sizeData.weight.toFixed(1)}kg</div>
+                ${getEggSvgHTML(eggIdCounter, zone.level)}
+            `;
+            eggItem.style.left = `${randX}px`;
+            eggItem.style.top = `${randY}px`;
+
+            const weightLabel = eggItem.querySelector('.egg-weight-label');
+            const hatchIcon = eggItem.querySelector('.hatch-ready-icon');
+
+            // 스케일에 상관없이 일정한 크기로 역스케일링
+            const invScale = (1 / sizeData.scale).toFixed(3);
+            weightLabel.style.transform = `translateX(-50%) scale(${invScale})`;
+            hatchIcon.style.transform = `translate(-50%, 0) scale(${invScale})`;
+
+            eggLayer.appendChild(eggItem);
+
+            const eggObj = { 
+                id: eggIdCounter, 
+                element: eggItem, 
+                weightLabel: weightLabel,
+                hatchIcon: hatchIcon,
+                worldX: randX, 
+                worldY: randY, 
+                scale: sizeData.scale, 
+                weight: sizeData.weight, 
+                zoneLevel: zone.level,
+                isLifted: false,
+                hasCrossedRedLine: false,
+                isIncubating: false,
+                remainingTime: 0,
+                isHatchReady: false
+            };
+
+            eggList.push(eggObj);
+            renderSingleEgg(eggObj);
+            eggIdCounter++;
+        }
+
+        function initRandomEggs() {
             ZONES_CONFIG.forEach(zone => {
-                const zoneMinY = zone.minY + 60;
-                const zoneMaxY = zone.maxY - 60;
-
                 for (let i = 0; i < 5; i++) {
-                    const randX = minX + Math.random() * (maxX - minX);
-                    const randY = zoneMinY + Math.random() * (zoneMaxY - zoneMinY);
-                    const sizeData = getRandomEggSize();
-                    
-                    const eggItem = document.createElement('div');
-                    eggItem.className = 'egg-item';
-                    eggItem.innerHTML = `
-                        <div class="hatch-ready-icon" id="hatch-icon-${eggIdCounter}">!</div>
-                        <div class="egg-weight-label" id="weight-label-${eggIdCounter}">${sizeData.weight.toFixed(1)}kg</div>
-                        ${getEggSvgHTML(eggIdCounter, zone.level)}
-                    `;
-                    eggItem.style.left = `${randX}px`;
-                    eggItem.style.top = `${randY}px`;
-                    eggItem.style.transform = `translate(-50%, -100%) scale(${sizeData.scale})`;
+                    spawnEggInZone(zone);
+                }
+            });
+        }
 
-                    const weightLabel = eggItem.querySelector('.egg-weight-label');
-                    const hatchIcon = eggItem.querySelector('.hatch-ready-icon');
-                    const invScale = (1 / sizeData.scale).toFixed(3);
-                    weightLabel.style.transform = `translateX(-50%) scale(${invScale})`;
-                    hatchIcon.style.transform = `translateX(-50%) scale(${invScale})`;
+        /* --- 30초 필드 알 리셋 (베이스 알 및 들어올린 알 제외) --- */
+        function resetFieldEggs() {
+            for (let i = eggList.length - 1; i >= 0; i--) {
+                const egg = eggList[i];
+                // 플레이어가 들고 있거나, 부화 중이거나, 이미 부화 완료되었거나, 레드라인을 지나 베이스에 있는 알은 제외
+                if (!egg.isLifted && !egg.isIncubating && !egg.isHatchReady && !egg.hasCrossedRedLine && egg.worldY < RED_LINE_Y) {
+                    if (egg.element && egg.element.parentNode) {
+                        egg.element.parentNode.removeChild(egg.element);
+                    }
+                    eggList.splice(i, 1);
+                }
+            }
 
-                    eggLayer.appendChild(eggItem);
-
-                    eggList.push({ 
-                        id: eggIdCounter, 
-                        element: eggItem, 
-                        weightLabel: weightLabel,
-                        hatchIcon: hatchIcon,
-                        worldX: randX, 
-                        worldY: randY, 
-                        scale: sizeData.scale, 
-                        weight: sizeData.weight, 
-                        zoneLevel: zone.level,
-                        isLifted: false,
-                        hasCrossedRedLine: false,
-                        isIncubating: false,
-                        remainingTime: 0,
-                        isHatchReady: false
-                    });
-
-                    eggIdCounter++;
+            // 필드 구역별 알 재생성
+            ZONES_CONFIG.forEach(zone => {
+                const currentZoneEggs = eggList.filter(e => e.zoneLevel === zone.level && e.worldY < RED_LINE_Y && !e.hasCrossedRedLine);
+                const needToSpawn = 5 - currentZoneEggs.length;
+                for (let i = 0; i < needToSpawn; i++) {
+                    spawnEggInZone(zone);
                 }
             });
         }
@@ -679,7 +849,7 @@
 
         function handleAction() {
             if (nearestHatchEgg) {
-                hatchEgg(nearestHatchEgg);
+                startHatchAnimation(nearestHatchEgg);
                 nearestHatchEgg = null;
                 actionBtn.className = '';
                 return;
@@ -732,14 +902,150 @@
             egg.remainingTime = baseZoneSeconds + weightSeconds;
         }
 
-        function hatchEgg(egg) {
+        /* --- 연출 오버레이 부화 시스템 --- */
+        let hatchingEggTarget = null;
+
+        function startHatchAnimation(egg) {
+            hatchingEggTarget = egg;
+            hatchOverlay.style.display = 'flex';
+            hatchEggContainer.style.display = 'flex';
+            petRevealCard.style.display = 'none';
+
+            // 애니메이션 비트 간격 설정 (따따따따...따..따...따!)
+            const beats = [80, 80, 80, 80, 120, 180, 260, 380, 550, 800];
+            let beatIndex = 0;
+
+            function triggerBeat() {
+                if (beatIndex >= beats.length) {
+                    // 비트 종료 후 화려하게 펫 오픈!
+                    finishHatch();
+                    return;
+                }
+
+                // 랜덤 실루엣 변경 및 바운스
+                const randomPreset = PET_PRESETS[Math.floor(Math.random() * PET_PRESETS.length)];
+                hatchSilhouette.innerText = randomPreset.icon;
+                hatchSilhouette.style.transform = `scale(${1 + Math.random() * 0.3}) rotate(${(Math.random() - 0.5) * 30}deg)`;
+
+                setTimeout(() => {
+                    hatchSilhouette.style.transform = `scale(1) rotate(0deg)`;
+                }, 50);
+
+                const nextDelay = beats[beatIndex];
+                beatIndex++;
+                setTimeout(triggerBeat, nextDelay);
+            }
+
+            triggerBeat();
+        }
+
+        function finishHatch() {
+            // 화면 번쩍임 효과
+            hatchFlash.style.opacity = '1';
+            setTimeout(() => hatchFlash.style.opacity = '0', 200);
+
+            hatchEggContainer.style.display = 'none';
+            petRevealCard.style.display = 'flex';
+
+            const egg = hatchingEggTarget;
+            const petWeight = parseFloat((egg.weight / 2).toFixed(1));
+            const income = 10 + petWeight;
+
+            const preset = PET_PRESETS[Math.floor(Math.random() * PET_PRESETS.length)];
+
+            revealedPetAvatar.innerText = preset.icon;
+            revealedPetAvatar.style.backgroundColor = preset.color;
+            revealedPetName.innerText = preset.name;
+            revealedPetStats.innerText = `+${income.toFixed(1)}원/초 (${petWeight}kg)`;
+
+            // 펫 객체 생성
+            createPet(preset, petWeight, income);
+
+            // 알 필드에서 제거
             if (egg.element && egg.element.parentNode) {
                 egg.element.parentNode.removeChild(egg.element);
             }
             const index = eggList.indexOf(egg);
-            if (index > -1) {
-                eggList.splice(index, 1);
-            }
+            if (index > -1) eggList.splice(index, 1);
+        }
+
+        confirmPetBtn.addEventListener('click', () => {
+            hatchOverlay.style.display = 'none';
+            hatchingEggTarget = null;
+        });
+
+        /* --- 펫 생성 및 AI 조작 --- */
+        function createPet(preset, weight, income) {
+            const petEl = document.createElement('div');
+            petEl.className = 'pet-item';
+            petEl.style.backgroundColor = preset.color;
+            petEl.innerHTML = `
+                <div class="pet-face">${preset.icon}</div>
+                <div class="pet-weight-tag">${weight.toFixed(1)}kg</div>
+            `;
+
+            const spawnX = FENCE_BOUNDS.left + 50 + Math.random() * (FENCE_BOUNDS.right - FENCE_BOUNDS.left - 100);
+            const spawnY = FENCE_BOUNDS.top + 50 + Math.random() * (FENCE_BOUNDS.bottom - FENCE_BOUNDS.top - 100);
+
+            petEl.style.left = `${spawnX}px`;
+            petEl.style.top = `${spawnY}px`;
+            petLayer.appendChild(petEl);
+
+            const angle = Math.random() * Math.PI * 2;
+            const petObj = {
+                element: petEl,
+                x: spawnX,
+                y: spawnY,
+                weight: weight,
+                income: income,
+                vx: Math.cos(angle) * 1.5,
+                vy: Math.sin(angle) * 1.5,
+                isStopped: false,
+                changeTimer: Math.random() * 3 + 1
+            };
+
+            petList.push(petObj);
+        }
+
+        function updatePets(deltaSec) {
+            petList.forEach(pet => {
+                pet.changeTimer -= deltaSec;
+                if (pet.changeTimer <= 0) {
+                    pet.changeTimer = Math.random() * 3 + 1;
+                    pet.isStopped = Math.random() < 0.35; // 35% 확률로 잠시 정지
+                    if (!pet.isStopped) {
+                        const angle = Math.random() * Math.PI * 2;
+                        const speed = 1.0 + Math.random() * 1.5;
+                        pet.vx = Math.cos(angle) * speed;
+                        pet.vy = Math.sin(angle) * speed;
+                    }
+                }
+
+                if (!pet.isStopped) {
+                    pet.x += pet.vx;
+                    pet.y += pet.vy;
+
+                    // 울타리 경계 충돌 및 튕김
+                    if (pet.x < FENCE_BOUNDS.left + 20) {
+                        pet.x = FENCE_BOUNDS.left + 20;
+                        pet.vx *= -1;
+                    } else if (pet.x > FENCE_BOUNDS.right - 20) {
+                        pet.x = FENCE_BOUNDS.right - 20;
+                        pet.vx *= -1;
+                    }
+
+                    if (pet.y < FENCE_BOUNDS.top + 20) {
+                        pet.y = FENCE_BOUNDS.top + 20;
+                        pet.vy *= -1;
+                    } else if (pet.y > FENCE_BOUNDS.bottom - 20) {
+                        pet.y = FENCE_BOUNDS.bottom - 20;
+                        pet.vy *= -1;
+                    }
+                }
+
+                pet.element.style.left = `${pet.x}px`;
+                pet.element.style.top = `${pet.y}px`;
+            });
         }
 
         function updateIncubationTimers() {
@@ -761,6 +1067,24 @@
                     }
                 }
             });
+
+            // 30초 알 필드 리셋 타이머
+            fieldResetTimer -= 1;
+            if (fieldResetTimer <= 0) {
+                fieldResetTimer = 30;
+                resetFieldEggs();
+            }
+            resetCountdown.innerText = fieldResetTimer;
+
+            // 매 초 펫 골드 수급 (초당 10 + 킬로그램 만큼)
+            let currentSecGold = 0;
+            petList.forEach(pet => {
+                currentSecGold += pet.income;
+            });
+            if (currentSecGold > 0) {
+                moneyValue += currentSecGold;
+                moneyDisplay.innerText = Math.floor(moneyValue).toLocaleString();
+            }
         }
 
         setInterval(updateIncubationTimers, 1000);
@@ -771,6 +1095,11 @@
             } else if (eggData.worldY >= RED_LINE_Y) {
                 eggData.hasCrossedRedLine = true;
             }
+
+            // 역스케일링 적용으로 레이블 크기 고정
+            const invScale = (1 / eggData.scale).toFixed(3);
+            eggData.weightLabel.style.transform = `translateX(-50%) scale(${invScale})`;
+            eggData.hatchIcon.style.transform = `translate(-50%, 0) scale(${invScale})`;
 
             if (eggData.isLifted && liftedEgg === eggData) {
                 eggData.element.style.left = `${playerX}px`; 
@@ -810,7 +1139,6 @@
             speedDisplay.innerText = `+${speedValue.toFixed(2)}`; 
         }
 
-        /* --- 무작위 위쪽 방향 흐려짐 팝업 애니메이션 --- */
         function createSpeedPopText(x, y, amount) {
             const pop = document.createElement('div');
             pop.className = 'pop-text';
@@ -818,7 +1146,6 @@
             pop.style.left = `${x}px`;
             pop.style.top = `${y - 30}px`;
 
-            // 위쪽 무작위 대각선 방향 각도 계산 (좌우 -45px ~ +45px, 위로 -60px ~ -100px)
             const randomDx = (Math.random() - 0.5) * 90;
             const randomDyMid = -30 - (Math.random() * 30);
             const randomDyEnd = -60 - (Math.random() * 40);
@@ -829,7 +1156,6 @@
 
             map.appendChild(pop);
 
-            // 애니메이션 완료 후 요소 제거
             setTimeout(() => {
                 if (pop && pop.parentNode) {
                     pop.parentNode.removeChild(pop);
@@ -837,7 +1163,6 @@
             }, 800);
         }
 
-        /* --- 런닝머신 속도 상승 및 팝업 효과 실행 --- */
         function checkTreadmill(now) {
             const isOnTM = (playerX >= TM_BOUNDS.left && playerX <= TM_BOUNDS.right && playerY >= TM_BOUNDS.top && playerY <= TM_BOUNDS.bottom);
             if (isOnTM) {
@@ -856,9 +1181,7 @@
                     speedValue += gainSpeed;
                     updateSpeedDisplay();
                     
-                    // 스피드 상승 시 위쪽 무작위 방향으로 튀어 오르는 팝업 발생
                     createSpeedPopText(playerX, playerY, gainSpeed);
-
                     lastTreadmillTime = now - (delta % 100);
                 }
             } else { 
@@ -914,15 +1237,23 @@
         
         joystickWrapper.addEventListener('mousedown', handleStart); window.addEventListener('mousemove', handleMove); window.addEventListener('mouseup', handleEnd); joystickWrapper.addEventListener('touchstart', handleStart); joystickWrapper.addEventListener('touchmove', handleMove); joystickWrapper.addEventListener('touchend', handleEnd);
         
+        let lastFrameTime = performance.now();
+
         function gameLoop(now) { 
+            const deltaSec = (now - lastFrameTime) / 1000;
+            lastFrameTime = now;
+
             if (isDragging) { 
                 movePlayer(moveX, moveY); 
                 renderMap(); 
             } else if (liftedEgg) {
                 renderMap(); 
             }
+
             checkTreadmill(now); 
             checkNearestEgg(); 
+            updatePets(deltaSec);
+
             requestAnimationFrame(gameLoop); 
         }
 
