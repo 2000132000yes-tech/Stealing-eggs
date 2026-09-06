@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-select=none">
-    <title>Steal An Egg - Fixed Joystick & Zone Eggs</title>
+    <title>Steal An Egg - Optimized Pickup & Egg Scales</title>
     <style>
         * {
             box-sizing: border-box;
@@ -189,19 +189,10 @@
 
         /* 캐릭터 (40px * 40px) */
         #player {
-            position: absolute; width: 40px; height: 40px; background-color: #ffda79; border: 3px solid #ccae4f; border-radius: 10px; transform: translate(-50%, -50%); z-index: 100; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5); will-change: left, top; transition: transform 0.2s ease, height 0.2s ease;
+            position: absolute; width: 40px; height: 40px; background-color: #ffda79; border: 3px solid #ccae4f; border-radius: 10px; transform: translate(-50%, -50%); z-index: 100; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5); will-change: left, top;
         }
 
         #player::after { content: ''; position: absolute; top: 9px; left: 7px; width: 7px; height: 7px; background-color: #333; border-radius: 50%; box-shadow: 15px 0 0 #333; }
-
-        /* 알 들기 모션 애니메이션 */
-        @keyframes pickUpActive {
-            0% { transform: translate(-50%, -50%) scaleY(1); }
-            50% { transform: translate(-50%, -30%) scaleY(0.7); }
-            100% { transform: translate(-50%, -50%) scaleY(1); }
-        }
-
-        .player-picking { animation: pickUpActive 0.3s ease-out; }
 
         /* UI 버튼 */
         #settings-btn {
@@ -240,10 +231,10 @@
         #speed-display { color: #3a86ff; }
         #money-display { color: #70e000; }
 
-        /* --- 컨트롤 UI 레이아웃 (위치 위로 조정) --- */
+        /* --- 컨트롤 UI 레이아웃 --- */
         #controls-container {
             position: absolute;
-            bottom: 100px; /* 기존 40px에서 위로 60px 올림 */
+            bottom: 100px;
             left: 50%;
             transform: translateX(-50%);
             width: 250px;
@@ -428,7 +419,6 @@
         
         let speedValue = 10.0;
         let isSpeedFixed = false;
-        let isActionFrozen = false;
 
         let isDragging = false;
         let moveX = 0;
@@ -446,7 +436,6 @@
         let nearestEgg = null;
         let liftedEgg = null;
 
-        // 구역(Zone)별 Y 영역 높이 및 Y 범위 정의
         const ZONES_CONFIG = [
             { name: "Zone 6", minY: 24, maxY: 7524 },
             { name: "Zone 5", minY: 7524, maxY: 13024 },
@@ -474,16 +463,16 @@
             `;
         }
 
+        // 큰 알이 나올 확률 감소 (지수 5로 증가시켜 작은 알 분포 확대)
         function getRandomEggSize() {
             const minScale = 0.2; 
             const maxScale = 1.5; 
-            const weightedRand = Math.pow(Math.random(), 3); 
+            const weightedRand = Math.pow(Math.random(), 5); 
             const scale = minScale + (weightedRand * (maxScale - minScale));
             const displaySize = 1 + ((scale - minScale) / (maxScale - minScale)) * 99;
             return { scale: parseFloat(scale.toFixed(3)), display: parseFloat(displaySize.toFixed(2)) };
         }
 
-        // 각 단계마다 5개씩 알 스폰 기능
         function initRandomEggs() {
             const minX = 500 + WALL_THICK + 60;
             const maxX = 1500 - WALL_THICK - 60;
@@ -493,7 +482,6 @@
                 const zoneMinY = zone.minY + 60;
                 const zoneMaxY = zone.maxY - 60;
 
-                // 단계마다 정확히 5개 스폰
                 for (let i = 0; i < 5; i++) {
                     const randX = minX + Math.random() * (maxX - minX);
                     const randY = zoneMinY + Math.random() * (zoneMaxY - zoneMinY);
@@ -541,28 +529,43 @@
 
         actionBtn.addEventListener('click', handleAction);
 
+        // 애니메이션 없이 즉시 집기/놓기 실행
         function handleAction() {
-            if (isActionFrozen) return;
-
             if (!liftedEgg) {
                 if (!nearestEgg) return;
-                liftedEgg = nearestEgg; liftedEgg.isLifted = true; nearestEgg = null;
-                isActionFrozen = true; player.classList.add('player-picking'); actionBtn.innerText = "놓기"; actionBtn.classList.add('is-lifting');
-                setTimeout(() => { liftedEgg.element.style.zIndex = '110'; isActionFrozen = false; }, 200);
-                setTimeout(() => { player.classList.remove('player-picking'); }, 300);
+                liftedEgg = nearestEgg; 
+                liftedEgg.isLifted = true; 
+                nearestEgg = null;
+                
+                liftedEgg.element.style.zIndex = '110';
+                actionBtn.innerText = "놓기"; 
+                actionBtn.classList.add('is-lifting');
             } else {
-                const dropEgg = liftedEgg; liftedEgg = null;
-                isActionFrozen = true; player.classList.add('player-picking'); actionBtn.innerText = "집기"; actionBtn.classList.remove('is-lifting');
-                setTimeout(() => { dropEgg.worldX = playerX; dropEgg.worldY = playerY; dropEgg.element.style.zIndex = '80'; dropEgg.element.style.left = `${playerX}px`; dropEgg.element.style.top = `${playerY}px`; renderSingleEgg(dropEgg); isActionFrozen = false; }, 200);
-                setTimeout(() => { player.classList.remove('player-picking'); }, 300);
+                const dropEgg = liftedEgg; 
+                liftedEgg = null;
+                
+                actionBtn.innerText = "집기"; 
+                actionBtn.classList.remove('is-lifting');
+                
+                dropEgg.worldX = playerX; 
+                dropEgg.worldY = playerY; 
+                dropEgg.element.style.zIndex = '80'; 
+                dropEgg.element.style.left = `${playerX}px`; 
+                dropEgg.element.style.top = `${playerY}px`; 
+                renderSingleEgg(dropEgg);
             }
         }
 
         function renderSingleEgg(eggData) {
             if (eggData.isLifted && liftedEgg === eggData) {
-                eggData.element.style.left = `${playerX}px`; eggData.element.style.top = `${playerY}px`;
-                const yOffset = -110 - (eggData.scale * 15); eggData.element.style.transform = `translate(-50%, ${yOffset}%) scale(${eggData.scale})`;
-            } else { eggData.element.style.transform = `translate(-50%, -100%) scale(${eggData.scale})`; eggData.isLifted = false; }
+                eggData.element.style.left = `${playerX}px`; 
+                eggData.element.style.top = `${playerY}px`;
+                const yOffset = -110 - (eggData.scale * 15); 
+                eggData.element.style.transform = `translate(-50%, ${yOffset}%) scale(${eggData.scale})`;
+            } else { 
+                eggData.element.style.transform = `translate(-50%, -100%) scale(${eggData.scale})`; 
+                eggData.isLifted = false; 
+            }
         }
 
         let currentScale = 0.65;
@@ -591,16 +594,29 @@
             else { if (x < WALL_THICK + RADIUS || x > 2000 - WALL_THICK - RADIUS) return false; if (y - RADIUS < 22600 + WALL_THICK) { if (x - RADIUS < 500 + WALL_THICK || x + RADIUS > 1500 - WALL_THICK) return false; } }
             return true;
         }
+
+        // 알 크기(scale)에 따라 속도가 느려지도록 계산
         function movePlayer(dx, dy) {
-            if (isActionFrozen) return;
-            const currentMoveSpeed = isSpeedFixed ? 10.0 : speedValue;
-            const actualDx = dx * currentMoveSpeed; const actualDy = dy * currentMoveSpeed;
-            const steps = Math.ceil(Math.hypot(actualDx, actualDy)); if (steps === 0) return;
+            let currentMoveSpeed = isSpeedFixed ? 10.0 : speedValue;
+            
+            // 알을 들고 있을 때 크기에 비례하여 이동 속도 디버프 적용
+            if (liftedEgg) {
+                const scale = liftedEgg.scale; 
+                const slowFactor = Math.max(0.1, 1 - (scale * 0.5)); // 크기가 클수록 최대 90%까지 느려짐
+                currentMoveSpeed *= slowFactor;
+            }
+
+            const actualDx = dx * currentMoveSpeed; 
+            const actualDy = dy * currentMoveSpeed;
+            const steps = Math.ceil(Math.hypot(actualDx, actualDy)); 
+            if (steps === 0) return;
+
             for (let i = 0; i < steps; i++) {
                 if (isValidPosition(playerX + actualDx / steps, playerY)) playerX += actualDx / steps;
                 if (isValidPosition(playerX, playerY + actualDy / steps)) playerY += actualDy / steps;
             }
         }
+
         function renderMap() { map.style.transform = `translate3d(${-playerX}px, ${-playerY}px, 0)`; player.style.left = `${playerX}px`; player.style.top = `${playerY}px`; if (liftedEgg) renderSingleEgg(liftedEgg); }
         function handleStart(e) { isDragging = true; handleMove(e); }
         function handleMove(e) {
@@ -620,7 +636,7 @@
         function handleEnd() { isDragging = false; moveX = 0; moveY = 0; joystickStick.style.transform = 'translate(-50%, -50%)'; }
         
         joystickWrapper.addEventListener('mousedown', handleStart); window.addEventListener('mousemove', handleMove); window.addEventListener('mouseup', handleEnd); joystickWrapper.addEventListener('touchstart', handleStart); joystickWrapper.addEventListener('touchmove', handleMove); joystickWrapper.addEventListener('touchend', handleEnd);
-        function gameLoop(now) { if (isDragging && !isActionFrozen) { movePlayer(moveX, moveY); renderMap(); } else if (liftedEgg || isActionFrozen) renderMap(); checkTreadmill(now); checkNearestEgg(); requestAnimationFrame(gameLoop); }
+        function gameLoop(now) { if (isDragging) { movePlayer(moveX, moveY); renderMap(); } else if (liftedEgg) renderMap(); checkTreadmill(now); checkNearestEgg(); requestAnimationFrame(gameLoop); }
         initRandomEggs(); setZoom(50); updateSpeedDisplay(); renderMap(); requestAnimationFrame(gameLoop);
     </script>
 </body>
