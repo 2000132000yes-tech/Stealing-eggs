@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-select=none">
-    <title>Steal An Egg - Speed Increment Updated</title>
+    <title>Steal An Egg - Egg Placement Update</title>
     <style>
         * {
             box-sizing: border-box;
@@ -64,12 +64,63 @@
         }
 
         /* 단계별 세로 높이 */
-        .zone-6 { height: 7500px; background-color: #f7a37b; }
-        .zone-5 { height: 5500px; background-color: #00a8e8; }
-        .zone-4 { height: 4000px; background-color: #262626; }
-        .zone-3 { height: 2800px; background-color: #ffffff; }
-        .zone-2 { height: 1800px; background-color: #1e5c1e; }
-        .zone-1 { height: 1000px; background-color: #72bf44; }
+        .zone-6 { height: 7500px; background-color: #f7a37b; position: relative; }
+        .zone-5 { height: 5500px; background-color: #00a8e8; position: relative; }
+        .zone-4 { height: 4000px; background-color: #262626; position: relative; }
+        .zone-3 { height: 2800px; background-color: #ffffff; position: relative; }
+        .zone-2 { height: 1800px; background-color: #1e5c1e; position: relative; }
+        .zone-1 { height: 1000px; background-color: #72bf44; position: relative; }
+
+        /* --- 알(Egg) 스타일 및 애니메이션 --- */
+        .egg-group-container {
+            position: absolute;
+            width: 160px;
+            height: 160px;
+            transform: translate(-50%, -50%);
+            z-index: 80;
+            pointer-events: none;
+        }
+
+        .egg-ring {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            animation: spinRing 12s linear infinite;
+        }
+
+        @keyframes spinRing {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .egg-item {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 36px;
+            height: 46px;
+            margin-left: -18px;
+            margin-top: -23px;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4));
+            transition: transform 0.2s ease, opacity 0.3s ease;
+        }
+
+        /* SVG 내부 아이콘 반대 회전 (알 정방향 유지) */
+        .egg-item svg {
+            width: 100%;
+            height: 100%;
+            animation: unspinRing 12s linear infinite;
+        }
+
+        @keyframes unspinRing {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(-360deg); }
+        }
+
+        .egg-collected {
+            transform: scale(1.6) translateY(-30px) !important;
+            opacity: 0 !important;
+        }
 
         /* 빨간 구별선 */
         .red-divider {
@@ -116,7 +167,7 @@
             pointer-events: none;
         }
 
-        /* 런닝머신 (가로 110px * 세로 160px) */
+        /* 런닝머신 */
         .treadmill {
             position: absolute;
             top: 23260px;
@@ -565,7 +616,7 @@
             <div id="joystick-stick"></div>
         </div>
 
-        <!-- 설정 창 Modal -->
+        <!-- 설정 Modal -->
         <div id="settings-modal">
             <div id="settings-card">
                 <button id="close-settings-btn">✕</button>
@@ -620,9 +671,110 @@
 
         let lastTreadmillTime = 0;
 
+        /* 관리 중인 알 데이터 목록 */
+        const eggList = [];
+
+        /* 달걀 SVG 템플릿 생성기 */
+        function getEggSvgHTML() {
+            return `
+                <svg viewBox="0 0 100 130" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <radialGradient id="eggGrad" cx="35%" cy="30%" r="70%">
+                            <stop offset="0%" stop-color="#ffffff"/>
+                            <stop offset="40%" stop-color="#ffeaa7"/>
+                            <stop offset="85%" stop-color="#fdcb6e"/>
+                            <stop offset="100%" stop-color="#e17055"/>
+                        </radialGradient>
+                    </defs>
+                    <path d="M 50 5 C 20 5, 5 45, 5 80 C 5 110, 25 125, 50 125 C 75 125, 95 110, 95 80 C 95 45, 80 5, 50 5 Z" 
+                          fill="url(#eggGrad)" stroke="#d63031" stroke-width="4"/>
+                    <ellipse cx="38" cy="35" rx="10" ry="16" fill="#ffffff" opacity="0.6" transform="rotate(-15 38 35)"/>
+                </svg>
+            `;
+        }
+
+        /* 각 단계의 끝지점(상단) 중심에 원형으로 알 5개 배치 */
+        function initEggs() {
+            const zones = [
+                { id: 1, selector: '.zone-1' },
+                { id: 2, selector: '.zone-2' },
+                { id: 3, selector: '.zone-3' },
+                { id: 4, selector: '.zone-4' },
+                { id: 5, selector: '.zone-5' },
+                { id: 6, selector: '.zone-6' }
+            ];
+
+            const count = 5;       // 알 5개
+            const radius = 55;     // 배치 원 반지름(px)
+
+            zones.forEach(z => {
+                const zoneElem = document.querySelector(z.selector);
+                if (!zoneElem) return;
+
+                const groupContainer = document.createElement('div');
+                groupContainer.className = 'egg-group-container';
+                groupContainer.style.top = `110px`; 
+                groupContainer.style.left = `50%`;
+
+                const ring = document.createElement('div');
+                ring.className = 'egg-ring';
+
+                for (let i = 0; i < count; i++) {
+                    const angle = (i * (360 / count)) * (Math.PI / 180);
+                    const itemX = Math.cos(angle) * radius;
+                    const itemY = Math.sin(angle) * radius;
+
+                    const eggItem = document.createElement('div');
+                    eggItem.className = 'egg-item';
+                    eggItem.style.transform = `translate(${itemX}px, ${itemY}px)`;
+                    eggItem.innerHTML = getEggSvgHTML();
+
+                    ring.appendChild(eggItem);
+
+                    /* 전역 좌표 계산 및 관리 배열에 추가 */
+                    eggList.push({
+                        zoneId: z.id,
+                        element: eggItem,
+                        ringElement: groupContainer,
+                        relX: itemX,
+                        relY: itemY,
+                        isCollected: false
+                    });
+                }
+
+                groupContainer.appendChild(ring);
+                zoneElem.appendChild(groupContainer);
+            });
+        }
+
+        /* 플레이어와 알의 상호작용 (획득 처리) */
+        function checkEggCollisions() {
+            const collectDist = 45; // 충돌 거리
+
+            eggList.forEach(egg => {
+                if (egg.isCollected) return;
+
+                const rect = egg.element.getBoundingClientRect();
+                const mapRect = map.getBoundingClientRect();
+
+                // 맵 전체 스케일 감안한 전역 위치 계산
+                const eggWorldX = (rect.left + rect.width / 2 - mapRect.left) / currentScale;
+                const eggWorldY = (rect.top + rect.height / 2 - mapRect.top) / currentScale;
+
+                const dist = Math.hypot(playerX - eggWorldX, playerY - eggWorldY);
+
+                if (dist < collectDist) {
+                    egg.isCollected = true;
+                    egg.element.classList.add('egg-collected');
+                }
+            });
+        }
+
+        let currentScale = 0.65;
+
         function setZoom(val) {
-            const scale = 1.2 - (val - 1) * (1.0 / 99);
-            camera.style.transform = `scale(${scale.toFixed(3)})`;
+            currentScale = 1.2 - (val - 1) * (1.0 / 99);
+            camera.style.transform = `scale(${currentScale.toFixed(3)})`;
             zoomValueText.innerText = val;
         }
 
@@ -643,13 +795,11 @@
             speedToggleSwitch.classList.toggle('active', isSpeedFixed);
         });
 
-        /* 소수점 둘째 자리(toFixed(2))까지 표기 */
         function updateSpeedDisplay() {
             speedDisplay.innerText = `:${speedValue.toFixed(2)}`;
             speedDisplay.style.color = `#3a86ff`;
         }
 
-        /* 팝업도 소수점 둘째 자리 표기 */
         function createSpeedPopup(amount) {
             const popup = document.createElement('div');
             popup.className = 'speed-popup';
@@ -694,7 +844,6 @@
                 }
 
                 while (now - lastTreadmillTime >= 100) {
-                    /* 0.01씩 속도 증가 */
                     speedValue += 0.01;
                     updateSpeedDisplay();
                     createSpeedPopup(0.01);
@@ -804,9 +953,12 @@
                 renderMap();
             }
             checkTreadmill(now);
+            checkEggCollisions();
             requestAnimationFrame(gameLoop);
         }
 
+        // 초기화
+        initEggs();
         setZoom(50);
         updateSpeedDisplay();
         renderMap();
