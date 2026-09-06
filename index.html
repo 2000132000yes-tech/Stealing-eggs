@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-select=none">
-    <title>Steal An Egg - Speed Toggle Switch (No Text Change)</title>
+    <title>Steal An Egg - Extended Zone Map</title>
     <style>
         * {
             box-sizing: border-box;
@@ -39,21 +39,23 @@
             will-change: transform;
         }
 
+        /* 전체 맵 세로 길이 확장: 16,500px */
         #world-map {
             position: absolute;
             top: 0;
             left: 0;
             width: 2000px;
-            height: 5700px;
+            height: 16500px;
             will-change: transform;
         }
 
+        /* Zone 전체 용량 확장 (2,500px * 6 = 15,000px) */
         .zone-container {
             position: absolute;
             top: 0;
             left: 500px;
             width: 1000px;
-            height: 4200px;
+            height: 15000px;
             display: flex;
             flex-direction: column;
             border-top: 24px solid #000000;
@@ -61,9 +63,10 @@
             border-right: 24px solid #000000;
         }
 
+        /* 각 Zone 높이를 2,500px로 변경 */
         .zone {
             width: 100%;
-            height: 696px;
+            height: 2500px;
         }
 
         .zone-6 { background-color: #f7a37b; }
@@ -73,9 +76,10 @@
         .zone-2 { background-color: #1e5c1e; }
         .zone-1 { background-color: #72bf44; }
 
+        /* 빨간 구별선 위치 변경 (14,992px 지점) */
         .red-divider {
             position: absolute;
-            top: 4192px;
+            top: 14992px;
             left: 524px;
             width: 952px;
             height: 8px;
@@ -84,9 +88,10 @@
             box-shadow: 0 0 8px rgba(255, 0, 0, 0.8);
         }
 
+        /* 하단 베이스 위치 변경 (15,000px 지점) */
         .base-wrapper {
             position: absolute;
-            top: 4200px;
+            top: 15000px;
             left: 0;
             width: 2000px;
             height: 1500px;
@@ -116,10 +121,10 @@
             pointer-events: none;
         }
 
-        /* 런닝머신 */
+        /* 런닝머신 위치 업데이트 (15,660px 지점) */
         .treadmill {
             position: absolute;
-            top: 4860px;
+            top: 15660px;
             left: 540px;
             width: 110px;
             height: 160px;
@@ -205,7 +210,7 @@
             background-color: #000000;
         }
 
-        /* 런닝머신 위 Floating Pop-up */
+        /* Floating Pop-up */
         .speed-popup {
             position: absolute;
             font-size: 24px;
@@ -251,7 +256,7 @@
             box-shadow: 18px 0 0 #333;
         }
 
-        /* 좌측 상단 설정 버튼 */
+        /* UI 엘리먼트 */
         #settings-btn {
             position: absolute;
             top: 20px;
@@ -279,14 +284,13 @@
             fill: #edf2f4;
         }
 
-        /* 설정 아래 속도 고정 스위치 (초록색 -> 빨간색) */
         #speed-toggle-switch {
             position: absolute;
             top: 74px;
             left: 20px;
             width: 44px;
             height: 24px;
-            background-color: #2dc653; /* 기본 초록색 */
+            background-color: #2dc653;
             border: 3px solid #141522;
             border-radius: 12px;
             cursor: pointer;
@@ -307,16 +311,14 @@
             transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        /* 스위치 활성화 (빨간색) */
         #speed-toggle-switch.active {
-            background-color: #e63946; /* 빨간색 */
+            background-color: #e63946;
         }
 
         #speed-toggle-switch.active #speed-toggle-knob {
             transform: translateX(20px);
         }
 
-        /* 좌측 하단 스탯 UI */
         #hud-container {
             position: absolute;
             bottom: 120px;
@@ -361,7 +363,6 @@
         #speed-display { color: #3a86ff; }
         #money-display { color: #70e000; }
 
-        /* 조이스틱 UI */
         #joystick-wrapper {
             position: absolute;
             bottom: 120px;
@@ -392,14 +393,12 @@
 <body>
 
     <div id="game-viewport">
-        <!-- 설정 버튼 -->
         <div id="settings-btn">
             <svg viewBox="0 0 24 24">
                 <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
             </svg>
         </div>
 
-        <!-- 설정 아래 속도 고정 스위치 -->
         <div id="speed-toggle-switch">
             <div id="speed-toggle-knob"></div>
         </div>
@@ -423,7 +422,6 @@
                     </div>
                 </div>
 
-                <!-- 런닝머신 -->
                 <div class="treadmill" id="treadmill">
                     <div class="treadmill-console">
                         <span class="treadmill-display" id="tm-screen">RUNNING</span>
@@ -473,13 +471,11 @@
         const tmScreen = document.getElementById('tm-screen');
         const speedToggleSwitch = document.getElementById('speed-toggle-switch');
 
+        // 플레이어 시작 위치 (확장된 하단 베이스 내)
         let playerX = 1000;
-        let playerY = 4700;
+        let playerY = 15500;
         
-        // 실제 누적 속도 스탯
         let speedValue = 10.0;
-        
-        // 속도 10 고정 스위치 상태
         let isSpeedFixed = false;
 
         let isDragging = false;
@@ -488,30 +484,28 @@
 
         const RADIUS = 25;
         const WALL_THICK = 24;
-        const MAP_HEIGHT = 5700;
+        const MAP_HEIGHT = 16500;
 
+        /* 런닝머신 충돌 범위 재설정 */
         const TM_BOUNDS = {
             left: 540,
             right: 650,
-            top: 4860,
-            bottom: 5020
+            top: 15660,
+            bottom: 15820
         };
 
         let lastTreadmillTime = 0;
 
-        // 스위치 클릭 이벤트
         speedToggleSwitch.addEventListener('click', () => {
             isSpeedFixed = !isSpeedFixed;
             speedToggleSwitch.classList.toggle('active', isSpeedFixed);
         });
 
         function updateSpeedDisplay() {
-            // 스위치 상태와 상관없이 항상 현재 속도 값을 그대로 표시
             speedDisplay.innerText = `:${speedValue.toFixed(1)}`;
             speedDisplay.style.color = `#3a86ff`;
         }
 
-        /* 런닝머신 위 Floating Pop-up 텍스트 */
         function createSpeedPopup(amount) {
             const popup = document.createElement('div');
             popup.className = 'speed-popup';
@@ -540,7 +534,6 @@
             }, 800);
         }
 
-        /* 런닝머신 훈련 체크 */
         function checkTreadmill(now) {
             const isOnTM = (
                 playerX >= TM_BOUNDS.left &&
@@ -570,15 +563,18 @@
             }
         }
 
+        /* 확장된 맵 세로 크기에 맞춰 충돌 감지 조정 */
         function isValidPosition(x, y) {
             if (y < WALL_THICK + RADIUS || y > MAP_HEIGHT - WALL_THICK - RADIUS) return false;
 
-            if (y < 4200) {
+            // 15,000px 상단 Zone 영역
+            if (y < 15000) {
                 if (x < 500 + WALL_THICK + RADIUS || x > 1500 - WALL_THICK - RADIUS) return false;
             } else {
+                // 15,000px 하단 Base 영역
                 if (x < WALL_THICK + RADIUS || x > 2000 - WALL_THICK - RADIUS) return false;
 
-                if (y - RADIUS < 4200 + WALL_THICK) {
+                if (y - RADIUS < 15000 + WALL_THICK) {
                     if (x - RADIUS < 500 + WALL_THICK || x + RADIUS > 1500 - WALL_THICK) return false;
                 }
             }
@@ -587,7 +583,6 @@
         }
 
         function movePlayer(dx, dy) {
-            // 스위치가 켜져(red) 있으면 이동 속도만 10.0으로 고정
             const currentMoveSpeed = isSpeedFixed ? 10.0 : speedValue;
             
             const actualDx = dx * currentMoveSpeed;
