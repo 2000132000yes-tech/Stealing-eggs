@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-select=none">
-    <title>Steal An Egg - Extended Fence</title>
+    <title>Steal An Egg - Treadmill Training</title>
     <style>
         * {
             box-sizing: border-box;
@@ -108,7 +108,7 @@
             border-radius: 0 0 32px 32px;
         }
 
-        /* 세로로 늘어난 직사각형 울타리 (height: 600px) */
+        /* 직사각형 울타리 */
         .inner-fence-rect {
             position: absolute;
             bottom: 60px;
@@ -121,6 +121,80 @@
             border-radius: 4px;
             pointer-events: none;
         }
+
+        /* 런닝머신 모델링 (울타리 위쪽 왼쪽) */
+        .treadmill {
+            position: absolute;
+            top: 4860px;
+            left: 540px;
+            width: 110px;
+            height: 160px;
+            background: #2b2b2b;
+            border: 4px solid #111;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.4);
+            z-index: 60;
+        }
+
+        /* 벨트 부분 */
+        .treadmill-belt {
+            position: absolute;
+            top: 35px;
+            left: 15px;
+            width: 80px;
+            height: 115px;
+            background: repeating-linear-gradient(
+                0deg,
+                #1a1a1a,
+                #1a1a1a 10px,
+                #333333 10px,
+                #333333 14px
+            );
+            border-radius: 6px;
+            border: 2px solid #000;
+            animation: beltRun 0.4s linear infinite;
+        }
+
+        @keyframes beltRun {
+            0% { background-position: 0 0; }
+            100% { background-position: 0 14px; }
+        }
+
+        /* 디스플레이/계기판 */
+        .treadmill-console {
+            position: absolute;
+            top: 6px;
+            left: 10px;
+            width: 90px;
+            height: 24px;
+            background: #0d1b2a;
+            border: 2px solid #415a77;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .treadmill-display {
+            font-size: 10px;
+            font-weight: bold;
+            color: #00ffcc;
+            font-family: monospace;
+            letter-spacing: 0.5px;
+        }
+
+        /* 손잡이 라인 */
+        .treadmill-handle-left, .treadmill-handle-right {
+            position: absolute;
+            top: 25px;
+            width: 8px;
+            height: 60px;
+            background: #777;
+            border: 1px solid #222;
+            border-radius: 3px;
+        }
+        .treadmill-handle-left { left: 4px; }
+        .treadmill-handle-right { right: 4px; }
 
         .shoulder-wall-left {
             position: absolute;
@@ -263,9 +337,19 @@
                     <div class="shoulder-wall-left"></div>
                     <div class="shoulder-wall-right"></div>
                     <div class="main-base">
-                        <!-- 세로 길이가 늘어난 직사각형 울타리 -->
+                        <!-- 직사각형 울타리 -->
                         <div class="inner-fence-rect"></div>
                     </div>
+                </div>
+
+                <!-- 런닝머신 (울타리 위쪽 왼쪽) -->
+                <div class="treadmill" id="treadmill">
+                    <div class="treadmill-console">
+                        <span class="treadmill-display" id="tm-screen">RUNNING</span>
+                    </div>
+                    <div class="treadmill-handle-left"></div>
+                    <div class="treadmill-handle-right"></div>
+                    <div class="treadmill-belt"></div>
                 </div>
             </div>
         </div>
@@ -283,7 +367,7 @@
                         <path d="M12 10.5L14 12.5" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"/>
                     </svg>
                 </div>
-                <div class="hud-text" id="speed-display">:10</div>
+                <div class="hud-text" id="speed-display">:10.0</div>
             </div>
 
             <div class="hud-item">
@@ -308,12 +392,13 @@
         const joystickWrapper = document.getElementById('joystick-wrapper');
         const joystickStick = document.getElementById('joystick-stick');
         const speedDisplay = document.getElementById('speed-display');
+        const tmScreen = document.getElementById('tm-screen');
 
         let playerX = 1000;
         let playerY = 4700;
 
-        let baseSpeedVal = parseInt(speedDisplay.innerText.replace(':', '')) || 10;
-        let speed = baseSpeedVal;
+        // 속도 기본 스탯 설정
+        let speedValue = 10.0;
 
         let isDragging = false;
         let moveX = 0;
@@ -322,6 +407,47 @@
         const RADIUS = 25;
         const WALL_THICK = 24;
         const MAP_HEIGHT = 5700;
+
+        // 런닝머신 영역 좌표 범위 (top: 4860, left: 540, w: 110, h: 160)
+        const TM_BOUNDS = {
+            left: 540,
+            right: 650,
+            top: 4860,
+            bottom: 5020
+        };
+
+        let treadmillTimer = null;
+
+        function updateSpeedDisplay() {
+            speedDisplay.innerText = `:${speedValue.toFixed(1)}`;
+        }
+
+        function checkTreadmill() {
+            const isOnTM = (
+                playerX >= TM_BOUNDS.left &&
+                playerX <= TM_BOUNDS.right &&
+                playerY >= TM_BOUNDS.top &&
+                playerY <= TM_BOUNDS.bottom
+            );
+
+            if (isOnTM) {
+                if (!treadmillTimer) {
+                    tmScreen.innerText = "TRAIN..";
+                    tmScreen.style.color = "#00ff66";
+                    treadmillTimer = setInterval(() => {
+                        speedValue += 0.1;
+                        updateSpeedDisplay();
+                    }, 100); // 0.1초마다 0.1 증가
+                }
+            } else {
+                if (treadmillTimer) {
+                    clearInterval(treadmillTimer);
+                    treadmillTimer = null;
+                    tmScreen.innerText = "READY";
+                    tmScreen.style.color = "#00ffcc";
+                }
+            }
+        }
 
         function isValidPosition(x, y) {
             // 외곽 벽 충돌 체크
@@ -344,11 +470,16 @@
         }
 
         function movePlayer(dx, dy) {
-            const steps = Math.ceil(Math.hypot(dx, dy));
+            // 스탯의 speedValue를 이동속도로 직접 사용
+            const currentMoveSpeed = speedValue;
+            const actualDx = dx * currentMoveSpeed;
+            const actualDy = dy * currentMoveSpeed;
+
+            const steps = Math.ceil(Math.hypot(actualDx, actualDy));
             if (steps === 0) return;
 
-            const stepX = dx / steps;
-            const stepY = dy / steps;
+            const stepX = actualDx / steps;
+            const stepY = actualDy / steps;
 
             for (let i = 0; i < steps; i++) {
                 if (isValidPosition(playerX + stepX, playerY)) {
@@ -358,6 +489,8 @@
                     playerY += stepY;
                 }
             }
+
+            checkTreadmill();
         }
 
         function renderMap() {
@@ -412,12 +545,15 @@
 
         function gameLoop() {
             if (isDragging) {
-                movePlayer(moveX * speed, moveY * speed);
+                movePlayer(moveX, moveY);
                 renderMap();
+            } else {
+                checkTreadmill();
             }
             requestAnimationFrame(gameLoop);
         }
 
+        updateSpeedDisplay();
         renderMap();
         gameLoop();
     </script>
