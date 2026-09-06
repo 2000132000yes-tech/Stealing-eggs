@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-select=none">
-    <title>Steal An Egg - Fence Incubation & Hatch System</title>
+    <title>Steal An Egg - Bug Fixed</title>
     <style>
         * {
             box-sizing: border-box;
@@ -220,12 +220,6 @@
         .shoulder-wall-left { position: absolute; top: 0; left: 0; width: 524px; height: 24px; background-color: #000000; }
         .shoulder-wall-right { position: absolute; top: 0; right: 0; width: 524px; height: 24px; background-color: #000000; }
 
-        /* Pop-up */
-        .speed-popup {
-            position: absolute; font-size: 24px; font-weight: 900; color: #00e5ff; text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 0 0 10px rgba(0, 229, 255, 0.9);
-            pointer-events: none; z-index: 250; font-family: 'Arial Black', sans-serif; white-space: nowrap; transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.8s ease-out; opacity: 1;
-        }
-
         /* 캐릭터 */
         #player {
             position: absolute; width: 40px; height: 40px; background-color: #ffda79; border: 3px solid #ccae4f; border-radius: 10px; transform: translate(-50%, -50%); z-index: 100; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5); will-change: left, top;
@@ -235,10 +229,23 @@
 
         /* UI 버튼 */
         #settings-btn {
-            position: absolute; top: 20px; left: 20px; width: 44px; height: 44px; background: #2b2d42; border: 3px solid #141522; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 300; box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+            position: absolute; 
+            top: 20px; 
+            left: 20px; 
+            width: 44px; 
+            height: 44px; 
+            background: #2b2d42; 
+            border: 3px solid #141522; 
+            border-radius: 10px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            cursor: pointer; 
+            z-index: 300; 
+            box-shadow: 0 4px 8px rgba(0,0,0,0.5);
         }
 
-        #settings-btn SVG { width: 24px; height: 24px; fill: #edf2f4; }
+        #settings-btn svg { width: 24px; height: 24px; fill: #edf2f4; }
 
         #speed-toggle-switch {
             position: absolute; top: 74px; left: 20px; width: 44px; height: 24px; background-color: #2dc653; border: 3px solid #141522; border-radius: 12px; cursor: pointer; z-index: 300; box-shadow: 0 4px 8px rgba(0,0,0,0.5); transition: background-color 0.2s ease;
@@ -249,17 +256,78 @@
         #speed-toggle-switch.active { background-color: #e63946; }
         #speed-toggle-switch.active #speed-toggle-knob { transform: translateX(20px); }
 
-        /* 설정 Modal */
+        /* --- 설정 Modal (수정) --- */
         #settings-modal {
-            display: none; position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); z-index: 500; align-items: center; justify-content: center;
+            display: none; 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100vw; 
+            height: 100vh; 
+            background: rgba(0, 0, 0, 0.65); 
+            backdrop-filter: blur(4px); 
+            z-index: 9999; 
+            align-items: center; 
+            justify-content: center;
         }
 
-        #settings-card { position: relative; width: 320px; background: #1e1e24; border: 3px solid #2b2d42; border-radius: 16px; padding: 20px; color: #ffffff; }
+        #settings-card { 
+            position: relative; 
+            width: 300px; 
+            background: #1e1e24; 
+            border: 3px solid #3a3d52; 
+            border-radius: 16px; 
+            padding: 24px 20px; 
+            color: #ffffff; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.8);
+        }
 
-        #close-settings-btn { position: absolute; top: 12px; left: 12px; width: 32px; height: 32px; background: #e63946; color: #fff; border: none; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .modal-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-align: center;
+            color: #fff;
+        }
 
-        .zoom-slider { -webkit-appearance: none; width: 100%; height: 8px; border-radius: 4px; background: #2b2d42; }
+        .setting-row {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .setting-label {
+            font-size: 14px;
+            color: #aaa;
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        #close-settings-btn { 
+            position: absolute; 
+            top: 12px; 
+            right: 12px; 
+            width: 32px; 
+            height: 32px; 
+            background: #e63946; 
+            color: #fff; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .zoom-slider { -webkit-appearance: none; width: 100%; height: 8px; border-radius: 4px; background: #2b2d42; outline: none; }
         .zoom-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: #00e5ff; cursor: pointer; }
+        .zoom-value { font-weight: bold; color: #00e5ff; width: 30px; text-align: right; }
 
         #hud-container { position: absolute; bottom: 120px; left: 25px; display: flex; flex-direction: column; gap: 6px; z-index: 300; pointer-events: none; }
         .hud-item { display: flex; align-items: center; }
@@ -339,7 +407,7 @@
 
         #action-btn:active { transform: scale(0.95); }
         #action-btn.can-pick { display: flex; }
-        #action-btn.is-lifting { background-color: rgba(230, 57, 70, 0.95); border-color: #b32e38; color: #fff; }
+        #action-btn.is-lifting { display: flex; background-color: rgba(230, 57, 70, 0.95); border-color: #b32e38; color: #fff; }
         #action-btn.can-hatch { display: flex; background-color: rgba(45, 198, 83, 0.95); border-color: #1b8a37; color: #fff; }
 
     </style>
@@ -469,9 +537,7 @@
         const MAP_HEIGHT = 24100;
         const RED_LINE_Y = 22592;
 
-        // 울타리 내부 영역 경계 정의
         const FENCE_BOUNDS = { left: 1000, right: 2000, top: 23440, bottom: 24040 };
-
         const TM_BOUNDS = { left: 540, right: 650, top: 23260, bottom: 23420 };
 
         let lastTreadmillTime = 0;
@@ -590,7 +656,7 @@
                         zoneLevel: zone.level,
                         isLifted: false,
                         hasCrossedRedLine: false,
-                        isIncubating: false, // 울타리 부화 여부
+                        isIncubating: false,
                         remainingTime: 0,
                         isHatchReady: false
                     });
@@ -600,8 +666,16 @@
             });
         }
 
+        /* --- 액션 버튼 상태 갱신 수정 --- */
         function checkNearestEgg() {
-            if (liftedEgg) return;
+            // 1. 이미 알을 들고 있는 경우 -> 무조건 [놓기] 버튼 활성화
+            if (liftedEgg) {
+                actionBtn.innerText = "놓기";
+                actionBtn.className = 'is-lifting';
+                return;
+            }
+
+            // 2. 알을 들고 있지 않은 경우 주변 감지
             const detectDist = 110; 
             let minDist = Infinity;
             let currentPickable = null;
@@ -637,7 +711,7 @@
         actionBtn.addEventListener('click', handleAction);
 
         function handleAction() {
-            // 1. 부화 가능 상태
+            // 부화 클릭
             if (nearestHatchEgg) {
                 hatchEgg(nearestHatchEgg);
                 nearestHatchEgg = null;
@@ -645,7 +719,7 @@
                 return;
             }
 
-            // 2. 알 집기 / 놓기
+            // 집기 / 놓기 클릭
             if (!liftedEgg) {
                 if (!nearestEgg) return;
                 liftedEgg = nearestEgg; 
@@ -665,7 +739,6 @@
                 dropEgg.element.style.left = `${playerX}px`; 
                 dropEgg.element.style.top = `${playerY}px`; 
 
-                // 울타리 안인지 검사
                 const isInFence = (
                     dropEgg.worldX >= FENCE_BOUNDS.left && 
                     dropEgg.worldX <= FENCE_BOUNDS.right && 
@@ -686,7 +759,6 @@
 
         function startIncubation(egg) {
             egg.isIncubating = true;
-            // 부화 공식: (등급 * 60초) + 무게(초)
             const totalSeconds = Math.round((egg.zoneLevel * 60) + egg.weight);
             egg.remainingTime = totalSeconds;
         }
@@ -721,7 +793,6 @@
             });
         }
 
-        // 1초 간격 부화 타이머 작동
         setInterval(updateIncubationTimers, 1000);
 
         function renderSingleEgg(eggData) {
@@ -741,7 +812,6 @@
                 eggData.isLifted = false; 
             }
 
-            // 라벨 표시 여부 제어
             if (eggData.isHatchReady) {
                 eggData.hatchIcon.style.display = 'block';
                 eggData.weightLabel.style.display = 'none';
@@ -760,23 +830,21 @@
         let currentScale = 0.65;
         function setZoom(val) { currentScale = 1.2 - (val - 1) * (1.0 / 99); camera.style.transform = `scale(${currentScale.toFixed(3)})`; zoomValueText.innerText = val; }
         zoomRange.addEventListener('input', (e) => { setZoom(e.target.value); });
+        
         settingsBtn.addEventListener('click', () => { settingsModal.style.display = 'flex'; });
         closeSettingsBtn.addEventListener('click', () => { settingsModal.style.display = 'none'; });
+
         speedToggleSwitch.addEventListener('click', () => { isSpeedFixed = !isSpeedFixed; speedToggleSwitch.classList.toggle('active', isSpeedFixed); });
         function updateSpeedDisplay() { speedDisplay.innerText = `:${speedValue.toFixed(2)}`; }
-        function createSpeedPopup(amount) {
-            const popup = document.createElement('div'); popup.className = 'speed-popup'; popup.innerText = `👟 +${amount.toFixed(2)}`;
-            popup.style.left = `${TM_BOUNDS.left + 25}px`; popup.style.top = `${TM_BOUNDS.top - 10}px`; map.appendChild(popup);
-            requestAnimationFrame(() => { popup.style.transform = `translate(${(Math.random() - 0.5) * 100}px, ${-(60 + Math.random() * 40)}px) scale(1.15)`; popup.style.opacity = '0'; });
-            setTimeout(() => { if (popup.parentNode) popup.parentNode.removeChild(popup); }, 800);
-        }
+        
         function checkTreadmill(now) {
             const isOnTM = (playerX >= TM_BOUNDS.left && playerX <= TM_BOUNDS.right && playerY >= TM_BOUNDS.top && playerY <= TM_BOUNDS.bottom);
             if (isOnTM) {
                 if (tmScreen.innerText !== "TRAIN..") { tmScreen.innerText = "TRAIN.."; lastTreadmillTime = now; }
-                while (now - lastTreadmillTime >= 100) { speedValue += 0.01; updateSpeedDisplay(); createSpeedPopup(0.01); lastTreadmillTime += 100; }
+                while (now - lastTreadmillTime >= 100) { speedValue += 0.01; updateSpeedDisplay(); lastTreadmillTime += 100; }
             } else { tmScreen.innerText = "READY"; }
         }
+
         function isValidPosition(x, y) {
             if (y < WALL_THICK + RADIUS || y > MAP_HEIGHT - WALL_THICK - RADIUS) return false;
             if (y < 22600) { if (x < 500 + WALL_THICK + RADIUS || x > 1500 - WALL_THICK - RADIUS) return false; }
@@ -827,4 +895,4 @@
         initRandomEggs(); setZoom(50); updateSpeedDisplay(); renderMap(); requestAnimationFrame(gameLoop);
     </script>
 </body>
-</html>
+    </html>
