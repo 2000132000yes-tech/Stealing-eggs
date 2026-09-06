@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-select=none">
-    <title>Steal An Egg - Pet & Hatching Update</title>
+    <title>Steal An Egg - Pet Modeling Update</title>
     <style>
         * {
             box-sizing: border-box;
@@ -118,37 +118,98 @@
             100% { transform: translate(-50%, -12px); }
         }
 
-        /* --- 펫 스타일 --- */
+        /* --- 입체 펫 3D 모델링 스타일 --- */
         .pet-item {
             position: absolute;
-            width: 44px;
-            height: 44px;
+            width: 50px;
+            height: 50px;
+            z-index: 90;
+            transform: translate(-50%, -50%);
+            will-change: left, top, transform;
+            pointer-events: none;
+        }
+
+        .pet-body-3d {
+            position: relative;
+            width: 100%;
+            height: 100%;
             border-radius: 50%;
             border: 3px solid #111;
-            z-index: 90;
+            box-shadow: inset -4px -6px 0px rgba(0,0,0,0.25), 0 8px 12px rgba(0,0,0,0.4);
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 6px 12px rgba(0,0,0,0.4);
-            transform: translate(-50%, -50%);
-            transition: transform 0.1s linear;
         }
 
-        .pet-face { font-size: 20px; }
+        .pet-ear-left, .pet-ear-right {
+            position: absolute;
+            top: -8px;
+            width: 14px;
+            height: 14px;
+            background: inherit;
+            border: 2px solid #111;
+            border-radius: 50% 50% 0 0;
+            z-index: -1;
+        }
+        .pet-ear-left { left: 2px; transform: rotate(-20deg); }
+        .pet-ear-right { right: 2px; transform: rotate(20deg); }
+
+        .pet-eye-left, .pet-eye-right {
+            position: absolute;
+            top: 15px;
+            width: 6px;
+            height: 8px;
+            background-color: #111;
+            border-radius: 50%;
+        }
+        .pet-eye-left { left: 13px; }
+        .pet-eye-right { right: 13px; }
+
+        .pet-eye-left::after, .pet-eye-right::after {
+            content: '';
+            position: absolute;
+            top: 1px; left: 1px;
+            width: 2px; height: 2px;
+            background-color: #fff;
+            border-radius: 50%;
+        }
+
+        .pet-snout {
+            position: absolute;
+            top: 22px;
+            width: 14px;
+            height: 10px;
+            background-color: #ffffff;
+            border: 1.5px solid #111;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .pet-nose {
+            width: 4px;
+            height: 3px;
+            background-color: #111;
+            border-radius: 50%;
+            margin-top: -2px;
+        }
 
         .pet-weight-tag {
             position: absolute;
-            bottom: -20px;
+            bottom: -22px;
             left: 50%;
             transform: translateX(-50%);
             font-size: 11px;
-            font-weight: bold;
+            font-weight: 900;
             color: #fff;
-            background: rgba(0,0,0,0.75);
-            padding: 1px 5px;
+            background: rgba(0,0,0,0.85);
+            padding: 2px 6px;
             border-radius: 4px;
             white-space: nowrap;
-            border: 1px solid rgba(255,255,255,0.3);
+            border: 1px solid rgba(255,255,255,0.4);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            z-index: 100;
         }
 
         .red-divider {
@@ -236,7 +297,6 @@
             display: flex; align-items: center; justify-content: center;
         }
 
-        .treadmill-display { font-size: 10px; font-weight: bold; color: #00ffcc; font-family: monospace; letter-spacing: 0.5px; }
         .treadmill-handle-left, .treadmill-handle-right { position: absolute; top: 25px; width: 8px; height: 60px; background: #777; border: 1px solid #222; border-radius: 3px; }
         .treadmill-handle-left { left: 4px; }
         .treadmill-handle-right { right: 4px; }
@@ -304,30 +364,15 @@
         .zoom-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: #00e5ff; cursor: pointer; }
         .zoom-value { font-weight: bold; color: #00e5ff; width: 30px; text-align: right; }
 
-        #hud-container { position: absolute; bottom: 120px; left: 25px; display: flex; flex-direction: column; gap: 6px; z-index: 300; pointer-events: none; }
+        /* --- UI HUD 컨테이너 (좌측) --- */
+        #hud-container { position: absolute; bottom: 120px; left: 25px; display: flex; flex-direction: column; gap: 8px; z-index: 300; pointer-events: none; }
         .hud-item { display: flex; align-items: center; }
-        .hud-icon { font-size: 20px; margin-right: 6px; }
+        .hud-icon { font-size: 22px; margin-right: 8px; }
         .hud-text { font-size: 22px; font-weight: 900; font-family: 'Arial Black', sans-serif; text-shadow: 0 2px 5px rgba(0,0,0,0.9); }
 
+        #reset-timer-display { color: #f1c40f; }
         #speed-display { color: #3a86ff; }
         #money-display { color: #70e000; }
-
-        /* --- 오른쪽 아래 알 리셋 카운트다운 타이머 --- */
-        #reset-timer-hud {
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-            background: rgba(0, 0, 0, 0.75);
-            border: 2px solid #ffda79;
-            padding: 8px 14px;
-            border-radius: 10px;
-            color: #fff;
-            font-size: 14px;
-            font-weight: 900;
-            z-index: 300;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-            pointer-events: none;
-        }
 
         #controls-container {
             position: absolute;
@@ -420,7 +465,9 @@
         }
 
         #hatch-silhouette {
-            font-size: 110px;
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
             filter: brightness(0) drop-shadow(0 0 15px rgba(255,255,255,0.4));
             transition: transform 0.05s ease-in-out;
         }
@@ -447,16 +494,10 @@
         }
 
         #revealed-pet-avatar {
-            width: 110px;
-            height: 110px;
-            border-radius: 50%;
-            border: 6px solid #fff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 60px;
-            box-shadow: 0 0 35px rgba(255, 255, 255, 0.8);
-            margin-bottom: 15px;
+            width: 100px;
+            height: 100px;
+            margin-bottom: 20px;
+            transform: scale(1.4);
         }
 
         #revealed-pet-name {
@@ -520,9 +561,7 @@
                 </div>
 
                 <div class="treadmill" id="treadmill">
-                    <div class="treadmill-console">
-                        <span class="treadmill-display" id="tm-screen">RUNNING</span>
-                    </div>
+                    <div class="treadmill-console"></div>
                     <div class="treadmill-handle-left"></div>
                     <div class="treadmill-handle-right"></div>
                     <div class="treadmill-belt"></div>
@@ -536,18 +575,19 @@
 
         <div id="hud-container">
             <div class="hud-item">
+                <div class="hud-icon">🌙</div>
+                <div class="hud-text" id="reset-timer-display">30</div>
+            </div>
+
+            <div class="hud-item">
                 <div class="hud-icon">👟</div>
-                <div class="hud-text" id="speed-display">+0.00</div>
+                <div class="hud-text" id="speed-display">10.00</div>
             </div>
 
             <div class="hud-item">
                 <div class="hud-icon">💰</div>
                 <div class="hud-text" id="money-display">0</div>
             </div>
-        </div>
-
-        <div id="reset-timer-hud">
-            🔄 리셋까지: <span id="reset-countdown">30</span>초
         </div>
 
         <div id="controls-container">
@@ -575,10 +615,10 @@
         <div id="hatch-overlay">
             <div id="hatch-flash"></div>
             <div id="hatch-egg-container">
-                <div id="hatch-silhouette">🐱</div>
+                <div id="hatch-silhouette"></div>
             </div>
             <div id="pet-reveal-card">
-                <div id="revealed-pet-avatar">🐱</div>
+                <div id="revealed-pet-avatar"></div>
                 <div id="revealed-pet-name">레전드 야옹이</div>
                 <div id="revealed-pet-stats">+60원/초 (50.0kg)</div>
                 <button id="confirm-pet-btn">확인</button>
@@ -598,8 +638,7 @@
 
         const speedDisplay = document.getElementById('speed-display');
         const moneyDisplay = document.getElementById('money-display');
-        const resetCountdown = document.getElementById('reset-countdown');
-        const tmScreen = document.getElementById('tm-screen');
+        const resetTimerDisplay = document.getElementById('reset-timer-display');
         const speedToggleSwitch = document.getElementById('speed-toggle-switch');
 
         const settingsBtn = document.getElementById('settings-btn');
@@ -647,14 +686,13 @@
         let nearestHatchEgg = null;
         let liftedEgg = null;
 
+        /* 입체 펫 모델링 프리셋 */
         const PET_PRESETS = [
-            { icon: '🐱', name: '고양이', color: '#ff70a6' },
-            { icon: '🐶', name: '강아지', color: '#ff9770' },
-            { icon: '🐰', name: '토끼', color: '#ffd670' },
-            { icon: '🦊', name: '여우', color: '#e9ff70' },
-            { icon: '🐻', name: '곰돌이', color: '#70d6ff' },
-            { icon: '🐼', name: '판다', color: '#b8c0ff' },
-            { icon: '🦄', name: '유니콘', color: '#ffc6ff' }
+            { name: '냥냥이', color: '#ff70a6', earType: 'cat' },
+            { name: '멍멍이', color: '#ff9770', earType: 'dog' },
+            { name: '토끼', color: '#ffd670', earType: 'rabbit' },
+            { name: '여우', color: '#e9ff70', earType: 'fox' },
+            { name: '곰돌이', color: '#70d6ff', earType: 'bear' }
         ];
 
         const ZONES_CONFIG = [
@@ -665,6 +703,22 @@
             { level: 2, name: "Zone 2", minY: 19824, maxY: 21624 },
             { level: 1, name: "Zone 1", minY: 21624, maxY: 22600 }
         ];
+
+        // 입체 3D 펫 HTML 구조 생성 함수
+        function create3DPetHTML(preset, weight) {
+            return `
+                <div class="pet-body-3d" style="background-color: ${preset.color};">
+                    <div class="pet-ear-left"></div>
+                    <div class="pet-ear-right"></div>
+                    <div class="pet-eye-left"></div>
+                    <div class="pet-eye-right"></div>
+                    <div class="pet-snout">
+                        <div class="pet-nose"></div>
+                    </div>
+                </div>
+                <div class="pet-weight-tag">${weight.toFixed(1)}kg</div>
+            `;
+        }
 
         function getEggSvgHTML(id, zoneLevel) {
             let gradContent = '';
@@ -746,7 +800,6 @@
             const weightLabel = eggItem.querySelector('.egg-weight-label');
             const hatchIcon = eggItem.querySelector('.hatch-ready-icon');
 
-            // 스케일에 상관없이 일정한 크기로 역스케일링
             const invScale = (1 / sizeData.scale).toFixed(3);
             weightLabel.style.transform = `translateX(-50%) scale(${invScale})`;
             hatchIcon.style.transform = `translate(-50%, 0) scale(${invScale})`;
@@ -783,11 +836,9 @@
             });
         }
 
-        /* --- 30초 필드 알 리셋 (베이스 알 및 들어올린 알 제외) --- */
         function resetFieldEggs() {
             for (let i = eggList.length - 1; i >= 0; i--) {
                 const egg = eggList[i];
-                // 플레이어가 들고 있거나, 부화 중이거나, 이미 부화 완료되었거나, 레드라인을 지나 베이스에 있는 알은 제외
                 if (!egg.isLifted && !egg.isIncubating && !egg.isHatchReady && !egg.hasCrossedRedLine && egg.worldY < RED_LINE_Y) {
                     if (egg.element && egg.element.parentNode) {
                         egg.element.parentNode.removeChild(egg.element);
@@ -796,7 +847,6 @@
                 }
             }
 
-            // 필드 구역별 알 재생성
             ZONES_CONFIG.forEach(zone => {
                 const currentZoneEggs = eggList.filter(e => e.zoneLevel === zone.level && e.worldY < RED_LINE_Y && !e.hasCrossedRedLine);
                 const needToSpawn = 5 - currentZoneEggs.length;
@@ -902,7 +952,6 @@
             egg.remainingTime = baseZoneSeconds + weightSeconds;
         }
 
-        /* --- 연출 오버레이 부화 시스템 --- */
         let hatchingEggTarget = null;
 
         function startHatchAnimation(egg) {
@@ -911,20 +960,17 @@
             hatchEggContainer.style.display = 'flex';
             petRevealCard.style.display = 'none';
 
-            // 애니메이션 비트 간격 설정 (따따따따...따..따...따!)
             const beats = [80, 80, 80, 80, 120, 180, 260, 380, 550, 800];
             let beatIndex = 0;
 
             function triggerBeat() {
                 if (beatIndex >= beats.length) {
-                    // 비트 종료 후 화려하게 펫 오픈!
                     finishHatch();
                     return;
                 }
 
-                // 랜덤 실루엣 변경 및 바운스
                 const randomPreset = PET_PRESETS[Math.floor(Math.random() * PET_PRESETS.length)];
-                hatchSilhouette.innerText = randomPreset.icon;
+                hatchSilhouette.style.backgroundColor = randomPreset.color;
                 hatchSilhouette.style.transform = `scale(${1 + Math.random() * 0.3}) rotate(${(Math.random() - 0.5) * 30}deg)`;
 
                 setTimeout(() => {
@@ -940,7 +986,6 @@
         }
 
         function finishHatch() {
-            // 화면 번쩍임 효과
             hatchFlash.style.opacity = '1';
             setTimeout(() => hatchFlash.style.opacity = '0', 200);
 
@@ -953,15 +998,13 @@
 
             const preset = PET_PRESETS[Math.floor(Math.random() * PET_PRESETS.length)];
 
-            revealedPetAvatar.innerText = preset.icon;
-            revealedPetAvatar.style.backgroundColor = preset.color;
+            revealedPetAvatar.className = 'pet-item';
+            revealedPetAvatar.innerHTML = create3DPetHTML(preset, petWeight);
             revealedPetName.innerText = preset.name;
             revealedPetStats.innerText = `+${income.toFixed(1)}원/초 (${petWeight}kg)`;
 
-            // 펫 객체 생성
             createPet(preset, petWeight, income);
 
-            // 알 필드에서 제거
             if (egg.element && egg.element.parentNode) {
                 egg.element.parentNode.removeChild(egg.element);
             }
@@ -974,22 +1017,29 @@
             hatchingEggTarget = null;
         });
 
-        /* --- 펫 생성 및 AI 조작 --- */
+        /* --- 입체 펫 생성 및 무게 비례 스케일링 --- */
         function createPet(preset, weight, income) {
             const petEl = document.createElement('div');
             petEl.className = 'pet-item';
-            petEl.style.backgroundColor = preset.color;
-            petEl.innerHTML = `
-                <div class="pet-face">${preset.icon}</div>
-                <div class="pet-weight-tag">${weight.toFixed(1)}kg</div>
-            `;
+            petEl.innerHTML = create3DPetHTML(preset, weight);
+
+            // 무게에 비례하여 펫 크기 설정 (0.5배 ~ 2.5배 스케일링)
+            const petScale = (0.5 + Math.min(weight, 100) * 0.02).toFixed(2);
 
             const spawnX = FENCE_BOUNDS.left + 50 + Math.random() * (FENCE_BOUNDS.right - FENCE_BOUNDS.left - 100);
             const spawnY = FENCE_BOUNDS.top + 50 + Math.random() * (FENCE_BOUNDS.bottom - FENCE_BOUNDS.top - 100);
 
             petEl.style.left = `${spawnX}px`;
             petEl.style.top = `${spawnY}px`;
+            petEl.style.transform = `translate(-50%, -50%) scale(${petScale})`;
+
             petLayer.appendChild(petEl);
+
+            // 무게 태그 스케일 역보정
+            const weightTag = petEl.querySelector('.pet-weight-tag');
+            if (weightTag) {
+                weightTag.style.transform = `translateX(-50%) scale(${(1 / petScale).toFixed(2)})`;
+            }
 
             const angle = Math.random() * Math.PI * 2;
             const petObj = {
@@ -998,6 +1048,7 @@
                 y: spawnY,
                 weight: weight,
                 income: income,
+                scale: petScale,
                 vx: Math.cos(angle) * 1.5,
                 vy: Math.sin(angle) * 1.5,
                 isStopped: false,
@@ -1012,7 +1063,7 @@
                 pet.changeTimer -= deltaSec;
                 if (pet.changeTimer <= 0) {
                     pet.changeTimer = Math.random() * 3 + 1;
-                    pet.isStopped = Math.random() < 0.35; // 35% 확률로 잠시 정지
+                    pet.isStopped = Math.random() < 0.35;
                     if (!pet.isStopped) {
                         const angle = Math.random() * Math.PI * 2;
                         const speed = 1.0 + Math.random() * 1.5;
@@ -1025,20 +1076,19 @@
                     pet.x += pet.vx;
                     pet.y += pet.vy;
 
-                    // 울타리 경계 충돌 및 튕김
-                    if (pet.x < FENCE_BOUNDS.left + 20) {
-                        pet.x = FENCE_BOUNDS.left + 20;
+                    if (pet.x < FENCE_BOUNDS.left + 25) {
+                        pet.x = FENCE_BOUNDS.left + 25;
                         pet.vx *= -1;
-                    } else if (pet.x > FENCE_BOUNDS.right - 20) {
-                        pet.x = FENCE_BOUNDS.right - 20;
+                    } else if (pet.x > FENCE_BOUNDS.right - 25) {
+                        pet.x = FENCE_BOUNDS.right - 25;
                         pet.vx *= -1;
                     }
 
-                    if (pet.y < FENCE_BOUNDS.top + 20) {
-                        pet.y = FENCE_BOUNDS.top + 20;
+                    if (pet.y < FENCE_BOUNDS.top + 25) {
+                        pet.y = FENCE_BOUNDS.top + 25;
                         pet.vy *= -1;
-                    } else if (pet.y > FENCE_BOUNDS.bottom - 20) {
-                        pet.y = FENCE_BOUNDS.bottom - 20;
+                    } else if (pet.y > FENCE_BOUNDS.bottom - 25) {
+                        pet.y = FENCE_BOUNDS.bottom - 25;
                         pet.vy *= -1;
                     }
                 }
@@ -1074,9 +1124,9 @@
                 fieldResetTimer = 30;
                 resetFieldEggs();
             }
-            resetCountdown.innerText = fieldResetTimer;
+            resetTimerDisplay.innerText = fieldResetTimer;
 
-            // 매 초 펫 골드 수급 (초당 10 + 킬로그램 만큼)
+            // 매 초 펫 골드 수급
             let currentSecGold = 0;
             petList.forEach(pet => {
                 currentSecGold += pet.income;
@@ -1096,7 +1146,6 @@
                 eggData.hasCrossedRedLine = true;
             }
 
-            // 역스케일링 적용으로 레이블 크기 고정
             const invScale = (1 / eggData.scale).toFixed(3);
             eggData.weightLabel.style.transform = `translateX(-50%) scale(${invScale})`;
             eggData.hatchIcon.style.transform = `translate(-50%, 0) scale(${invScale})`;
@@ -1136,13 +1185,14 @@
         speedToggleSwitch.addEventListener('click', () => { isSpeedFixed = !isSpeedFixed; speedToggleSwitch.classList.toggle('active', isSpeedFixed); });
         
         function updateSpeedDisplay() { 
-            speedDisplay.innerText = `+${speedValue.toFixed(2)}`; 
+            // 속도 표시에서 '+' 제거
+            speedDisplay.innerText = `${speedValue.toFixed(2)}`; 
         }
 
         function createSpeedPopText(x, y, amount) {
             const pop = document.createElement('div');
             pop.className = 'pop-text';
-            pop.innerText = `👟 +${amount.toFixed(2)}`;
+            pop.innerText = `👟 ${amount.toFixed(2)}`;
             pop.style.left = `${x}px`;
             pop.style.top = `${y - 30}px`;
 
@@ -1166,11 +1216,6 @@
         function checkTreadmill(now) {
             const isOnTM = (playerX >= TM_BOUNDS.left && playerX <= TM_BOUNDS.right && playerY >= TM_BOUNDS.top && playerY <= TM_BOUNDS.bottom);
             if (isOnTM) {
-                if (tmScreen.innerText !== "TRAIN..") { 
-                    tmScreen.innerText = "TRAIN.."; 
-                    lastTreadmillTime = now; 
-                }
-                
                 if (lastTreadmillTime === 0) lastTreadmillTime = now;
                 
                 const delta = now - lastTreadmillTime;
@@ -1185,7 +1230,6 @@
                     lastTreadmillTime = now - (delta % 100);
                 }
             } else { 
-                tmScreen.innerText = "READY"; 
                 lastTreadmillTime = 0;
             }
         }
