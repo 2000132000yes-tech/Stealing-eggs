@@ -2,1306 +2,749 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-select=none">
-    <title>Steal An Egg - Pet Modeling Update</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D 펫 타이쿤 & 스피드 런</title>
     <style>
-        * {
-            box-sizing: border-box;
-            user-select: none;
-            -webkit-user-select: none;
-        }
-
         body {
             margin: 0;
             padding: 0;
-            background-color: #0d0d0d;
-            font-family: Arial, sans-serif;
             overflow: hidden;
+            font-family: 'Arial', sans-serif;
+            background-color: #000;
+            user-select: none;
+        }
+
+        #canvas-container {
             width: 100vw;
             height: 100vh;
         }
 
-        #game-viewport {
-            position: relative;
-            width: 100vw;
-            height: 100vh;
-            overflow: hidden;
-        }
-
-        #camera {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
-            transform: scale(0.65);
-            transform-origin: center center;
-            will-change: transform;
-        }
-
-        #world-map {
+        /* UI Layer */
+        #ui-layer {
             position: absolute;
             top: 0;
             left: 0;
-            width: 2000px;
-            height: 24100px;
-            will-change: transform;
-        }
-
-        .zone-container {
-            position: absolute;
-            top: 0;
-            left: 500px;
-            width: 1000px;
-            height: 22600px;
-            display: flex;
-            flex-direction: column;
-            border-top: 24px solid #000000;
-            border-left: 24px solid #000000;
-            border-right: 24px solid #000000;
-        }
-
-        .zone-6 { height: 7500px; background-color: #f7a37b; position: relative; }
-        .zone-5 { height: 5500px; background-color: #00a8e8; position: relative; }
-        .zone-4 { height: 4000px; background-color: #262626; position: relative; }
-        .zone-3 { height: 2800px; background-color: #ffffff; position: relative; }
-        .zone-2 { height: 1800px; background-color: #1e5c1e; position: relative; }
-        .zone-1 { height: 1000px; background-color: #72bf44; position: relative; }
-
-        .egg-item {
-            position: absolute;
-            width: 100px; 
-            height: 130px;
-            transform-origin: center bottom;
-            filter: drop-shadow(0 6px 10px rgba(0,0,0,0.5));
-            z-index: 80;
-            pointer-events: none;
-            will-change: transform, left, top;
-        }
-
-        .egg-item svg { width: 100%; height: 100%; overflow: visible; }
-
-        .egg-weight-label {
-            position: absolute;
-            top: -28px;
-            left: 50%;
-            font-size: 15px;
-            font-weight: 900;
-            color: #ffffff;
-            background-color: rgba(0, 0, 0, 0.85);
-            padding: 3px 8px;
-            border-radius: 6px;
-            border: 1.5px solid #ffda79;
-            white-space: nowrap;
-            display: none;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.6);
-            z-index: 150;
-            pointer-events: none;
-        }
-
-        .hatch-ready-icon {
-            position: absolute;
-            top: -60px;
-            left: 50%;
-            font-size: 36px;
-            font-weight: 900;
-            color: #ff2222;
-            text-shadow: -2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff, 2px 2px 0 #fff;
-            animation: bounceReady 0.6s infinite alternate ease-in-out;
-            display: none;
-            z-index: 160;
-            pointer-events: none;
-        }
-
-        @keyframes bounceReady {
-            0% { transform: translate(-50%, 0); }
-            100% { transform: translate(-50%, -12px); }
-        }
-
-        /* --- 입체 펫 3D 모델링 스타일 --- */
-        .pet-item {
-            position: absolute;
-            width: 50px;
-            height: 50px;
-            z-index: 90;
-            transform: translate(-50%, -50%);
-            will-change: left, top, transform;
-            pointer-events: none;
-        }
-
-        .pet-body-3d {
-            position: relative;
             width: 100%;
             height: 100%;
-            border-radius: 50%;
-            border: 3px solid #111;
-            box-shadow: inset -4px -6px 0px rgba(0,0,0,0.25), 0 8px 12px rgba(0,0,0,0.4);
+            pointer-events: none;
             display: flex;
-            align-items: center;
-            justify-content: center;
+            flex-direction: column;
+            justify-content: space-between;
+            box-sizing: border-box;
+            padding: 20px;
         }
 
-        .pet-ear-left, .pet-ear-right {
+        /* Stage Title */
+        #stage-title-container {
             position: absolute;
-            top: -8px;
-            width: 14px;
-            height: 14px;
-            background: inherit;
-            border: 2px solid #111;
-            border-radius: 50% 50% 0 0;
-            z-index: -1;
-        }
-        .pet-ear-left { left: 2px; transform: rotate(-20deg); }
-        .pet-ear-right { right: 2px; transform: rotate(20deg); }
-
-        .pet-eye-left, .pet-eye-right {
-            position: absolute;
-            top: 15px;
-            width: 6px;
-            height: 8px;
-            background-color: #111;
-            border-radius: 50%;
-        }
-        .pet-eye-left { left: 13px; }
-        .pet-eye-right { right: 13px; }
-
-        .pet-eye-left::after, .pet-eye-right::after {
-            content: '';
-            position: absolute;
-            top: 1px; left: 1px;
-            width: 2px; height: 2px;
-            background-color: #fff;
-            border-radius: 50%;
-        }
-
-        .pet-snout {
-            position: absolute;
-            top: 22px;
-            width: 14px;
-            height: 10px;
-            background-color: #ffffff;
-            border: 1.5px solid #111;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .pet-nose {
-            width: 4px;
-            height: 3px;
-            background-color: #111;
-            border-radius: 50%;
-            margin-top: -2px;
-        }
-
-        .pet-weight-tag {
-            position: absolute;
-            bottom: -22px;
+            top: 20px;
             left: 50%;
             transform: translateX(-50%);
-            font-size: 11px;
-            font-weight: 900;
+            background: rgba(0, 0, 0, 0.6);
+            border: 3px solid #ffcc00;
+            border-radius: 20px;
+            padding: 8px 30px;
             color: #fff;
-            background: rgba(0,0,0,0.85);
-            padding: 2px 6px;
-            border-radius: 4px;
-            white-space: nowrap;
-            border: 1px solid rgba(255,255,255,0.4);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            font-size: 26px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px #000;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            pointer-events: auto;
+        }
+
+        /* Top HUD */
+        .hud-top {
+            display: flex;
+            gap: 15px;
+            pointer-events: auto;
+        }
+
+        .hud-card {
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            border-radius: 15px;
+            padding: 10px 20px;
+            color: white;
+            font-size: 20px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+
+        /* Floating Text Effects Container */
+        #floating-text-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .floating-text {
+            position: absolute;
+            color: #7cfc00;
+            font-size: 22px;
+            font-weight: 900;
+            text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 2px 5px rgba(0,0,0,0.8);
+            transform: translate(-50%, -100%);
+            animation: floatUpFade 1.2s ease-out forwards;
+        }
+
+        @keyframes floatUpFade {
+            0% {
+                opacity: 1;
+                transform: translate(-50%, 0);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -60px);
+            }
+        }
+
+        /* Modal / Gacha System */
+        .modal {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(20, 20, 35, 0.95);
+            border: 4px solid #ffcc00;
+            border-radius: 25px;
+            padding: 30px;
+            width: 340px;
+            text-align: center;
+            color: white;
+            box-shadow: 0 0 30px rgba(255, 204, 0, 0.4);
+            display: none;
+            pointer-events: auto;
             z-index: 100;
         }
 
-        .red-divider {
-            position: absolute;
-            top: 22592px;
-            left: 524px;
-            width: 952px;
-            height: 8px;
-            background-color: #ff2222;
-            z-index: 50;
-            box-shadow: 0 0 8px rgba(255, 0, 0, 0.8);
+        .modal h2 {
+            margin-top: 0;
+            color: #ffcc00;
+            font-size: 28px;
         }
 
-        .base-wrapper {
-            position: absolute;
-            top: 22600px;
-            left: 0;
-            width: 2000px;
-            height: 1500px;
-        }
-
-        .main-base {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            background-color: #9cd645;
-            border-left: 24px solid #000000;
-            border-right: 24px solid #000000;
-            border-bottom: 24px solid #000000;
-            border-radius: 0 0 32px 32px;
-        }
-
-        .inner-fence-rect {
-            position: absolute;
-            bottom: 60px;
-            left: 500px;
-            width: 1000px;
-            height: 600px;
-            border: 12px solid #5c3a1e;
-            background-color: rgba(139, 90, 43, 0.12);
-            box-shadow: inset 0 0 15px rgba(0,0,0,0.3);
-            border-radius: 4px;
-            pointer-events: none;
-        }
-
-        .treadmill {
-            position: absolute;
-            top: 23260px;
-            left: 540px;
-            width: 110px;
-            height: 160px;
-            background: #2b2b2b;
-            border: 4px solid #111;
-            border-radius: 12px;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.4);
-            z-index: 60;
-        }
-
-        .treadmill-belt {
-            position: absolute;
-            top: 35px;
-            left: 15px;
-            width: 80px;
-            height: 115px;
-            background: repeating-linear-gradient(0deg, #1a1a1a, #1a1a1a 10px, #333333 10px, #333333 14px);
-            border-radius: 6px;
-            border: 2px solid #000;
-            animation: beltRun 0.4s linear infinite;
-        }
-
-        @keyframes beltRun {
-            0% { background-position: 0 0; }
-            100% { background-position: 0 14px; }
-        }
-
-        .treadmill-console {
-            position: absolute;
-            top: 6px;
-            left: 10px;
-            width: 90px;
-            height: 24px;
-            background: #0d1b2a;
-            border: 2px solid #415a77;
-            border-radius: 4px;
-            display: flex; align-items: center; justify-content: center;
-        }
-
-        .treadmill-handle-left, .treadmill-handle-right { position: absolute; top: 25px; width: 8px; height: 60px; background: #777; border: 1px solid #222; border-radius: 3px; }
-        .treadmill-handle-left { left: 4px; }
-        .treadmill-handle-right { right: 4px; }
-
-        .shoulder-wall-left { position: absolute; top: 0; left: 0; width: 524px; height: 24px; background-color: #000000; }
-        .shoulder-wall-right { position: absolute; top: 0; right: 0; width: 524px; height: 24px; background-color: #000000; }
-
-        #player {
-            position: absolute; width: 40px; height: 40px; background-color: #ffda79; border: 3px solid #ccae4f; border-radius: 10px; transform: translate(-50%, -50%); z-index: 100; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5); will-change: left, top;
-        }
-
-        #player::after { content: ''; position: absolute; top: 9px; left: 7px; width: 7px; height: 7px; background-color: #333; border-radius: 50%; box-shadow: 15px 0 0 #333; }
-
-        .pop-text {
-            position: absolute;
-            font-size: 26px;
-            font-weight: 900;
-            color: #3a86ff;
-            text-shadow: -2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff, 2px 2px 0 #fff, 0 3px 8px rgba(0,0,0,0.5);
-            pointer-events: none;
-            z-index: 200;
-            white-space: nowrap;
-            will-change: transform, opacity;
-            animation: popupFloat 0.8s ease-out forwards;
-        }
-
-        @keyframes popupFloat {
-            0% { opacity: 1; transform: translate(-50%, -50%) scale(0.6) translate(0, 0); }
-            50% { opacity: 1; transform: translate(-50%, -50%) scale(1.1) translate(var(--dx), var(--dy-mid)); }
-            100% { opacity: 0; transform: translate(-50%, -50%) scale(0.9) translate(calc(var(--dx) * 1.5), var(--dy-end)); }
-        }
-
-        #settings-btn {
-            position: absolute; top: 20px; left: 20px; width: 44px; height: 44px; background: #2b2d42; border: 3px solid #141522; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 300; box-shadow: 0 4px 8px rgba(0,0,0,0.5);
-        }
-
-        #settings-btn svg { width: 24px; height: 24px; fill: #edf2f4; }
-
-        #speed-toggle-switch {
-            position: absolute; top: 74px; left: 20px; width: 44px; height: 24px; background-color: #2dc653; border: 3px solid #141522; border-radius: 12px; cursor: pointer; z-index: 300; box-shadow: 0 4px 8px rgba(0,0,0,0.5); transition: background-color 0.2s ease;
-        }
-
-        #speed-toggle-knob { position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; background-color: #ffffff; border-radius: 50%; transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
-        #speed-toggle-switch.active { background-color: #e63946; }
-        #speed-toggle-switch.active #speed-toggle-knob { transform: translateX(20px); }
-
-        #settings-modal {
-            display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.65); backdrop-filter: blur(4px); z-index: 9999; align-items: center; justify-content: center;
-        }
-
-        #settings-card { 
-            position: relative; width: 300px; background: #1e1e24; border: 3px solid #3a3d52; border-radius: 16px; padding: 24px 20px; color: #ffffff; box-shadow: 0 10px 25px rgba(0,0,0,0.8);
-        }
-
-        .modal-title { font-size: 18px; font-weight: bold; margin-bottom: 20px; text-align: center; color: #fff; }
-        .setting-row { display: flex; flex-direction: column; gap: 10px; }
-        .setting-label { font-size: 14px; color: #aaa; }
-        .slider-container { display: flex; align-items: center; gap: 12px; }
-
-        #close-settings-btn { 
-            position: absolute; top: 12px; right: 12px; width: 32px; height: 32px; background: #e63946; color: #fff; border: none; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: bold;
-        }
-
-        .zoom-slider { -webkit-appearance: none; width: 100%; height: 8px; border-radius: 4px; background: #2b2d42; outline: none; }
-        .zoom-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: #00e5ff; cursor: pointer; }
-        .zoom-value { font-weight: bold; color: #00e5ff; width: 30px; text-align: right; }
-
-        /* --- UI HUD 컨테이너 (좌측) --- */
-        #hud-container { position: absolute; bottom: 120px; left: 25px; display: flex; flex-direction: column; gap: 8px; z-index: 300; pointer-events: none; }
-        .hud-item { display: flex; align-items: center; }
-        .hud-icon { font-size: 22px; margin-right: 8px; }
-        .hud-text { font-size: 22px; font-weight: 900; font-family: 'Arial Black', sans-serif; text-shadow: 0 2px 5px rgba(0,0,0,0.9); }
-
-        #reset-timer-display { color: #f1c40f; }
-        #speed-display { color: #3a86ff; }
-        #money-display { color: #70e000; }
-
-        #controls-container {
-            position: absolute;
-            bottom: 100px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 250px;
-            height: 180px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            pointer-events: none;
-            z-index: 300;
-        }
-
-        #joystick-wrapper {
-            position: absolute;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 120px;
-            height: 120px;
-            background: rgba(255, 255, 255, 0.6);
-            border: 6px solid rgba(0, 0, 0, 0.9);
-            border-radius: 50%;
-            touch-action: none;
-            pointer-events: auto;
-            box-shadow: 0 6px 15px rgba(0,0,0,0.6);
-        }
-
-        #joystick-stick {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 50px;
-            height: 50px;
-            background: rgba(0, 0, 0, 1);
-            border: 3px solid #fff;
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            pointer-events: none;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.4);
-        }
-
-        #action-btn {
-            display: none;
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 80px;
-            height: 80px;
-            background-color: rgba(255, 218, 121, 0.95);
-            border: 7px solid #ccae4f;
-            color: #7d6b31;
-            border-radius: 50%;
-            font-size: 19px;
-            font-weight: 900;
-            cursor: pointer;
-            pointer-events: auto;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 5px 12px rgba(0, 0, 0, 0.6);
-            transition: background-color 0.1s, transform 0.1s;
-        }
-
-        #action-btn:active { transform: scale(0.95); }
-        #action-btn.can-pick { display: flex; }
-        #action-btn.is-lifting { display: flex; background-color: rgba(230, 57, 70, 0.95); border-color: #b32e38; color: #fff; }
-        #action-btn.can-hatch { display: flex; background-color: rgba(45, 198, 83, 0.95); border-color: #1b8a37; color: #fff; }
-
-        /* --- 부화 애니메이션 연출 오버레이 --- */
-        #hatch-overlay {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100vw; height: 100vh;
-            background-color: rgba(0, 0, 0, 0.92);
-            z-index: 10000;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-
-        #hatch-egg-container {
-            position: relative;
-            width: 180px;
-            height: 220px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        #hatch-silhouette {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            filter: brightness(0) drop-shadow(0 0 15px rgba(255,255,255,0.4));
-            transition: transform 0.05s ease-in-out;
-        }
-
-        #hatch-flash {
-            position: absolute;
-            top: 0; left: 0; width: 100vw; height: 100vh;
-            background: #fff;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.1s ease;
-        }
-
-        #pet-reveal-card {
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            animation: petPopIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-        }
-
-        @keyframes petPopIn {
-            0% { transform: scale(0.2); opacity: 0; }
-            100% { transform: scale(1); opacity: 1; }
-        }
-
-        #revealed-pet-avatar {
-            width: 100px;
-            height: 100px;
-            margin-bottom: 20px;
-            transform: scale(1.4);
-        }
-
-        #revealed-pet-name {
-            font-size: 26px;
-            font-weight: 900;
-            color: #fff;
-            margin-bottom: 6px;
-        }
-
-        #revealed-pet-stats {
+        .btn {
+            background: linear-gradient(135deg, #ff9900, #ff5500);
+            border: none;
+            color: white;
+            padding: 12px 25px;
             font-size: 18px;
             font-weight: bold;
-            color: #70e000;
-            margin-bottom: 20px;
-        }
-
-        #confirm-pet-btn {
-            padding: 10px 30px;
-            font-size: 18px;
-            font-weight: 900;
-            color: #111;
-            background: #ffda79;
-            border: 3px solid #ccae4f;
-            border-radius: 12px;
+            border-radius: 50px;
             cursor: pointer;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            box-shadow: 0 5px 15px rgba(255, 85, 0, 0.4);
+            transition: all 0.2s;
+            margin-top: 15px;
         }
 
+        .btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 20px rgba(255, 85, 0, 0.6);
+        }
+
+        .btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Gacha Animation Display */
+        #gacha-result {
+            margin: 20px 0;
+            font-size: 24px;
+            font-weight: bold;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Bottom Controls Info */
+        .controls-info {
+            background: rgba(0, 0, 0, 0.5);
+            color: #ccc;
+            padding: 8px 15px;
+            border-radius: 10px;
+            font-size: 14px;
+            align-self: center;
+            pointer-events: auto;
+        }
     </style>
 </head>
 <body>
+    <div id="canvas-container"></div>
 
-    <div id="game-viewport">
-        <div id="settings-btn">
-            <svg viewBox="0 0 24 24">
-                <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6-3.6z"/>
-            </svg>
+    <div id="ui-layer">
+        <div class="hud-top">
+            <div class="hud-card">💰 골드: <span id="gold-display">0</span></div>
+            <div class="hud-card">⚡ 속도: <span id="speed-display">10</span></div>
+            <div class="hud-card">🐾 펫: <span id="pet-count-display">0/3</span></div>
         </div>
 
-        <div id="speed-toggle-switch">
-            <div id="speed-toggle-knob"></div>
+        <div id="stage-title-container">
+            <span id="stage-title-text">1단계: 잔디밭</span>
         </div>
 
-        <div id="camera">
-            <div id="world-map">
-                <div class="zone-container">
-                    <div class="zone zone-6"></div>
-                    <div class="zone zone-5"></div>
-                    <div class="zone zone-4"></div>
-                    <div class="zone zone-3"></div>
-                    <div class="zone zone-2"></div>
-                    <div class="zone zone-1"></div>
-                </div>
-                <div class="red-divider"></div>
-                <div class="base-wrapper">
-                    <div class="shoulder-wall-left"></div>
-                    <div class="shoulder-wall-right"></div>
-                    <div class="main-base">
-                        <div class="inner-fence-rect"></div>
-                    </div>
-                </div>
-
-                <div class="treadmill" id="treadmill">
-                    <div class="treadmill-console"></div>
-                    <div class="treadmill-handle-left"></div>
-                    <div class="treadmill-handle-right"></div>
-                    <div class="treadmill-belt"></div>
-                </div>
-
-                <div id="egg-layer"></div>
-                <div id="pet-layer"></div>
-                <div id="player"></div>
-            </div>
-        </div>
-
-        <div id="hud-container">
-            <div class="hud-item">
-                <div class="hud-icon">🌙</div>
-                <div class="hud-text" id="reset-timer-display">30</div>
-            </div>
-
-            <div class="hud-item">
-                <div class="hud-icon">👟</div>
-                <div class="hud-text" id="speed-display">10.00</div>
-            </div>
-
-            <div class="hud-item">
-                <div class="hud-icon">💰</div>
-                <div class="hud-text" id="money-display">0</div>
-            </div>
-        </div>
-
-        <div id="controls-container">
-            <div id="joystick-wrapper">
-                <div id="joystick-stick"></div>
-            </div>
-            <button id="action-btn">집기</button>
-        </div>
-
-        <div id="settings-modal">
-            <div id="settings-card">
-                <button id="close-settings-btn">✕</button>
-                <div class="modal-title">설정 (Settings)</div>
-                <div class="setting-row">
-                    <span class="setting-label">시야 크기</span>
-                    <div class="slider-container">
-                        <input type="range" id="zoom-range" class="zoom-slider" min="1" max="100" value="50">
-                        <span id="zoom-value-text" class="zoom-value">50</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 부화 연출 오버레이 -->
-        <div id="hatch-overlay">
-            <div id="hatch-flash"></div>
-            <div id="hatch-egg-container">
-                <div id="hatch-silhouette"></div>
-            </div>
-            <div id="pet-reveal-card">
-                <div id="revealed-pet-avatar"></div>
-                <div id="revealed-pet-name">레전드 야옹이</div>
-                <div id="revealed-pet-stats">+60원/초 (50.0kg)</div>
-                <button id="confirm-pet-btn">확인</button>
-            </div>
+        <div class="controls-info">
+            W, A, S, D 또는 화살표 키로 이동 | 런닝머신 위에서 이동 속도 증가!
         </div>
     </div>
 
+    <div id="floating-text-container"></div>
+
+    <!-- Gacha Modal -->
+    <div id="gacha-modal" class="modal">
+        <h2>🥚 신비한 알 뽑기</h2>
+        <p>새로운 펫을 뽑아 골드 수급을 늘리세요!</p>
+        <p>비용: <span style="color: #ffcc00; font-weight: bold;">100 골드</span></p>
+        <div id="gacha-result">?</div>
+        <button id="gacha-btn" class="btn" onclick="buyPet()">뽑기!</button>
+        <button class="btn" style="background: #555; box-shadow: none;" onclick="closeGachaModal()">닫기</button>
+    </div>
+
+    <!-- Three.js & Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
-        const map = document.getElementById('world-map');
-        const camera = document.getElementById('camera');
-        const player = document.getElementById('player');
-        const eggLayer = document.getElementById('egg-layer');
-        const petLayer = document.getElementById('pet-layer');
-        const joystickWrapper = document.getElementById('joystick-wrapper');
-        const joystickStick = document.getElementById('joystick-stick');
-        const actionBtn = document.getElementById('action-btn');
+        // --- Web Audio API (Sound System) ---
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null;
 
-        const speedDisplay = document.getElementById('speed-display');
-        const moneyDisplay = document.getElementById('money-display');
-        const resetTimerDisplay = document.getElementById('reset-timer-display');
-        const speedToggleSwitch = document.getElementById('speed-toggle-switch');
-
-        const settingsBtn = document.getElementById('settings-btn');
-        const settingsModal = document.getElementById('settings-modal');
-        const closeSettingsBtn = document.getElementById('close-settings-btn');
-        const zoomRange = document.getElementById('zoom-range');
-        const zoomValueText = document.getElementById('zoom-value-text');
-
-        // 부화 연출 관련 DOM
-        const hatchOverlay = document.getElementById('hatch-overlay');
-        const hatchEggContainer = document.getElementById('hatch-egg-container');
-        const hatchSilhouette = document.getElementById('hatch-silhouette');
-        const hatchFlash = document.getElementById('hatch-flash');
-        const petRevealCard = document.getElementById('pet-reveal-card');
-        const revealedPetAvatar = document.getElementById('revealed-pet-avatar');
-        const revealedPetName = document.getElementById('revealed-pet-name');
-        const revealedPetStats = document.getElementById('revealed-pet-stats');
-        const confirmPetBtn = document.getElementById('confirm-pet-btn');
-
-        let playerX = 1000;
-        let playerY = 23100;
-        
-        let speedValue = 10.00;
-        let moneyValue = 0;
-        let isSpeedFixed = false;
-
-        let isDragging = false;
-        let moveX = 0;
-        let moveY = 0;
-
-        const RADIUS = 20; 
-        const WALL_THICK = 24;
-        const MAP_HEIGHT = 24100;
-        const RED_LINE_Y = 22592;
-
-        const FENCE_BOUNDS = { left: 512, right: 1488, top: 23452, bottom: 24028 };
-        const TM_BOUNDS = { left: 540, right: 650, top: 23260, bottom: 23420 };
-
-        let lastTreadmillTime = 0;
-        let fieldResetTimer = 30;
-
-        const eggList = [];
-        const petList = [];
-        let nearestEgg = null;
-        let nearestHatchEgg = null;
-        let liftedEgg = null;
-
-        /* 입체 펫 모델링 프리셋 */
-        const PET_PRESETS = [
-            { name: '냥냥이', color: '#ff70a6', earType: 'cat' },
-            { name: '멍멍이', color: '#ff9770', earType: 'dog' },
-            { name: '토끼', color: '#ffd670', earType: 'rabbit' },
-            { name: '여우', color: '#e9ff70', earType: 'fox' },
-            { name: '곰돌이', color: '#70d6ff', earType: 'bear' }
-        ];
-
-        const ZONES_CONFIG = [
-            { level: 6, name: "Zone 6", minY: 24, maxY: 7524 },
-            { level: 5, name: "Zone 5", minY: 7524, maxY: 13024 },
-            { level: 4, name: "Zone 4", minY: 13024, maxY: 17024 },
-            { level: 3, name: "Zone 3", minY: 17024, maxY: 19824 },
-            { level: 2, name: "Zone 2", minY: 19824, maxY: 21624 },
-            { level: 1, name: "Zone 1", minY: 21624, maxY: 22600 }
-        ];
-
-        // 입체 3D 펫 HTML 구조 생성 함수
-        function create3DPetHTML(preset, weight) {
-            return `
-                <div class="pet-body-3d" style="background-color: ${preset.color};">
-                    <div class="pet-ear-left"></div>
-                    <div class="pet-ear-right"></div>
-                    <div class="pet-eye-left"></div>
-                    <div class="pet-eye-right"></div>
-                    <div class="pet-snout">
-                        <div class="pet-nose"></div>
-                    </div>
-                </div>
-                <div class="pet-weight-tag">${weight.toFixed(1)}kg</div>
-            `;
-        }
-
-        function getEggSvgHTML(id, zoneLevel) {
-            let gradContent = '';
-            let patternSVG = '';
-
-            switch(zoneLevel) {
-                case 1:
-                    gradContent = `<stop offset="0%" stop-color="#ffffff"/><stop offset="60%" stop-color="#fbc531"/><stop offset="100%" stop-color="#e1b12c"/>`;
-                    patternSVG = `<circle cx="35" cy="70" r="6" fill="#e84118" opacity="0.6"/><circle cx="65" cy="85" r="8" fill="#e84118" opacity="0.6"/><circle cx="50" cy="100" r="5" fill="#e84118" opacity="0.6"/>`;
-                    break;
-                case 2:
-                    gradContent = `<stop offset="0%" stop-color="#eccc68"/><stop offset="50%" stop-color="#2ed573"/><stop offset="100%" stop-color="#26af5f"/>`;
-                    patternSVG = `<path d="M 20 60 Q 50 50, 80 60 Q 50 70, 20 60" fill="#1e90ff" opacity="0.5"/><path d="M 15 85 Q 50 75, 85 85 Q 50 95, 15 85" fill="#1e90ff" opacity="0.5"/>`;
-                    break;
-                case 3:
-                    gradContent = `<stop offset="0%" stop-color="#ffffff"/><stop offset="40%" stop-color="#a29bfe"/><stop offset="100%" stop-color="#6c5ce7"/>`;
-                    patternSVG = `<path d="M 50 5 C 30 40, 30 90, 50 125" stroke="#fd79a8" stroke-width="6" fill="none" opacity="0.7"/><path d="M 35 15 C 15 45, 15 85, 30 115" stroke="#fd79a8" stroke-width="5" fill="none" opacity="0.7"/><path d="M 65 15 C 85 45, 85 85, 70 115" stroke="#fd79a8" stroke-width="5" fill="none" opacity="0.7"/>`;
-                    break;
-                case 4:
-                    gradContent = `<stop offset="0%" stop-color="#636e72"/><stop offset="50%" stop-color="#2d3436"/><stop offset="100%" stop-color="#000000"/>`;
-                    patternSVG = `<line x1="20" y1="40" x2="80" y2="100" stroke="#00cec9" stroke-width="6" opacity="0.8"/><line x1="30" y1="30" x2="90" y2="90" stroke="#ff7675" stroke-width="4" opacity="0.8"/>`;
-                    break;
-                case 5:
-                    gradContent = `<stop offset="0%" stop-color="#ffffff"/><stop offset="50%" stop-color="#81ecec"/><stop offset="100%" stop-color="#0984e3"/>`;
-                    patternSVG = `<polygon points="50,30 65,50 50,70 35,50" fill="#ffffff" opacity="0.7"/><polygon points="50,75 65,95 50,115 35,95" fill="#ffffff" opacity="0.7"/>`;
-                    break;
-                case 6:
-                    gradContent = `<stop offset="0%" stop-color="#fff200"/><stop offset="50%" stop-color="#ff3838"/><stop offset="100%" stop-color="#c56cf0"/>`;
-                    patternSVG = `<path d="M 55 20 L 35 60 L 55 60 L 40 105 L 70 50 L 50 50 Z" fill="#fff" opacity="0.85"/>`;
-                    break;
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new AudioContext();
             }
-
-            return `
-                <svg viewBox="0 0 100 130" xmlns="http://www.w3.org/2000/svg">
-                    <defs>
-                        <radialGradient id="eggGrad_${id}" cx="35%" cy="30%" r="70%">
-                            ${gradContent}
-                        </radialGradient>
-                    </defs>
-                    <path d="M 50 5 C 20 5, 5 45, 5 80 C 5 110, 25 125, 50 125 C 75 125, 95 110, 95 80 C 95 45, 80 5, 50 5 Z" 
-                          fill="url(#eggGrad_${id})" stroke="#222222" stroke-width="4"/>
-                    ${patternSVG}
-                    <ellipse cx="38" cy="35" rx="10" ry="16" fill="#ffffff" opacity="0.5" transform="rotate(-15 38 35)"/>
-                </svg>
-            `;
         }
 
-        function getRandomEggSize() {
-            const minScale = 0.2; 
-            const maxScale = 1.5; 
-            const weightedRand = Math.pow(Math.random(), 12); 
-            const scale = minScale + (weightedRand * (maxScale - minScale));
-            const weight = (Math.pow(scale, 2.5) * 35).toFixed(1);
-            return { scale: parseFloat(scale.toFixed(3)), weight: parseFloat(weight) };
-        }
-
-        let eggIdCounter = 0;
-
-        function spawnEggInZone(zone) {
-            const minX = 500 + WALL_THICK + 60;
-            const maxX = 1500 - WALL_THICK - 60;
-            const zoneMinY = zone.minY + 60;
-            const zoneMaxY = zone.maxY - 60;
-
-            const randX = minX + Math.random() * (maxX - minX);
-            const randY = zoneMinY + Math.random() * (zoneMaxY - zoneMinY);
-            const sizeData = getRandomEggSize();
+        // 런닝머신 속도 업 효과음 ("똥!" 소리)
+        function playSpeedUpSound() {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
             
-            const eggItem = document.createElement('div');
-            eggItem.className = 'egg-item';
-            eggItem.innerHTML = `
-                <div class="hatch-ready-icon" id="hatch-icon-${eggIdCounter}">!</div>
-                <div class="egg-weight-label" id="weight-label-${eggIdCounter}">${sizeData.weight.toFixed(1)}kg</div>
-                ${getEggSvgHTML(eggIdCounter, zone.level)}
-            `;
-            eggItem.style.left = `${randX}px`;
-            eggItem.style.top = `${randY}px`;
+            osc.type = 'sine';
+            // 통 하고 유쾌하게 튀는 피치 (500Hz -> 800Hz)
+            osc.frequency.setValueAtTime(500, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(850, audioCtx.currentTime + 0.08);
 
-            const weightLabel = eggItem.querySelector('.egg-weight-label');
-            const hatchIcon = eggItem.querySelector('.hatch-ready-icon');
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
 
-            const invScale = (1 / sizeData.scale).toFixed(3);
-            weightLabel.style.transform = `translateX(-50%) scale(${invScale})`;
-            hatchIcon.style.transform = `translate(-50%, 0) scale(${invScale})`;
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
 
-            eggLayer.appendChild(eggItem);
-
-            const eggObj = { 
-                id: eggIdCounter, 
-                element: eggItem, 
-                weightLabel: weightLabel,
-                hatchIcon: hatchIcon,
-                worldX: randX, 
-                worldY: randY, 
-                scale: sizeData.scale, 
-                weight: sizeData.weight, 
-                zoneLevel: zone.level,
-                isLifted: false,
-                hasCrossedRedLine: false,
-                isIncubating: false,
-                remainingTime: 0,
-                isHatchReady: false
-            };
-
-            eggList.push(eggObj);
-            renderSingleEgg(eggObj);
-            eggIdCounter++;
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.08);
         }
 
-        function initRandomEggs() {
-            ZONES_CONFIG.forEach(zone => {
-                for (let i = 0; i < 5; i++) {
-                    spawnEggInZone(zone);
-                }
+        // 골드 획득 효과음
+        function playCoinSound() {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(987.77, audioCtx.currentTime); // B5
+            osc.frequency.setValueAtTime(1318.51, audioCtx.currentTime + 0.08); // E6
+
+            gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
+
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.25);
+        }
+
+        // --- Game Data & Setup ---
+        const STAGES = [
+            { id: 1, name: "1단계: 잔디밭", color: 0x55aa55, wallColor: 0x338833 },
+            { id: 2, name: "2단계: 정글", color: 0x226622, wallColor: 0x114411 },
+            { id: 3, name: "3단계: 설산", color: 0xddffff, wallColor: 0xbbdddd },
+            { id: 4, name: "4단계: 용암지대", color: 0x441111, wallColor: 0x882200 },
+            { id: 5, name: "5단계: 바다", color: 0x115599, wallColor: 0x003366 },
+            { id: 6, name: "6단계: 선사시대", color: 0x886644, wallColor: 0x553311 }
+        ];
+
+        const PET_TYPES = [
+            { name: "🧋 아기 곰", color: 0x8B4513, income: 5, rarity: "일반" },
+            { name: "🐰 분홍 토끼", color: 0xFFC0CB, income: 12, rarity: "희귀" },
+            { name: "🦊 여우", color: 0xFF4500, income: 25, rarity: "영웅" },
+            { name: "🐲 아기 드래곤", color: 0x9370DB, income: 60, rarity: "전설" }
+        ];
+
+        let state = {
+            gold: 0,
+            baseSpeed: 10,
+            currentSpeed: 10,
+            pets: [],
+            maxPets: 3,
+            hasEgg: false,
+            currentStageIdx: 0,
+            lastTreadmillStep: 0
+        };
+
+        // --- Scene, Camera, Renderer ---
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(STAGES[0].color);
+
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        container.appendChild(renderer.domElement);
+
+        // --- Lighting ---
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambientLight);
+
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.7);
+        dirLight.position.set(20, 40, 20);
+        dirLight.castShadow = true;
+        dirLight.shadow.mapSize.width = 2048;
+        dirLight.shadow.mapSize.height = 2048;
+        dirLight.shadow.camera.near = 0.5;
+        dirLight.shadow.camera.far = 150;
+        const d = 40;
+        dirLight.shadow.camera.left = -d;
+        dirLight.shadow.camera.right = d;
+        dirLight.shadow.camera.top = d;
+        dirLight.shadow.camera.bottom = -d;
+        scene.add(dirLight);
+
+        // --- World Creation ---
+        let groundMaterial, groundMesh;
+        function createWorld() {
+            // Floor
+            const groundGeo = new THREE.PlaneGeometry(100, 100);
+            groundMaterial = new THREE.MeshStandardMaterial({ 
+                color: STAGES[0].color, 
+                roughness: 0.8 
             });
+            groundMesh = new THREE.Mesh(groundGeo, groundMaterial);
+            groundMesh.rotation.x = -Math.PI / 2;
+            groundMesh.receiveShadow = true;
+            scene.add(groundMesh);
+
+            // Grid decoration
+            const grid = new THREE.GridHelper(100, 20, 0x000000, 0x000000);
+            grid.position.y = 0.01;
+            grid.material.opacity = 0.1;
+            grid.material.transparent = true;
+            scene.add(grid);
         }
+        createWorld();
 
-        function resetFieldEggs() {
-            for (let i = eggList.length - 1; i >= 0; i--) {
-                const egg = eggList[i];
-                if (!egg.isLifted && !egg.isIncubating && !egg.isHatchReady && !egg.hasCrossedRedLine && egg.worldY < RED_LINE_Y) {
-                    if (egg.element && egg.element.parentNode) {
-                        egg.element.parentNode.removeChild(egg.element);
-                    }
-                    eggList.splice(i, 1);
-                }
-            }
-
-            ZONES_CONFIG.forEach(zone => {
-                const currentZoneEggs = eggList.filter(e => e.zoneLevel === zone.level && e.worldY < RED_LINE_Y && !e.hasCrossedRedLine);
-                const needToSpawn = 5 - currentZoneEggs.length;
-                for (let i = 0; i < needToSpawn; i++) {
-                    spawnEggInZone(zone);
-                }
-            });
-        }
-
-        function checkNearestEgg() {
-            if (liftedEgg) {
-                actionBtn.innerText = "놓기";
-                actionBtn.className = 'is-lifting';
-                return;
-            }
-
-            const detectDist = 120; 
-            let minDist = Infinity;
-            let currentPickable = null;
-            let currentHatchable = null;
-
-            eggList.forEach(egg => {
-                if (egg.isLifted) return;
-                const dist = Math.hypot(playerX - egg.worldX, playerY - egg.worldY);
-                if (dist < detectDist && dist < minDist) { 
-                    minDist = dist; 
-                    if (egg.isHatchReady) {
-                        currentHatchable = egg;
-                    } else if (!egg.isIncubating) {
-                        currentPickable = egg;
-                    }
-                }
-            });
-
-            nearestHatchEgg = currentHatchable;
-            nearestEgg = currentPickable;
-
-            if (nearestHatchEgg) {
-                actionBtn.innerText = "부화";
-                actionBtn.className = 'can-hatch';
-            } else if (nearestEgg) {
-                actionBtn.innerText = "집기";
-                actionBtn.className = 'can-pick';
-            } else {
-                actionBtn.className = '';
-            }
-        }
-
-        actionBtn.addEventListener('click', handleAction);
-
-        function handleAction() {
-            if (nearestHatchEgg) {
-                startHatchAnimation(nearestHatchEgg);
-                nearestHatchEgg = null;
-                actionBtn.className = '';
-                return;
-            }
-
-            if (!liftedEgg) {
-                if (!nearestEgg) return;
-                liftedEgg = nearestEgg; 
-                liftedEgg.isLifted = true; 
-                nearestEgg = null;
-                
-                liftedEgg.element.style.zIndex = '110';
-                actionBtn.innerText = "놓기"; 
-                actionBtn.className = 'is-lifting';
-            } else {
-                const dropEgg = liftedEgg; 
-                liftedEgg = null;
-                
-                dropEgg.worldX = playerX; 
-                dropEgg.worldY = playerY; 
-                dropEgg.element.style.zIndex = '80'; 
-                dropEgg.element.style.left = `${playerX}px`; 
-                dropEgg.element.style.top = `${playerY}px`; 
-
-                const isInFence = (
-                    dropEgg.worldX >= FENCE_BOUNDS.left && 
-                    dropEgg.worldX <= FENCE_BOUNDS.right && 
-                    dropEgg.worldY >= FENCE_BOUNDS.top && 
-                    dropEgg.worldY <= FENCE_BOUNDS.bottom
-                );
-
-                if (isInFence && !dropEgg.isIncubating && !dropEgg.isHatchReady) {
-                    startIncubation(dropEgg);
-                }
-
-                actionBtn.innerText = "집기"; 
-                actionBtn.className = '';
-                
-                renderSingleEgg(dropEgg);
-            }
-        }
-
-        function startIncubation(egg) {
-            egg.isIncubating = true;
-            const baseZoneSeconds = egg.zoneLevel * 60;
-            const integerWeight = Math.floor(egg.weight);
-            const decimalWeight = Math.round((egg.weight - integerWeight) * 10);
-            const weightSeconds = integerWeight + decimalWeight;
-
-            egg.remainingTime = baseZoneSeconds + weightSeconds;
-        }
-
-        let hatchingEggTarget = null;
-
-        function startHatchAnimation(egg) {
-            hatchingEggTarget = egg;
-            hatchOverlay.style.display = 'flex';
-            hatchEggContainer.style.display = 'flex';
-            petRevealCard.style.display = 'none';
-
-            const beats = [80, 80, 80, 80, 120, 180, 260, 380, 550, 800];
-            let beatIndex = 0;
-
-            function triggerBeat() {
-                if (beatIndex >= beats.length) {
-                    finishHatch();
-                    return;
-                }
-
-                const randomPreset = PET_PRESETS[Math.floor(Math.random() * PET_PRESETS.length)];
-                hatchSilhouette.style.backgroundColor = randomPreset.color;
-                hatchSilhouette.style.transform = `scale(${1 + Math.random() * 0.3}) rotate(${(Math.random() - 0.5) * 30}deg)`;
-
-                setTimeout(() => {
-                    hatchSilhouette.style.transform = `scale(1) rotate(0deg)`;
-                }, 50);
-
-                const nextDelay = beats[beatIndex];
-                beatIndex++;
-                setTimeout(triggerBeat, nextDelay);
-            }
-
-            triggerBeat();
-        }
-
-        function finishHatch() {
-            hatchFlash.style.opacity = '1';
-            setTimeout(() => hatchFlash.style.opacity = '0', 200);
-
-            hatchEggContainer.style.display = 'none';
-            petRevealCard.style.display = 'flex';
-
-            const egg = hatchingEggTarget;
-            const petWeight = parseFloat((egg.weight / 2).toFixed(1));
-            const income = 10 + petWeight;
-
-            const preset = PET_PRESETS[Math.floor(Math.random() * PET_PRESETS.length)];
-
-            revealedPetAvatar.className = 'pet-item';
-            revealedPetAvatar.innerHTML = create3DPetHTML(preset, petWeight);
-            revealedPetName.innerText = preset.name;
-            revealedPetStats.innerText = `+${income.toFixed(1)}원/초 (${petWeight}kg)`;
-
-            createPet(preset, petWeight, income);
-
-            if (egg.element && egg.element.parentNode) {
-                egg.element.parentNode.removeChild(egg.element);
-            }
-            const index = eggList.indexOf(egg);
-            if (index > -1) eggList.splice(index, 1);
-        }
-
-        confirmPetBtn.addEventListener('click', () => {
-            hatchOverlay.style.display = 'none';
-            hatchingEggTarget = null;
-        });
-
-        /* --- 입체 펫 생성 및 무게 비례 스케일링 --- */
-        function createPet(preset, weight, income) {
-            const petEl = document.createElement('div');
-            petEl.className = 'pet-item';
-            petEl.innerHTML = create3DPetHTML(preset, weight);
-
-            // 무게에 비례하여 펫 크기 설정 (0.5배 ~ 2.5배 스케일링)
-            const petScale = (0.5 + Math.min(weight, 100) * 0.02).toFixed(2);
-
-            const spawnX = FENCE_BOUNDS.left + 50 + Math.random() * (FENCE_BOUNDS.right - FENCE_BOUNDS.left - 100);
-            const spawnY = FENCE_BOUNDS.top + 50 + Math.random() * (FENCE_BOUNDS.bottom - FENCE_BOUNDS.top - 100);
-
-            petEl.style.left = `${spawnX}px`;
-            petEl.style.top = `${spawnY}px`;
-            petEl.style.transform = `translate(-50%, -50%) scale(${petScale})`;
-
-            petLayer.appendChild(petEl);
-
-            // 무게 태그 스케일 역보정
-            const weightTag = petEl.querySelector('.pet-weight-tag');
-            if (weightTag) {
-                weightTag.style.transform = `translateX(-50%) scale(${(1 / petScale).toFixed(2)})`;
-            }
-
-            const angle = Math.random() * Math.PI * 2;
-            const petObj = {
-                element: petEl,
-                x: spawnX,
-                y: spawnY,
-                weight: weight,
-                income: income,
-                scale: petScale,
-                vx: Math.cos(angle) * 1.5,
-                vy: Math.sin(angle) * 1.5,
-                isStopped: false,
-                changeTimer: Math.random() * 3 + 1
-            };
-
-            petList.push(petObj);
-        }
-
-        function updatePets(deltaSec) {
-            petList.forEach(pet => {
-                pet.changeTimer -= deltaSec;
-                if (pet.changeTimer <= 0) {
-                    pet.changeTimer = Math.random() * 3 + 1;
-                    pet.isStopped = Math.random() < 0.35;
-                    if (!pet.isStopped) {
-                        const angle = Math.random() * Math.PI * 2;
-                        const speed = 1.0 + Math.random() * 1.5;
-                        pet.vx = Math.cos(angle) * speed;
-                        pet.vy = Math.sin(angle) * speed;
-                    }
-                }
-
-                if (!pet.isStopped) {
-                    pet.x += pet.vx;
-                    pet.y += pet.vy;
-
-                    if (pet.x < FENCE_BOUNDS.left + 25) {
-                        pet.x = FENCE_BOUNDS.left + 25;
-                        pet.vx *= -1;
-                    } else if (pet.x > FENCE_BOUNDS.right - 25) {
-                        pet.x = FENCE_BOUNDS.right - 25;
-                        pet.vx *= -1;
-                    }
-
-                    if (pet.y < FENCE_BOUNDS.top + 25) {
-                        pet.y = FENCE_BOUNDS.top + 25;
-                        pet.vy *= -1;
-                    } else if (pet.y > FENCE_BOUNDS.bottom - 25) {
-                        pet.y = FENCE_BOUNDS.bottom - 25;
-                        pet.vy *= -1;
-                    }
-                }
-
-                pet.element.style.left = `${pet.x}px`;
-                pet.element.style.top = `${pet.y}px`;
-            });
-        }
-
-        function updateIncubationTimers() {
-            eggList.forEach(egg => {
-                if (egg.isIncubating && !egg.isHatchReady) {
-                    egg.remainingTime -= 1;
-                    if (egg.remainingTime <= 0) {
-                        egg.remainingTime = 0;
-                        egg.isIncubating = false;
-                        egg.isHatchReady = true;
-                        egg.hatchIcon.style.display = 'block';
-                        egg.weightLabel.style.display = 'none';
-                    } else {
-                        const m = Math.floor(egg.remainingTime / 60);
-                        const s = egg.remainingTime % 60;
-                        const timeStr = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-                        egg.weightLabel.innerText = timeStr;
-                        egg.weightLabel.style.display = 'block';
-                    }
-                }
-            });
-
-            // 30초 알 필드 리셋 타이머
-            fieldResetTimer -= 1;
-            if (fieldResetTimer <= 0) {
-                fieldResetTimer = 30;
-                resetFieldEggs();
-            }
-            resetTimerDisplay.innerText = fieldResetTimer;
-
-            // 매 초 펫 골드 수급
-            let currentSecGold = 0;
-            petList.forEach(pet => {
-                currentSecGold += pet.income;
-            });
-            if (currentSecGold > 0) {
-                moneyValue += currentSecGold;
-                moneyDisplay.innerText = Math.floor(moneyValue).toLocaleString();
-            }
-        }
-
-        setInterval(updateIncubationTimers, 1000);
-
-        function renderSingleEgg(eggData) {
-            if (playerY >= RED_LINE_Y && eggData.isLifted) {
-                eggData.hasCrossedRedLine = true;
-            } else if (eggData.worldY >= RED_LINE_Y) {
-                eggData.hasCrossedRedLine = true;
-            }
-
-            const invScale = (1 / eggData.scale).toFixed(3);
-            eggData.weightLabel.style.transform = `translateX(-50%) scale(${invScale})`;
-            eggData.hatchIcon.style.transform = `translate(-50%, 0) scale(${invScale})`;
-
-            if (eggData.isLifted && liftedEgg === eggData) {
-                eggData.element.style.left = `${playerX}px`; 
-                eggData.element.style.top = `${playerY}px`;
-                const yOffset = -110 - (eggData.scale * 15); 
-                eggData.element.style.transform = `translate(-50%, ${yOffset}%) scale(${eggData.scale})`;
-            } else { 
-                eggData.element.style.transform = `translate(-50%, -100%) scale(${eggData.scale})`; 
-                eggData.isLifted = false; 
-            }
-
-            if (eggData.isHatchReady) {
-                eggData.hatchIcon.style.display = 'block';
-                eggData.weightLabel.style.display = 'none';
-            } else if (eggData.isIncubating) {
-                eggData.weightLabel.style.display = 'block';
-                eggData.hatchIcon.style.display = 'none';
-            } else if (eggData.hasCrossedRedLine) {
-                eggData.weightLabel.style.display = 'block';
-                eggData.hatchIcon.style.display = 'none';
-            } else {
-                eggData.weightLabel.style.display = 'none';
-                eggData.hatchIcon.style.display = 'none';
-            }
-        }
-
-        let currentScale = 0.65;
-        function setZoom(val) { currentScale = 1.2 - (val - 1) * (1.0 / 99); camera.style.transform = `scale(${currentScale.toFixed(3)})`; zoomValueText.innerText = val; }
-        zoomRange.addEventListener('input', (e) => { setZoom(e.target.value); });
+        // --- Game Objects ---
+        // 1. Player (동물 형태: 병아리/강아지 느낌의 귀여운 모습)
+        const playerGroup = new THREE.Group();
         
-        settingsBtn.addEventListener('click', () => { settingsModal.style.display = 'flex'; });
-        closeSettingsBtn.addEventListener('click', () => { settingsModal.style.display = 'none'; });
+        // Body
+        const bodyGeo = new THREE.SphereGeometry(0.8, 16, 16);
+        const bodyMat = new THREE.MeshStandardMaterial({ color: 0xffdd00, roughness: 0.3 });
+        const body = new THREE.Mesh(bodyGeo, bodyMat);
+        body.position.y = 0.8;
+        body.castShadow = true;
+        playerGroup.add(body);
 
-        speedToggleSwitch.addEventListener('click', () => { isSpeedFixed = !isSpeedFixed; speedToggleSwitch.classList.toggle('active', isSpeedFixed); });
-        
-        function updateSpeedDisplay() { 
-            // 속도 표시에서 '+' 제거
-            speedDisplay.innerText = `${speedValue.toFixed(2)}`; 
+        // Eyes
+        const eyeGeo = new THREE.SphereGeometry(0.1, 8, 8);
+        const eyeMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
+        const leftEye = new THREE.Mesh(eyeGeo, eyeMat);
+        leftEye.position.set(0.3, 1.0, 0.65);
+        const rightEye = leftEye.clone();
+        rightEye.position.x = -0.3;
+        playerGroup.add(leftEye);
+        playerGroup.add(rightEye);
+
+        // Beak / Nose
+        const noseGeo = new THREE.ConeGeometry(0.15, 0.3, 8);
+        const noseMat = new THREE.MeshStandardMaterial({ color: 0xff6600 });
+        const nose = new THREE.Mesh(noseGeo, noseMat);
+        nose.rotation.x = Math.PI / 2;
+        nose.position.set(0, 0.8, 0.85);
+        playerGroup.add(nose);
+
+        playerGroup.position.set(0, 0, 0);
+        scene.add(playerGroup);
+
+        // Carried Egg Object (hidden initially)
+        const carriedEggGeo = new THREE.SphereGeometry(0.5, 16, 16);
+        carriedEggGeo.scale(1, 1.3, 1);
+        const carriedEggMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2 });
+        const carriedEgg = new THREE.Mesh(carriedEggGeo, carriedEggMat);
+        carriedEgg.position.set(0, 2.2, 0);
+        carriedEgg.castShadow = true;
+        carriedEgg.visible = false;
+        playerGroup.add(carriedEgg);
+
+        // 2. Base Zone (알을 제출하는 곳)
+        const baseZoneGeo = new THREE.CylinderGeometry(4, 4, 0.1, 32);
+        const baseZoneMat = new THREE.MeshStandardMaterial({ color: 0x00ff88, transparent: true, opacity: 0.5 });
+        const baseZone = new THREE.Mesh(baseZoneGeo, baseZoneMat);
+        baseZone.position.set(0, 0.05, -15);
+        scene.add(baseZone);
+
+        // Base Marker
+        const baseRing = new THREE.Mesh(
+            new THREE.RingGeometry(3.8, 4, 32),
+            new THREE.MeshBasicMaterial({ color: 0x00ff88, side: THREE.DoubleSide })
+        );
+        baseRing.rotation.x = Math.PI / 2;
+        baseRing.position.set(0, 0.08, -15);
+        scene.add(baseRing);
+
+        // 3. Treadmill Zone (런닝머신)
+        const treadmillGroup = new THREE.Group();
+        const tmBase = new THREE.Mesh(
+            new THREE.BoxGeometry(6, 0.3, 10),
+            new THREE.MeshStandardMaterial({ color: 0x333333 })
+        );
+        tmBase.position.y = 0.15;
+        tmBase.receiveShadow = true;
+        treadmillGroup.add(tmBase);
+
+        const tmBelt = new THREE.Mesh(
+            new THREE.BoxGeometry(5, 0.32, 9),
+            new THREE.MeshStandardMaterial({ color: 0x111111 })
+        );
+        tmBelt.position.y = 0.16;
+        treadmillGroup.add(tmBelt);
+
+        treadmillGroup.position.set(-15, 0, 0);
+        scene.add(treadmillGroup);
+
+        // 4. Gacha Egg Station (알 뽑기 상점)
+        const gachaStationGroup = new THREE.Group();
+        const pedestal = new THREE.Mesh(
+            new THREE.CylinderGeometry(2, 2.5, 1, 16),
+            new THREE.MeshStandardMaterial({ color: 0xffcc00 })
+        );
+        pedestal.position.y = 0.5;
+        pedestal.castShadow = true;
+        gachaStationGroup.add(pedestal);
+
+        const displayEggGeo = new THREE.SphereGeometry(1, 16, 16);
+        displayEggGeo.scale(1, 1.3, 1);
+        const displayEgg = new THREE.Mesh(
+            displayEggGeo,
+            new THREE.MeshStandardMaterial({ color: 0xff5588, roughness: 0.3 })
+        );
+        displayEgg.position.y = 2.2;
+        displayEgg.castShadow = true;
+        gachaStationGroup.add(displayEgg);
+
+        gachaStationGroup.position.set(15, 0, 0);
+        scene.add(gachaStationGroup);
+
+        // 5. Egg Pickup Field (알을 주울 수 있는 지역)
+        const eggPickupGroup = new THREE.Group();
+        const eggPickupPad = new THREE.Mesh(
+            new THREE.CylinderGeometry(3, 3, 0.1, 32),
+            new THREE.MeshStandardMaterial({ color: 0xffaa00, transparent: true, opacity: 0.6 })
+        );
+        eggPickupPad.position.y = 0.05;
+        eggPickupGroup.add(eggPickupPad);
+
+        const wildEgg = new THREE.Mesh(
+            displayEggGeo,
+            new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2 })
+        );
+        wildEgg.position.y = 1.3;
+        wildEgg.castShadow = true;
+        eggPickupGroup.add(wildEgg);
+
+        eggPickupGroup.position.set(0, 0, 20);
+        scene.add(eggPickupGroup);
+
+        // --- Pet System Visuals ---
+        class PetMesh {
+            constructor(petData, index) {
+                this.data = petData;
+                this.index = index;
+
+                this.group = new THREE.Group();
+                
+                // Pet Body
+                const geo = new THREE.SphereGeometry(0.5, 16, 16);
+                const mat = new THREE.MeshStandardMaterial({ color: petData.color, roughness: 0.4 });
+                this.mesh = new THREE.Mesh(geo, mat);
+                this.mesh.position.y = 0.5;
+                this.mesh.castShadow = true;
+                this.group.add(this.mesh);
+
+                // Ears (동물 느낌 내기)
+                const earGeo = new THREE.ConeGeometry(0.15, 0.4, 8);
+                const leftEar = new THREE.Mesh(earGeo, mat);
+                leftEar.position.set(0.2, 0.9, 0);
+                const rightEar = leftEar.clone();
+                rightEar.position.x = -0.2;
+                this.group.add(leftEar);
+                this.group.add(rightEar);
+
+                scene.add(this.group);
+
+                this.timer = 0;
+            }
+
+            update(delta, playerPos) {
+                // Follow Player
+                const angle = (this.index / state.pets.length) * Math.PI * 2 + Date.now() * 0.002;
+                const targetX = playerPos.x + Math.cos(angle) * 2.5;
+                const targetZ = playerPos.z + Math.sin(angle) * 2.5;
+
+                this.group.position.x += (targetX - this.group.position.x) * 0.1;
+                this.group.position.z += (targetZ - this.group.position.z) * 0.1;
+                this.group.position.y = Math.sin(Date.now() * 0.008 + this.index) * 0.2;
+
+                // Gold Generation Timer
+                this.timer += delta;
+                if (this.timer >= 3) { // 3초마다 돈 버는 펫
+                    this.timer = 0;
+                    addGold(this.data.income);
+                    spawnFloatingText(`+${this.data.income}`, this.group.position);
+                }
+            }
+
+            destroy() {
+                scene.remove(this.group);
+            }
         }
 
-        function createSpeedPopText(x, y, amount) {
-            const pop = document.createElement('div');
-            pop.className = 'pop-text';
-            pop.innerText = `👟 ${amount.toFixed(2)}`;
-            pop.style.left = `${x}px`;
-            pop.style.top = `${y - 30}px`;
+        let petMeshes = [];
 
-            const randomDx = (Math.random() - 0.5) * 90;
-            const randomDyMid = -30 - (Math.random() * 30);
-            const randomDyEnd = -60 - (Math.random() * 40);
+        function updatePetMeshes() {
+            petMeshes.forEach(p => p.destroy());
+            petMeshes = [];
+            state.pets.forEach((petData, idx) => {
+                petMeshes.push(new PetMesh(petData, idx));
+            });
+            document.getElementById('pet-count-display').innerText = `${state.pets.length}/${state.maxPets}`;
+        }
 
-            pop.style.setProperty('--dx', `${randomDx}px`);
-            pop.style.setProperty('--dy-mid', `${randomDyMid}px`);
-            pop.style.setProperty('--dy-end', `${randomDyEnd}px`);
+        // --- Floating Text Effect for Pet Earnings ---
+        function spawnFloatingText(text, worldPos) {
+            // World to Screen coordinate conversion
+            const vector = worldPos.clone();
+            vector.y += 1.2; // 펫 머리 위
+            vector.project(camera);
 
-            map.appendChild(pop);
+            const x = (vector.x * .5 + .5) * window.innerWidth;
+            const y = (-(vector.y * .5) + .5) * window.innerHeight;
+
+            const el = document.createElement('div');
+            el.className = 'floating-text';
+            el.innerText = text;
+            el.style.left = `${x}px`;
+            el.style.top = `${y}px`;
+
+            document.getElementById('floating-text-container').appendChild(el);
 
             setTimeout(() => {
-                if (pop && pop.parentNode) {
-                    pop.parentNode.removeChild(pop);
-                }
-            }, 800);
+                el.remove();
+            }, 1200);
         }
 
-        function checkTreadmill(now) {
-            const isOnTM = (playerX >= TM_BOUNDS.left && playerX <= TM_BOUNDS.right && playerY >= TM_BOUNDS.top && playerY <= TM_BOUNDS.bottom);
-            if (isOnTM) {
-                if (lastTreadmillTime === 0) lastTreadmillTime = now;
+        // --- Input Handling ---
+        const keys = {};
+        window.addEventListener('keydown', (e) => {
+            initAudio();
+            keys[e.code] = true;
+        });
+        window.addEventListener('keyup', (e) => {
+            keys[e.code] = false;
+        });
+
+        // --- Game Logic Functions ---
+        function addGold(amount) {
+            state.gold += amount;
+            document.getElementById('gold-display').innerText = state.gold;
+            playCoinSound();
+        }
+
+        function checkStageProgress() {
+            // 500골드마다 다음 단계로 진입
+            const newStageIdx = Math.min(Math.floor(state.gold / 500), STAGES.length - 1);
+            if (newStageIdx !== state.currentStageIdx) {
+                state.currentStageIdx = newStageIdx;
+                const stage = STAGES[newStageIdx];
                 
-                const delta = now - lastTreadmillTime;
-                if (delta >= 100) {
-                    const increments = Math.floor(delta / 100);
-                    const gainSpeed = increments * 0.01;
-                    
-                    speedValue += gainSpeed;
-                    updateSpeedDisplay();
-                    
-                    createSpeedPopText(playerX, playerY, gainSpeed);
-                    lastTreadmillTime = now - (delta % 100);
+                // 배경색 변경
+                scene.background.setHex(stage.color);
+                groundMaterial.color.setHex(stage.color);
+
+                // UI 업데이트
+                document.getElementById('stage-title-text').innerText = stage.name;
+            }
+        }
+
+        // --- Gacha Modal System ---
+        let gachaAutoCloseTimer = null;
+
+        function openGachaModal() {
+            document.getElementById('gacha-modal').style.display = 'block';
+        }
+
+        function closeGachaModal() {
+            document.getElementById('gacha-modal').style.display = 'none';
+            if (gachaAutoCloseTimer) clearTimeout(gachaAutoCloseTimer);
+        }
+
+        function buyPet() {
+            if (state.gold < 100) {
+                alert("골드가 부족합니다! (100 골드 필요)");
+                return;
+            }
+            if (state.pets.length >= state.maxPets) {
+                alert("펫 소지 칸이 가득 찼습니다!");
+                return;
+            }
+
+            state.gold -= 100;
+            document.getElementById('gold-display').innerText = state.gold;
+
+            // 랜덤 펫 가챠
+            const rand = Math.random();
+            let selectedPet = PET_TYPES[0];
+            if (rand > 0.95) selectedPet = PET_TYPES[3];
+            else if (rand > 0.8) selectedPet = PET_TYPES[2];
+            else if (rand > 0.5) selectedPet = PET_TYPES[1];
+
+            state.pets.push(selectedPet);
+            updatePetMeshes();
+
+            const resultEl = document.getElementById('gacha-result');
+            resultEl.innerText = `🎉 ${selectedPet.name} (${selectedPet.rarity}) 획득!`;
+            resultEl.style.color = `#${selectedPet.color.toString(16)}`;
+
+            // 펫 뽑은 후 1초 뒤 자동 나가기
+            if (gachaAutoCloseTimer) clearTimeout(gachaAutoCloseTimer);
+            gachaAutoCloseTimer = setTimeout(() => {
+                closeGachaModal();
+                resultEl.innerText = "?";
+            }, 1000);
+        }
+
+        // --- Main Game Loop ---
+        const clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const delta = clock.getDelta();
+
+            // 1. Movement Logic
+            let moveX = 0;
+            let moveZ = 0;
+
+            if (keys['KeyW'] || keys['ArrowUp']) moveZ -= 1;
+            if (keys['KeyS'] || keys['ArrowDown']) moveZ += 1;
+            if (keys['KeyA'] || keys['ArrowLeft']) moveX -= 1;
+            if (keys['KeyD'] || keys['ArrowRight']) moveX += 1;
+
+            if (moveX !== 0 || moveZ !== 0) {
+                const len = Math.sqrt(moveX * moveX + moveZ * moveZ);
+                const actualSpeed = state.currentSpeed;
+                
+                playerGroup.position.x += (moveX / len) * actualSpeed * delta;
+                playerGroup.position.z += (moveZ / len) * actualSpeed * delta;
+
+                // Look Direction
+                const angle = Math.atan2(moveX, moveZ);
+                playerGroup.rotation.y = angle;
+
+                // Bounce Walking Anim
+                playerGroup.position.y = Math.abs(Math.sin(Date.now() * 0.015)) * 0.3;
+            } else {
+                playerGroup.position.y = 0;
+            }
+
+            // Map Bounds
+            playerGroup.position.x = Math.max(-48, Math.min(48, playerGroup.position.x));
+            playerGroup.position.z = Math.max(-48, Math.min(48, playerGroup.position.z));
+
+            // Camera Tracking
+            camera.position.x = playerGroup.position.x;
+            camera.position.z = playerGroup.position.z + 18;
+            camera.position.y = playerGroup.position.y + 15;
+            camera.lookAt(playerGroup.position.x, playerGroup.position.y, playerGroup.position.z);
+
+            // 2. Treadmill Zone (속도 증가)
+            const distToTM = playerGroup.position.distanceTo(treadmillGroup.position);
+            if (distToTM < 4) {
+                state.baseSpeed += delta * 8; // 런닝머신 위에서 속도 상승
+                state.currentSpeed = state.hasEgg ? state.baseSpeed * 0.5 : state.baseSpeed;
+                document.getElementById('speed-display').innerText = Math.floor(state.baseSpeed);
+
+                // 속도가 올라갈 때마다 "똥!" 효과음 재생
+                if (Date.now() - state.lastTreadmillStep > 180) {
+                    playSpeedUpSound();
+                    state.lastTreadmillStep = Date.now();
                 }
-            } else { 
-                lastTreadmillTime = 0;
-            }
-        }
-
-        function isValidPosition(x, y) {
-            if (y < WALL_THICK + RADIUS || y > MAP_HEIGHT - WALL_THICK - RADIUS) return false;
-            if (y < 22600) { if (x < 500 + WALL_THICK + RADIUS || x > 1500 - WALL_THICK - RADIUS) return false; }
-            else { if (x < WALL_THICK + RADIUS || x > 2000 - WALL_THICK - RADIUS) return false; if (y - RADIUS < 22600 + WALL_THICK) { if (x - RADIUS < 500 + WALL_THICK || x + RADIUS > 1500 - WALL_THICK) return false; } }
-            return true;
-        }
-
-        function movePlayer(dx, dy) {
-            let currentMoveSpeed = isSpeedFixed ? 10.0 : speedValue;
-            
-            if (liftedEgg) {
-                const scale = liftedEgg.scale; 
-                const slowFactor = Math.max(0.1, 1 - (scale * 0.5)); 
-                currentMoveSpeed *= slowFactor;
             }
 
-            const actualDx = dx * currentMoveSpeed; 
-            const actualDy = dy * currentMoveSpeed;
-            const steps = Math.ceil(Math.hypot(actualDx, actualDy)); 
-            if (steps === 0) return;
-
-            for (let i = 0; i < steps; i++) {
-                if (isValidPosition(playerX + actualDx / steps, playerY)) playerX += actualDx / steps;
-                if (isValidPosition(playerX, playerY + actualDy / steps)) playerY += actualDy / steps;
-            }
-        }
-
-        function renderMap() { map.style.transform = `translate3d(${-playerX}px, ${-playerY}px, 0)`; player.style.left = `${playerX}px`; player.style.top = `${playerY}px`; if (liftedEgg) renderSingleEgg(liftedEgg); }
-        function handleStart(e) { isDragging = true; handleMove(e); }
-        function handleMove(e) {
-            if (!isDragging) return;
-            const rect = joystickWrapper.getBoundingClientRect();
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            const centerX = rect.left + rect.width / 2; const centerY = rect.top + rect.height / 2;
-            let deltaX = clientX - centerX; let deltaY = clientY - centerY;
-            const distance = Math.hypot(deltaX, deltaY);
-            
-            const maxRadius = 60;
-            if (distance > maxRadius) { deltaX = (deltaX / distance) * maxRadius; deltaY = (deltaY / distance) * maxRadius; }
-            joystickStick.style.transform = `translate(calc(-50% + ${deltaX}px), calc(-50% + ${deltaY}px))`;
-            moveX = deltaX / maxRadius; moveY = deltaY / maxRadius;
-        }
-        function handleEnd() { isDragging = false; moveX = 0; moveY = 0; joystickStick.style.transform = 'translate(-50%, -50%)'; }
-        
-        joystickWrapper.addEventListener('mousedown', handleStart); window.addEventListener('mousemove', handleMove); window.addEventListener('mouseup', handleEnd); joystickWrapper.addEventListener('touchstart', handleStart); joystickWrapper.addEventListener('touchmove', handleMove); joystickWrapper.addEventListener('touchend', handleEnd);
-        
-        let lastFrameTime = performance.now();
-
-        function gameLoop(now) { 
-            const deltaSec = (now - lastFrameTime) / 1000;
-            lastFrameTime = now;
-
-            if (isDragging) { 
-                movePlayer(moveX, moveY); 
-                renderMap(); 
-            } else if (liftedEgg) {
-                renderMap(); 
+            // 3. Egg Pickup Zone
+            const distToEggPad = playerGroup.position.distanceTo(eggPickupGroup.position);
+            if (distToEggPad < 2.5 && !state.hasEgg) {
+                state.hasEgg = true;
+                carriedEgg.visible = false; // 등 뒤에 알 표시
+                carriedEgg.visible = true;
+                state.currentSpeed = state.baseSpeed * 0.5; // 알 들면 속도 감소
             }
 
-            checkTreadmill(now); 
-            checkNearestEgg(); 
-            updatePets(deltaSec);
+            // 4. Base Zone (알 제출 & 원래 속도로 복구)
+            const distToBase = playerGroup.position.distanceTo(baseZone.position);
+            if (distToBase < 3.5) {
+                if (state.hasEgg) {
+                    state.hasEgg = false;
+                    carriedEgg.visible = false;
+                    
+                    // 원래 속도로 즉시 회복!
+                    state.currentSpeed = state.baseSpeed;
+                    
+                    // 알 제출 보상
+                    addGold(50);
+                }
+            }
 
-            requestAnimationFrame(gameLoop); 
+            // 5. Gacha Station Modal Trigger
+            const distToGacha = playerGroup.position.distanceTo(gachaStationGroup.position);
+            if (distToGacha < 3) {
+                if (document.getElementById('gacha-modal').style.display !== 'block') {
+                    openGachaModal();
+                }
+            }
+
+            // Display Egg Rotation Animation
+            displayEgg.rotation.y += delta * 1.5;
+            wildEgg.rotation.y += delta * 2.0;
+
+            // Update Pets
+            petMeshes.forEach(pet => pet.update(delta, playerGroup.position));
+
+            // Stage Check
+            checkStageProgress();
+
+            renderer.render(scene, camera);
         }
 
-        initRandomEggs(); setZoom(50); updateSpeedDisplay(); renderMap(); requestAnimationFrame(gameLoop);
+        // Window Resize Handling
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Start Loop
+        animate();
     </script>
 </body>
 </html>
