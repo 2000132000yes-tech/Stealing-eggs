@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-select=none">
-    <title>Steal An Egg - UI Tweaks</title>
+    <title>Steal An Egg - World Map</title>
     <style>
         * {
             box-sizing: border-box;
@@ -98,6 +98,7 @@
         }
 
         .main-base {
+            position: relative;
             width: 100%;
             height: 100%;
             background-color: #9cd645;
@@ -105,6 +106,53 @@
             border-right: 24px solid #000000;
             border-bottom: 24px solid #000000;
             border-radius: 0 0 32px 32px;
+            overflow: hidden;
+        }
+
+        /* 베이스 뒤쪽(하단) 울타리 디자인 */
+        .fence-container {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 45px;
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-end;
+            padding: 0 10px;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .fence-post {
+            width: 18px;
+            height: 40px;
+            background-color: #8b5a2b;
+            border: 2px solid #5c3a1e;
+            border-radius: 4px 4px 0 0;
+            position: relative;
+        }
+
+        .fence-rail {
+            position: absolute;
+            bottom: 12px;
+            left: 0;
+            width: 100%;
+            height: 8px;
+            background-color: #a0522d;
+            border-top: 2px solid #5c3a1e;
+            border-bottom: 2px solid #5c3a1e;
+        }
+
+        .fence-rail-top {
+            position: absolute;
+            bottom: 26px;
+            left: 0;
+            width: 100%;
+            height: 8px;
+            background-color: #a0522d;
+            border-top: 2px solid #5c3a1e;
+            border-bottom: 2px solid #5c3a1e;
         }
 
         .shoulder-wall-left {
@@ -152,10 +200,10 @@
             box-shadow: 18px 0 0 #333;
         }
 
-        /* 좌측 하단 스탯 UI (배경 제거, 위로 이동, 작아짐) */
+        /* 좌측 하단 스탯 UI */
         #hud-container {
             position: absolute;
-            bottom: 120px; /* 기존 25px -> 120px 로 위로 높임 */
+            bottom: 120px;
             left: 25px;
             display: flex;
             flex-direction: column;
@@ -167,12 +215,12 @@
         .hud-item {
             display: flex;
             align-items: center;
-            background: none; /* 배경 제거 */
+            background: none;
             padding: 2px 0;
         }
 
         .hud-icon {
-            width: 24px; /* 기존 32px -> 24px 로 축소 */
+            width: 24px;
             height: 24px;
             display: flex;
             align-items: center;
@@ -187,12 +235,21 @@
         }
 
         .hud-text {
-            color: #ffffff;
-            font-size: 18px; /* 기존 22px -> 18px 로 축소 */
-            font-weight: 900; /* 더 두껍고 명확하게 설정 */
+            font-size: 18px;
+            font-weight: 900;
             letter-spacing: 0.5px;
             font-family: 'Arial Black', sans-serif;
             text-shadow: 0 2px 5px rgba(0,0,0,0.9), 0 0 2px rgba(0,0,0,0.9);
+        }
+
+        /* 속도 글씨: 파란색 */
+        #speed-display {
+            color: #3a86ff;
+        }
+
+        /* 돈 글씨: 초록색 */
+        #money-display {
+            color: #2ec4b6;
         }
 
         /* 조이스틱 UI */
@@ -240,7 +297,25 @@
                 <div class="base-wrapper">
                     <div class="shoulder-wall-left"></div>
                     <div class="shoulder-wall-right"></div>
-                    <div class="main-base"></div>
+                    <div class="main-base">
+                        <!-- 베이스 뒤쪽 울타리 -->
+                        <div class="fence-rail-top"></div>
+                        <div class="fence-rail"></div>
+                        <div class="fence-container">
+                            <div class="fence-post"></div><div class="fence-post"></div>
+                            <div class="fence-post"></div><div class="fence-post"></div>
+                            <div class="fence-post"></div><div class="fence-post"></div>
+                            <div class="fence-post"></div><div class="fence-post"></div>
+                            <div class="fence-post"></div><div class="fence-post"></div>
+                            <div class="fence-post"></div><div class="fence-post"></div>
+                            <div class="fence-post"></div><div class="fence-post"></div>
+                            <div class="fence-post"></div><div class="fence-post"></div>
+                            <div class="fence-post"></div><div class="fence-post"></div>
+                            <div class="fence-post"></div><div class="fence-post"></div>
+                            <div class="fence-post"></div><div class="fence-post"></div>
+                            <div class="fence-post"></div><div class="fence-post"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -249,7 +324,7 @@
 
         <!-- 좌측 하단 스탯 UI -->
         <div id="hud-container">
-            <!-- 상단: 스피드 (파란색 신발) -->
+            <!-- 파란색 속도 텍스트 -->
             <div class="hud-item">
                 <div class="hud-icon">
                     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -262,13 +337,13 @@
                 <div class="hud-text" id="speed-display">:10</div>
             </div>
 
-            <!-- 하단: 골드 (돈 모양) -->
+            <!-- 초록색 돈 텍스트 -->
             <div class="hud-item">
                 <div class="hud-icon">
                     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="12" cy="12" r="9" fill="#ffb703" stroke="#fb8500" stroke-width="2"/>
-                        <circle cx="12" cy="12" r="6" fill="#ffd166" stroke="#fb8500" stroke-width="1"/>
-                        <text x="12" y="16" font-size="11" font-weight="900" fill="#d48b00" text-anchor="middle">$</text>
+                        <circle cx="12" cy="12" r="9" fill="#2ec4b6" stroke="#0f9f90" stroke-width="2"/>
+                        <circle cx="12" cy="12" r="6" fill="#cbf3f0" stroke="#0f9f90" stroke-width="1"/>
+                        <text x="12" y="16" font-size="11" font-weight="900" fill="#0f9f90" text-anchor="middle">$</text>
                     </svg>
                 </div>
                 <div class="hud-text" id="money-display">:000</div>
