@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-select=none">
-    <title>Steal An Egg - Speed Toggle Switch</title>
+    <title>Steal An Egg - Speed Toggle Switch (No Text Change)</title>
     <style>
         * {
             box-sizing: border-box;
@@ -279,7 +279,7 @@
             fill: #edf2f4;
         }
 
-        /* 설정 아래 초록색/빨간색 속도 고정 스위치 */
+        /* 설정 아래 속도 고정 스위치 (초록색 -> 빨간색) */
         #speed-toggle-switch {
             position: absolute;
             top: 74px;
@@ -307,7 +307,7 @@
             transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        /* 스위치 활성화 (빨간색 & 속도 10 고정) */
+        /* 스위치 활성화 (빨간색) */
         #speed-toggle-switch.active {
             background-color: #e63946; /* 빨간색 */
         }
@@ -399,7 +399,7 @@
             </svg>
         </div>
 
-        <!-- 설정 아래 속도 고정 스위치 (초록색 -> 빨간색) -->
+        <!-- 설정 아래 속도 고정 스위치 -->
         <div id="speed-toggle-switch">
             <div id="speed-toggle-knob"></div>
         </div>
@@ -503,19 +503,12 @@
         speedToggleSwitch.addEventListener('click', () => {
             isSpeedFixed = !isSpeedFixed;
             speedToggleSwitch.classList.toggle('active', isSpeedFixed);
-            updateSpeedDisplay();
         });
 
         function updateSpeedDisplay() {
-            if (isSpeedFixed) {
-                // 고정 상태일 때는 HUD에 10.0 표시 (빨간 고정 상태임을 알림)
-                speedDisplay.innerText = `:10.0 (FIX)`;
-                speedDisplay.style.color = `#ff4d6d`;
-            } else {
-                // 해제 상태에서는 원래 누적 속도 표시
-                speedDisplay.innerText = `:${speedValue.toFixed(1)}`;
-                speedDisplay.style.color = `#3a86ff`;
-            }
+            // 스위치 상태와 상관없이 항상 현재 속도 값을 그대로 표시
+            speedDisplay.innerText = `:${speedValue.toFixed(1)}`;
+            speedDisplay.style.color = `#3a86ff`;
         }
 
         /* 런닝머신 위 Floating Pop-up 텍스트 */
@@ -563,7 +556,6 @@
                     lastTreadmillTime = now;
                 }
 
-                // 속도 10 고정 상태여도 내부 스탯(speedValue)은 계속 정상 상승!
                 while (now - lastTreadmillTime >= 100) {
                     speedValue += 0.1;
                     updateSpeedDisplay();
@@ -595,7 +587,7 @@
         }
 
         function movePlayer(dx, dy) {
-            // 스위치가 켜져(red) 있으면 이동 속도를 10.0으로 고정, 꺼져(green)있으면 실제 speedValue 적용
+            // 스위치가 켜져(red) 있으면 이동 속도만 10.0으로 고정
             const currentMoveSpeed = isSpeedFixed ? 10.0 : speedValue;
             
             const actualDx = dx * currentMoveSpeed;
