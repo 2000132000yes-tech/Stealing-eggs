@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-select=none">
-    <title>Steal An Egg - Camera & Player Size Fixed</title>
+    <title>Steal An Egg - Camera Bug Fixed</title>
     <style>
         * {
             box-sizing: border-box;
@@ -225,11 +225,9 @@
             opacity: 1;
         }
 
-        /* 캐릭터: 런닝머신보다 작도록 40px * 40px로 수정 */
+        /* 캐릭터: 맵 요소 내부에 배치되도록 절대 위치 수정 */
         #player {
             position: absolute;
-            top: 50%;
-            left: 50%;
             width: 40px;
             height: 40px;
             background-color: #ffda79;
@@ -238,6 +236,7 @@
             transform: translate(-50%, -50%);
             z-index: 100;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+            will-change: left, top;
         }
 
         #player::after {
@@ -534,10 +533,11 @@
                     <div class="treadmill-handle-right"></div>
                     <div class="treadmill-belt"></div>
                 </div>
+
+                <!-- 플레이어를 world-map 내부로 이동 -->
+                <div id="player"></div>
             </div>
         </div>
-
-        <div id="player"></div>
 
         <div id="hud-container">
             <div class="hud-item">
@@ -585,6 +585,7 @@
     <script>
         const map = document.getElementById('world-map');
         const camera = document.getElementById('camera');
+        const player = document.getElementById('player');
         const joystickWrapper = document.getElementById('joystick-wrapper');
         const joystickStick = document.getElementById('joystick-stick');
         const speedDisplay = document.getElementById('speed-display');
@@ -607,7 +608,6 @@
         let moveX = 0;
         let moveY = 0;
 
-        // 플레이어 크기 40px 기준 반지름 20px 적용
         const RADIUS = 20;
         const WALL_THICK = 24;
         const MAP_HEIGHT = 24100;
@@ -621,9 +621,9 @@
 
         let lastTreadmillTime = 0;
 
-        /* 시야(Zoom) 로직 정상 반전:
-           수치(1) = 좁은 시야 (화면 1.2x 확대)
-           수치(100) = 넓은 시야 (화면 0.2x 축소) */
+        /* 시야(Zoom) 설정:
+           수치(1) = 좁은 시야 (1.2x 확대)
+           수치(100) = 넓은 시야 (0.2x 축소) */
         function setZoom(val) {
             const scale = 1.2 - (val - 1) * (1.0 / 99);
             camera.style.transform = `scale(${scale.toFixed(3)})`;
@@ -747,8 +747,11 @@
             }
         }
 
+        /* 맵과 플레이어 위치 렌더링 */
         function renderMap() {
             map.style.transform = `translate3d(${-playerX}px, ${-playerY}px, 0)`;
+            player.style.left = `${playerX}px`;
+            player.style.top = `${playerY}px`;
         }
 
         function handleStart(e) {
