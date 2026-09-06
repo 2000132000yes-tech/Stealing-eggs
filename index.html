@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-select=none">
-    <title>Steal An Egg - World Map Expansion</title>
+    <title>Steal An Egg - Walk Through Fence</title>
     <style>
         * {
             box-sizing: border-box;
@@ -40,7 +40,7 @@
             will-change: transform;
         }
 
-        /* 월드 맵 전체 (높이 5700px로 증가) */
+        /* 월드 맵 전체 */
         #world-map {
             position: absolute;
             top: 0;
@@ -88,7 +88,7 @@
             box-shadow: 0 0 8px rgba(255, 0, 0, 0.8);
         }
 
-        /* 메인 베이스 영역 (세로 길이를 1500px로 확장) */
+        /* 메인 베이스 영역 */
         .base-wrapper {
             position: absolute;
             top: 4200px;
@@ -106,56 +106,20 @@
             border-right: 24px solid #000000;
             border-bottom: 24px solid #000000;
             border-radius: 0 0 32px 32px;
-            overflow: hidden;
         }
 
-        /* 직사각형 뒤쪽 울타리 디자인 */
-        .fence-container {
+        /* 통과 가능한 1/4 직사각형 울타리 */
+        .inner-fence-rect {
             position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 50px;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-            padding: 0 10px;
+            bottom: 60px;
+            left: 500px;
+            width: 1000px;
+            height: 380px;
+            border: 12px solid #5c3a1e;
+            background-color: rgba(139, 90, 43, 0.12);
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.3);
+            border-radius: 4px;
             pointer-events: none;
-            z-index: 10;
-        }
-
-        /* 완전히 직사각형인 울타리 기둥 */
-        .fence-post {
-            width: 20px;
-            height: 48px;
-            background-color: #8b5a2b;
-            border: 2px solid #3d2311;
-            border-radius: 0px; /* 완벽한 직사각형 */
-            box-shadow: inset 0 0 4px rgba(0,0,0,0.3);
-        }
-
-        .fence-rail-top {
-            position: absolute;
-            bottom: 30px;
-            left: 0;
-            width: 100%;
-            height: 10px;
-            background-color: #a0522d;
-            border-top: 2px solid #3d2311;
-            border-bottom: 2px solid #3d2311;
-            z-index: 11;
-        }
-
-        .fence-rail-bottom {
-            position: absolute;
-            bottom: 10px;
-            left: 0;
-            width: 100%;
-            height: 10px;
-            background-color: #a0522d;
-            border-top: 2px solid #3d2311;
-            border-bottom: 2px solid #3d2311;
-            z-index: 11;
         }
 
         .shoulder-wall-left {
@@ -301,24 +265,8 @@
                     <div class="shoulder-wall-left"></div>
                     <div class="shoulder-wall-right"></div>
                     <div class="main-base">
-                        <!-- 직사각형 울타리 난간 -->
-                        <div class="fence-rail-top"></div>
-                        <div class="fence-rail-bottom"></div>
-                        <div class="fence-container">
-                            <div class="fence-post"></div><div class="fence-post"></div>
-                            <div class="fence-post"></div><div class="fence-post"></div>
-                            <div class="fence-post"></div><div class="fence-post"></div>
-                            <div class="fence-post"></div><div class="fence-post"></div>
-                            <div class="fence-post"></div><div class="fence-post"></div>
-                            <div class="fence-post"></div><div class="fence-post"></div>
-                            <div class="fence-post"></div><div class="fence-post"></div>
-                            <div class="fence-post"></div><div class="fence-post"></div>
-                            <div class="fence-post"></div><div class="fence-post"></div>
-                            <div class="fence-post"></div><div class="fence-post"></div>
-                            <div class="fence-post"></div><div class="fence-post"></div>
-                            <div class="fence-post"></div><div class="fence-post"></div>
-                            <div class="fence-post"></div><div class="fence-post"></div>
-                        </div>
+                        <!-- 넘어가기 가능한 직사각형 울타리 -->
+                        <div class="inner-fence-rect"></div>
                     </div>
                 </div>
             </div>
@@ -377,27 +325,26 @@
 
         const RADIUS = 25;
         const WALL_THICK = 24;
-        const MAP_HEIGHT = 5700; // 넓어진 베이스 크기에 맞춰 총 맵 높이 변경 (4200 + 1500)
+        const MAP_HEIGHT = 5700;
 
         function isValidPosition(x, y) {
-            // 상/하단 외곽 벽 충돌 체크
+            // 외곽 벽 충돌 체크
             if (y < WALL_THICK + RADIUS || y > MAP_HEIGHT - WALL_THICK - RADIUS) return false;
 
-            // 1~6 구역 내부 (y < 4200)
+            // 구역 1~6 내부
             if (y < 4200) {
-                return (x >= 500 + WALL_THICK + RADIUS && x <= 1500 - WALL_THICK - RADIUS);
+                if (x < 500 + WALL_THICK + RADIUS || x > 1500 - WALL_THICK - RADIUS) return false;
+            } else {
+                // 베이스 내부
+                if (x < WALL_THICK + RADIUS || x > 2000 - WALL_THICK - RADIUS) return false;
+
+                // 어깨 벽 충돌 체크
+                if (y - RADIUS < 4200 + WALL_THICK) {
+                    if (x - RADIUS < 500 + WALL_THICK || x + RADIUS > 1500 - WALL_THICK) return false;
+                }
             }
 
-            // 베이스 내부 (y >= 4200)
-            if (x < WALL_THICK + RADIUS || x > 2000 - WALL_THICK - RADIUS) return false;
-
-            // 베이스 좌/우 상단 꺾이는 벽(어깨 벽) 충돌 체크
-            if (y - RADIUS < 4200 + WALL_THICK) {
-                const inLeftShoulder = (x - RADIUS < 500 + WALL_THICK);
-                const inRightShoulder = (x + RADIUS > 1500 - WALL_THICK);
-                if (inLeftShoulder || inRightShoulder) return false;
-            }
-
+            // 울타리는 자유 통과 가능 (충돌 검사 미적용)
             return true;
         }
 
