@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-select=none">
-    <title>Steal An Egg - Fixed Version</title>
+    <title>Steal An Egg - Treadmill Effect Updated</title>
     <style>
         * {
             box-sizing: border-box;
@@ -219,6 +219,35 @@
 
         #player::after { content: ''; position: absolute; top: 9px; left: 7px; width: 7px; height: 7px; background-color: #333; border-radius: 50%; box-shadow: 15px 0 0 #333; }
 
+        /* --- 런닝머신 팝업 효과 텍스트 스타일 --- */
+        .pop-text {
+            position: absolute;
+            font-size: 26px;
+            font-weight: 900;
+            color: #3a86ff;
+            text-shadow: -2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff, 2px 2px 0 #fff, 0 3px 8px rgba(0,0,0,0.5);
+            pointer-events: none;
+            z-index: 200;
+            white-space: nowrap;
+            will-change: transform, opacity;
+            animation: popupFloat 0.8s ease-out forwards;
+        }
+
+        @keyframes popupFloat {
+            0% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(0.6) translate(0, 0);
+            }
+            50% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1.1) translate(var(--dx), var(--dy-mid));
+            }
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.9) translate(calc(var(--dx) * 1.5), var(--dy-end));
+            }
+        }
+
         #settings-btn {
             position: absolute; 
             top: 20px; 
@@ -287,8 +316,7 @@
 
         #hud-container { position: absolute; bottom: 120px; left: 25px; display: flex; flex-direction: column; gap: 6px; z-index: 300; pointer-events: none; }
         .hud-item { display: flex; align-items: center; }
-        .hud-icon { width: 24px; height: 24px; margin-right: 6px; }
-        .hud-icon svg { width: 100%; height: 100%; }
+        .hud-icon { font-size: 20px; margin-right: 6px; }
         .hud-text { font-size: 22px; font-weight: 900; font-family: 'Arial Black', sans-serif; text-shadow: 0 2px 5px rgba(0,0,0,0.9); }
 
         #speed-display { color: #3a86ff; }
@@ -413,23 +441,12 @@
 
         <div id="hud-container">
             <div class="hud-item">
-                <div class="hud-icon">
-                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M2 17C2 17 4 17 6 15C8 13 10 9 13 9C15 9 17 10 18 12C19 13 21 13.5 22 14V18H2V17Z" fill="#3a86ff" stroke="#004e92" stroke-width="1.5"/>
-                        <path d="M2 18H22V20H2V18Z" fill="#e0e1dd"/>
-                    </svg>
-                </div>
-                <div class="hud-text" id="speed-display">:10.00</div>
+                <div class="hud-icon">👟</div>
+                <div class="hud-text" id="speed-display">+0.00</div>
             </div>
 
             <div class="hud-item">
-                <div class="hud-icon">
-                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="12" cy="12" r="9" fill="#70e000" stroke="#38b000" stroke-width="2"/>
-                        <circle cx="12" cy="12" r="6" fill="#ccff33" stroke="#38b000" stroke-width="1"/>
-                        <text x="12" y="16" font-size="11" font-weight="900" fill="#208b00" text-anchor="middle">$</text>
-                    </svg>
-                </div>
+                <div class="hud-icon">💰</div>
                 <div class="hud-text" id="money-display">000</div>
             </div>
         </div>
@@ -705,12 +722,9 @@
             }
         }
 
-        /* --- 소수점 표기 반영 부화 공식 --- */
         function startIncubation(egg) {
             egg.isIncubating = true;
-            const baseZoneSeconds = egg.zoneLevel * 60; // Zone 1 = 60초(1분)
-            
-            // 무게 소수점 계산: 17.6kg -> 정수 17초 + 소수점(.6 * 10 = 6초)
+            const baseZoneSeconds = egg.zoneLevel * 60;
             const integerWeight = Math.floor(egg.weight);
             const decimalWeight = Math.round((egg.weight - integerWeight) * 10);
             const weightSeconds = integerWeight + decimalWeight;
@@ -792,12 +806,38 @@
 
         speedToggleSwitch.addEventListener('click', () => { isSpeedFixed = !isSpeedFixed; speedToggleSwitch.classList.toggle('active', isSpeedFixed); });
         
-        /* --- HUD 실시간 속도 표기 개선 --- */
         function updateSpeedDisplay() { 
-            speedDisplay.innerText = `:${speedValue.toFixed(2)}`; 
+            speedDisplay.innerText = `+${speedValue.toFixed(2)}`; 
         }
-        
-        /* --- 런닝머신 속도 상승 매 프레임 감지 --- */
+
+        /* --- 무작위 위쪽 방향 흐려짐 팝업 애니메이션 --- */
+        function createSpeedPopText(x, y, amount) {
+            const pop = document.createElement('div');
+            pop.className = 'pop-text';
+            pop.innerText = `👟 +${amount.toFixed(2)}`;
+            pop.style.left = `${x}px`;
+            pop.style.top = `${y - 30}px`;
+
+            // 위쪽 무작위 대각선 방향 각도 계산 (좌우 -45px ~ +45px, 위로 -60px ~ -100px)
+            const randomDx = (Math.random() - 0.5) * 90;
+            const randomDyMid = -30 - (Math.random() * 30);
+            const randomDyEnd = -60 - (Math.random() * 40);
+
+            pop.style.setProperty('--dx', `${randomDx}px`);
+            pop.style.setProperty('--dy-mid', `${randomDyMid}px`);
+            pop.style.setProperty('--dy-end', `${randomDyEnd}px`);
+
+            map.appendChild(pop);
+
+            // 애니메이션 완료 후 요소 제거
+            setTimeout(() => {
+                if (pop && pop.parentNode) {
+                    pop.parentNode.removeChild(pop);
+                }
+            }, 800);
+        }
+
+        /* --- 런닝머신 속도 상승 및 팝업 효과 실행 --- */
         function checkTreadmill(now) {
             const isOnTM = (playerX >= TM_BOUNDS.left && playerX <= TM_BOUNDS.right && playerY >= TM_BOUNDS.top && playerY <= TM_BOUNDS.bottom);
             if (isOnTM) {
@@ -811,8 +851,14 @@
                 const delta = now - lastTreadmillTime;
                 if (delta >= 100) {
                     const increments = Math.floor(delta / 100);
-                    speedValue += increments * 0.01;
-                    updateSpeedDisplay(); // 실시간 HUD 업뎃
+                    const gainSpeed = increments * 0.01;
+                    
+                    speedValue += gainSpeed;
+                    updateSpeedDisplay();
+                    
+                    // 스피드 상승 시 위쪽 무작위 방향으로 튀어 오르는 팝업 발생
+                    createSpeedPopText(playerX, playerY, gainSpeed);
+
                     lastTreadmillTime = now - (delta % 100);
                 }
             } else { 
