@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-select=none">
-    <title>Steal An Egg - Joystick Visible Fixed</title>
+    <title>Steal An Egg - Center Large Joystick</title>
     <style>
         * {
             box-sizing: border-box;
@@ -240,68 +240,76 @@
         #speed-display { color: #3a86ff; }
         #money-display { color: #70e000; }
 
-        /* --- 컨트롤 UI 레이아웃 완전히 복구 (화면 내부 배치) --- */
+        /* --- 컨트롤 UI 레이아웃 (하단 중앙, 대폭 확대) --- */
         #controls-container {
             position: absolute;
-            bottom: 60px; /* 화면 하단에서 여백 */
-            right: 60px;  /* 화면 우측에서 여백 */
+            bottom: 40px; /* 화면 하단 여백 */
+            left: 50%;   /* 화면 가로 중앙 */
+            transform: translateX(-50%); /* 정확한 중앙 정렬 */
+            width: 250px; /* 컨테이너 너비 확보 */
+            height: 180px; /* 컨테이너 높이 확보 */
             display: flex;
-            flex-direction: column; /* 세로 배치 */
             align-items: center;
-            gap: 15px; /* 버튼과 조이스틱 간격 */
+            justify-content: center;
             pointer-events: none; /* 컨테이너 자체는 클릭 무시 */
             z-index: 300;
         }
 
-        /* 조이스틱 (반지름 30px 단축 버전): 완전히 보이도록 수정 */
+        /* 조이스틱 (대폭 확대: 지름 120px) */
         #joystick-wrapper {
-            width: 60px; /* 지름 60px */
-            height: 60px;
-            background: rgba(255, 255, 255, 0.5); /* 배경 명확히 */
-            border: 4px solid rgba(0, 0, 0, 0.8); /* 검은색 테두리 추가로 시인성 확보 */
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px; /* 지름 120px로 확대 */
+            height: 120px;
+            background: rgba(255, 255, 255, 0.6); /* 배경 더 명확히 */
+            border: 6px solid rgba(0, 0, 0, 0.9); /* 검은색 테두리 */
             border-radius: 50%;
             touch-action: none;
             pointer-events: auto; /* 클릭 인식 */
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-            position: relative;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.6);
         }
 
         #joystick-stick {
             position: absolute;
             top: 50%;
             left: 50%;
-            width: 26px; /* 스틱 크기도 단축 */
-            height: 26px;
-            background: rgba(0, 0, 0, 1); /* 스틱 검은색으로 */
-            border: 2px solid #fff; /* 스틱 테두리 흰색 */
+            width: 50px; /* 스틱 크기도 확대 */
+            height: 50px;
+            background: rgba(0, 0, 0, 1); /* 스틱 검은색 */
+            border: 3px solid #fff; /* 스틱 흰색 테두리 */
             border-radius: 50%;
             transform: translate(-50%, -50%);
             pointer-events: none;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.4);
         }
 
-        /* 집기/놓기 버튼 */
+        /* 집기/놓기 버튼: 조이스틱 우측 상단으로 배치 최적화 */
         #action-btn {
             display: none;
-            width: 70px;
-            height: 70px;
-            background-color: rgba(255, 218, 121, 0.9); /* 버튼 명확히 */
-            border: 6px solid #ccae4f;
+            position: absolute;
+            top: 0; /* 컨테이너 상단 */
+            right: 0; /* 컨테이너 우측 */
+            width: 80px; /* 크기 약간 확대 */
+            height: 80px;
+            background-color: rgba(255, 218, 121, 0.95);
+            border: 7px solid #ccae4f;
             color: #7d6b31;
             border-radius: 50%;
-            font-size: 17px;
+            font-size: 19px;
             font-weight: 900;
             cursor: pointer;
             pointer-events: auto; /* 클릭 인식 */
             align-items: center;
             justify-content: center;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
-            transition: background-color 0.1s, transform 0.1s;
+            box-shadow: 0 5px 12px rgba(0, 0, 0, 0.6);
+            transition: background-color 0.1s, transform 0.1s, top 0.1s, right 0.1s;
         }
 
         #action-btn:active { transform: scale(0.95); }
         #action-btn.can-pick { display: flex; } /* 근처에 알이 있을 때만 표시 */
-        #action-btn.is-lifting { background-color: rgba(230, 57, 70, 0.9); border-color: #b32e38; color: #fff; }
+        #action-btn.is-lifting { background-color: rgba(230, 57, 70, 0.95); border-color: #b32e38; color: #fff; }
 
     </style>
 </head>
@@ -310,7 +318,7 @@
     <div id="game-viewport">
         <div id="settings-btn">
             <svg viewBox="0 0 24 24">
-                <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
+                <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7; height: 180px; flex-direction: column-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
             </svg>
         </div>
 
@@ -374,15 +382,15 @@
             </div>
         </div>
 
-        <!-- 우측 하단 컨트롤 컨테이너 (복구됨) -->
+        <!-- 하단 중앙 컨트롤 컨테이너 (복구 및 확대됨) -->
         <div id="controls-container">
-            <!-- 집기/놓기 버튼 (위) -->
-            <button id="action-btn">집기</button>
-            
-            <!-- 조이스틱 (아래, 반지름 30px 단축 버전) -->
+            <!-- 조이스틱 (중앙 아래, 지름 120px 대형) -->
             <div id="joystick-wrapper">
                 <div id="joystick-stick"></div>
             </div>
+            
+            <!-- 집기/놓기 버튼 (우측 상단 배치 최적화) -->
+            <button id="action-btn">집기</button>
         </div>
 
         <div id="settings-modal">
@@ -462,9 +470,9 @@
         }
 
         function getRandomEggSize() {
-            const minScale = 0.2; // 최소 크기 (플레이어의 절반)
-            const maxScale = 1.5; // 최대 크기
-            const weightedRand = Math.pow(Math.random(), 3); // 작은 알 가중치
+            const minScale = 0.2; 
+            const maxScale = 1.5; 
+            const weightedRand = Math.pow(Math.random(), 3); 
             const scale = minScale + (weightedRand * (maxScale - minScale));
             const displaySize = 1 + ((scale - minScale) / (maxScale - minScale)) * 99;
             return { scale: parseFloat(scale.toFixed(3)), display: parseFloat(displaySize.toFixed(2)) };
@@ -581,16 +589,16 @@
             let deltaX = clientX - centerX; let deltaY = clientY - centerY;
             const distance = Math.hypot(deltaX, deltaY);
             
-            // --- 조이스틱 위치 및 스케일 버그 해결 ---
-            // Max Radius를 축소된 크기(반지름 30px)로 정확히 제한
-            const maxRadius = 30; 
+            // --- 조이스틱 확대(지름 120px)에 맞게 Max Radius 수정 (60px) ---
+            const maxRadius = 60; // 반지름 60px
             if (distance > maxRadius) { deltaX = (deltaX / distance) * maxRadius; deltaY = (deltaY / distance) * maxRadius; }
-            // 스틱 이동 렌더링 (translate50% 유지하며 중앙 기준 deltaX 이동)
+            // 스틱 이동 렌더링
             joystickStick.style.transform = `translate(calc(-50% + ${deltaX}px), calc(-50% + ${deltaY}px))`;
-            // 이동 비율 계산 (축소된 반지름 기준)
+            // 이동 비율 계산 (확대된 반지름 기준)
             moveX = deltaX / maxRadius; moveY = deltaY / maxRadius;
         }
         function handleEnd() { isDragging = false; moveX = 0; moveY = 0; joystickStick.style.transform = 'translate(-50%, -50%)'; }
+        
         joystickWrapper.addEventListener('mousedown', handleStart); window.addEventListener('mousemove', handleMove); window.addEventListener('mouseup', handleEnd); joystickWrapper.addEventListener('touchstart', handleStart); joystickWrapper.addEventListener('touchmove', handleMove); joystickWrapper.addEventListener('touchend', handleEnd);
         function gameLoop(now) { if (isDragging && !isActionFrozen) { movePlayer(moveX, moveY); renderMap(); } else if (liftedEgg || isActionFrozen) renderMap(); checkTreadmill(now); checkNearestEgg(); requestAnimationFrame(gameLoop); }
         initRandomEggs(); setZoom(50); updateSpeedDisplay(); renderMap(); requestAnimationFrame(gameLoop);
