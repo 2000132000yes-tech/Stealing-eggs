@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-select=none">
-    <title>Steal An Egg - Unique Eggs & Weight Display</title>
+    <title>Steal An Egg - Fixed Label Size & Persistent Weight</title>
     <style>
         * {
             box-sizing: border-box;
@@ -85,23 +85,23 @@
 
         .egg-item svg { width: 100%; height: 100%; overflow: visible; }
 
-        /* 알 상단 무게 라벨 */
+        /* 알 상단 무게 라벨 (스케일 역산으로 고정 크기 유지) */
         .egg-weight-label {
             position: absolute;
             top: -28px;
             left: 50%;
-            transform: translateX(-50%);
+            transform-origin: center center;
             font-size: 15px;
             font-weight: 900;
             color: #ffffff;
-            background-color: rgba(0, 0, 0, 0.75);
-            padding: 2px 8px;
+            background-color: rgba(0, 0, 0, 0.85);
+            padding: 3px 8px;
             border-radius: 6px;
-            border: 1px solid #ffda79;
+            border: 1.5px solid #ffda79;
             white-space: nowrap;
             display: none;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.5);
-            z-index: 120;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.6);
+            z-index: 150;
         }
 
         /* 빨간 구별선 */
@@ -465,33 +465,32 @@
             { level: 1, name: "Zone 1", minY: 21624, maxY: 22600 }
         ];
 
-        // 단계(Zone)별로 모양/색상/패턴이 다른 알 SVG 생성
         function getEggSvgHTML(id, zoneLevel) {
             let gradContent = '';
             let patternSVG = '';
 
             switch(zoneLevel) {
-                case 1: // 기본 따뜻한 노란알 + 점박이
+                case 1:
                     gradContent = `<stop offset="0%" stop-color="#ffffff"/><stop offset="60%" stop-color="#fbc531"/><stop offset="100%" stop-color="#e1b12c"/>`;
                     patternSVG = `<circle cx="35" cy="70" r="6" fill="#e84118" opacity="0.6"/><circle cx="65" cy="85" r="8" fill="#e84118" opacity="0.6"/><circle cx="50" cy="100" r="5" fill="#e84118" opacity="0.6"/>`;
                     break;
-                case 2: // 자연의 초록알 + 물결 패턴
+                case 2:
                     gradContent = `<stop offset="0%" stop-color="#eccc68"/><stop offset="50%" stop-color="#2ed573"/><stop offset="100%" stop-color="#26af5f"/>`;
                     patternSVG = `<path d="M 20 60 Q 50 50, 80 60 Q 50 70, 20 60" fill="#1e90ff" opacity="0.5"/><path d="M 15 85 Q 50 75, 85 85 Q 50 95, 15 85" fill="#1e90ff" opacity="0.5"/>`;
                     break;
-                case 3: // 신비로운 보라알 + 세로 줄무늬
+                case 3:
                     gradContent = `<stop offset="0%" stop-color="#ffffff"/><stop offset="40%" stop-color="#a29bfe"/><stop offset="100%" stop-color="#6c5ce7"/>`;
                     patternSVG = `<path d="M 50 5 C 30 40, 30 90, 50 125" stroke="#fd79a8" stroke-width="6" fill="none" opacity="0.7"/><path d="M 35 15 C 15 45, 15 85, 30 115" stroke="#fd79a8" stroke-width="5" fill="none" opacity="0.7"/><path d="M 65 15 C 85 45, 85 85, 70 115" stroke="#fd79a8" stroke-width="5" fill="none" opacity="0.7"/>`;
                     break;
-                case 4: // 다크/네온 알 + 대각선 테크 패턴
+                case 4:
                     gradContent = `<stop offset="0%" stop-color="#636e72"/><stop offset="50%" stop-color="#2d3436"/><stop offset="100%" stop-color="#000000"/>`;
                     patternSVG = `<line x1="20" y1="40" x2="80" y2="100" stroke="#00cec9" stroke-width="6" opacity="0.8"/><line x1="30" y1="30" x2="90" y2="90" stroke="#ff7675" stroke-width="4" opacity="0.8"/>`;
                     break;
-                case 5: // 얼음/수정 알 + 다이아몬드 패턴
+                case 5:
                     gradContent = `<stop offset="0%" stop-color="#ffffff"/><stop offset="50%" stop-color="#81ecec"/><stop offset="100%" stop-color="#0984e3"/>`;
                     patternSVG = `<polygon points="50,30 65,50 50,70 35,50" fill="#ffffff" opacity="0.7"/><polygon points="50,75 65,95 50,115 35,95" fill="#ffffff" opacity="0.7"/>`;
                     break;
-                case 6: // 황금/마그마 알 + 번개 패턴
+                case 6:
                     gradContent = `<stop offset="0%" stop-color="#fff200"/><stop offset="50%" stop-color="#ff3838"/><stop offset="100%" stop-color="#c56cf0"/>`;
                     patternSVG = `<path d="M 55 20 L 35 60 L 55 60 L 40 105 L 70 50 L 50 50 Z" fill="#fff" opacity="0.85"/>`;
                     break;
@@ -512,15 +511,11 @@
             `;
         }
 
-        // 큰 알이 나올 확률 극단적으로 감소 (지수 power = 12 적용)
         function getRandomEggSize() {
             const minScale = 0.2; 
             const maxScale = 1.5; 
-            // 지수를 12로 대폭 올려 아주 아주 작은 알이 대부분 나오게 만듦
             const weightedRand = Math.pow(Math.random(), 12); 
             const scale = minScale + (weightedRand * (maxScale - minScale));
-            
-            // 크기(scale)에 따른 무게(kg) 계산식 (0.2scale -> 약 1.5kg, 1.5scale -> 약 98.5kg)
             const weight = (Math.pow(scale, 2.5) * 35).toFixed(1);
             return { scale: parseFloat(scale.toFixed(3)), weight: weight };
         }
@@ -548,17 +543,24 @@
                     eggItem.style.left = `${randX}px`;
                     eggItem.style.top = `${randY}px`;
                     eggItem.style.transform = `translate(-50%, -100%) scale(${sizeData.scale})`;
+
+                    // 글자 크기를 일정하게 고정하기 위해 (1 / scale)로 역할산 트랜스폼 설정
+                    const weightLabel = eggItem.querySelector('.egg-weight-label');
+                    const invScale = (1 / sizeData.scale).toFixed(3);
+                    weightLabel.style.transform = `translateX(-50%) scale(${invScale})`;
+
                     eggLayer.appendChild(eggItem);
 
                     eggList.push({ 
                         id: eggIdCounter, 
                         element: eggItem, 
-                        weightLabel: eggItem.querySelector('.egg-weight-label'),
+                        weightLabel: weightLabel,
                         worldX: randX, 
                         worldY: randY, 
                         scale: sizeData.scale, 
                         weight: sizeData.weight, 
-                        isLifted: false 
+                        isLifted: false,
+                        hasCrossedRedLine: false // 빨간선 통과 여부 저장 플래그
                     });
 
                     eggIdCounter++;
@@ -612,27 +614,28 @@
         }
 
         function renderSingleEgg(eggData) {
+            // 들고 있거나 놓았을 때 플레이어/알 위치가 빨간선보다 아래에 위치하면 '영구 공개' 설정
+            if (playerY >= RED_LINE_Y && eggData.isLifted) {
+                eggData.hasCrossedRedLine = true;
+            } else if (eggData.worldY >= RED_LINE_Y) {
+                eggData.hasCrossedRedLine = true;
+            }
+
             if (eggData.isLifted && liftedEgg === eggData) {
                 eggData.element.style.left = `${playerX}px`; 
                 eggData.element.style.top = `${playerY}px`;
                 const yOffset = -110 - (eggData.scale * 15); 
                 eggData.element.style.transform = `translate(-50%, ${yOffset}%) scale(${eggData.scale})`;
-                
-                // 빨간 선(RED_LINE_Y)을 넘었을 때만 무게 표시
-                if (playerY >= RED_LINE_Y) {
-                    eggData.weightLabel.style.display = 'block';
-                } else {
-                    eggData.weightLabel.style.display = 'none';
-                }
             } else { 
                 eggData.element.style.transform = `translate(-50%, -100%) scale(${eggData.scale})`; 
                 eggData.isLifted = false; 
-                // 내려놓았거나 빨간선 위일 경우 무게 숨김
-                if (eggData.worldY < RED_LINE_Y) {
-                    eggData.weightLabel.style.display = 'none';
-                } else {
-                    eggData.weightLabel.style.display = 'block';
-                }
+            }
+
+            // 한번이라도 빨간선 아래로 내려왔다면 글씨는 계속 표시
+            if (eggData.hasCrossedRedLine) {
+                eggData.weightLabel.style.display = 'block';
+            } else {
+                eggData.weightLabel.style.display = 'none';
             }
         }
 
