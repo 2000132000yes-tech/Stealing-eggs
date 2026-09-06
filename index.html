@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-select=none">
-    <title>Steal An Egg - Bug Fixed</title>
+    <title>Steal An Egg - Hatch Bug Fixed</title>
     <style>
         * {
             box-sizing: border-box;
@@ -39,7 +39,6 @@
             will-change: transform;
         }
 
-        /* 전체 맵 세로 길이: 24,100px */
         #world-map {
             position: absolute;
             top: 0;
@@ -49,7 +48,6 @@
             will-change: transform;
         }
 
-        /* Zone 컨테이너 */
         .zone-container {
             position: absolute;
             top: 0;
@@ -63,7 +61,6 @@
             border-right: 24px solid #000000;
         }
 
-        /* 단계별 세로 높이 */
         .zone-6 { height: 7500px; background-color: #f7a37b; position: relative; }
         .zone-5 { height: 5500px; background-color: #00a8e8; position: relative; }
         .zone-4 { height: 4000px; background-color: #262626; position: relative; }
@@ -71,7 +68,6 @@
         .zone-2 { height: 1800px; background-color: #1e5c1e; position: relative; }
         .zone-1 { height: 1000px; background-color: #72bf44; position: relative; }
 
-        /* --- 알(Egg) 스타일 --- */
         .egg-item {
             position: absolute;
             width: 100px; 
@@ -85,7 +81,6 @@
 
         .egg-item svg { width: 100%; height: 100%; overflow: visible; }
 
-        /* 알 상단 무게 / 타이머 라벨 */
         .egg-weight-label {
             position: absolute;
             top: -28px;
@@ -102,9 +97,9 @@
             display: none;
             box-shadow: 0 2px 6px rgba(0,0,0,0.6);
             z-index: 150;
+            pointer-events: none; /* 클릭 이벤트를 방해하지 않도록 추가 */
         }
 
-        /* 부화 완료 느낌표 아이콘 */
         .hatch-ready-icon {
             position: absolute;
             top: -55px;
@@ -117,6 +112,7 @@
             animation: bounceReady 0.6s infinite alternate ease-in-out;
             display: none;
             z-index: 160;
+            pointer-events: none; /* 클릭 이벤트를 방해하지 않도록 추가 */
         }
 
         @keyframes bounceReady {
@@ -124,7 +120,6 @@
             100% { transform: translateX(-50%) translateY(-10px); }
         }
 
-        /* 빨간 구별선 */
         .red-divider {
             position: absolute;
             top: 22592px;
@@ -136,7 +131,6 @@
             box-shadow: 0 0 8px rgba(255, 0, 0, 0.8);
         }
 
-        /* 하단 베이스 */
         .base-wrapper {
             position: absolute;
             top: 22600px;
@@ -169,7 +163,6 @@
             pointer-events: none;
         }
 
-        /* 런닝머신 */
         .treadmill {
             position: absolute;
             top: 23260px;
@@ -220,14 +213,12 @@
         .shoulder-wall-left { position: absolute; top: 0; left: 0; width: 524px; height: 24px; background-color: #000000; }
         .shoulder-wall-right { position: absolute; top: 0; right: 0; width: 524px; height: 24px; background-color: #000000; }
 
-        /* 캐릭터 */
         #player {
             position: absolute; width: 40px; height: 40px; background-color: #ffda79; border: 3px solid #ccae4f; border-radius: 10px; transform: translate(-50%, -50%); z-index: 100; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5); will-change: left, top;
         }
 
         #player::after { content: ''; position: absolute; top: 9px; left: 7px; width: 7px; height: 7px; background-color: #333; border-radius: 50%; box-shadow: 15px 0 0 #333; }
 
-        /* UI 버튼 */
         #settings-btn {
             position: absolute; 
             top: 20px; 
@@ -256,7 +247,6 @@
         #speed-toggle-switch.active { background-color: #e63946; }
         #speed-toggle-switch.active #speed-toggle-knob { transform: translateX(20px); }
 
-        /* --- 설정 Modal (수정) --- */
         #settings-modal {
             display: none; 
             position: fixed; 
@@ -338,7 +328,6 @@
         #speed-display { color: #3a86ff; }
         #money-display { color: #70e000; }
 
-        /* --- 컨트롤 UI 레이아웃 --- */
         #controls-container {
             position: absolute;
             bottom: 100px;
@@ -353,7 +342,6 @@
             z-index: 300;
         }
 
-        /* 조이스틱 */
         #joystick-wrapper {
             position: absolute;
             bottom: 0;
@@ -383,7 +371,6 @@
             box-shadow: 0 4px 8px rgba(0,0,0,0.4);
         }
 
-        /* 액션 버튼 (집기/놓기/부화) */
         #action-btn {
             display: none;
             position: absolute;
@@ -537,7 +524,8 @@
         const MAP_HEIGHT = 24100;
         const RED_LINE_Y = 22592;
 
-        const FENCE_BOUNDS = { left: 1000, right: 2000, top: 23440, bottom: 24040 };
+        // 울타리 부화 영역 설정
+        const FENCE_BOUNDS = { left: 500, right: 1500, top: 23440, bottom: 24040 };
         const TM_BOUNDS = { left: 540, right: 650, top: 23260, bottom: 23420 };
 
         let lastTreadmillTime = 0;
@@ -666,17 +654,15 @@
             });
         }
 
-        /* --- 액션 버튼 상태 갱신 수정 --- */
+        /* --- 근처 알 감지 및 버튼 상태 업데이트 --- */
         function checkNearestEgg() {
-            // 1. 이미 알을 들고 있는 경우 -> 무조건 [놓기] 버튼 활성화
             if (liftedEgg) {
                 actionBtn.innerText = "놓기";
                 actionBtn.className = 'is-lifting';
                 return;
             }
 
-            // 2. 알을 들고 있지 않은 경우 주변 감지
-            const detectDist = 110; 
+            const detectDist = 120; 
             let minDist = Infinity;
             let currentPickable = null;
             let currentHatchable = null;
@@ -711,7 +697,7 @@
         actionBtn.addEventListener('click', handleAction);
 
         function handleAction() {
-            // 부화 클릭
+            // 1. 부화 시도
             if (nearestHatchEgg) {
                 hatchEgg(nearestHatchEgg);
                 nearestHatchEgg = null;
@@ -719,7 +705,7 @@
                 return;
             }
 
-            // 집기 / 놓기 클릭
+            // 2. 알 집기
             if (!liftedEgg) {
                 if (!nearestEgg) return;
                 liftedEgg = nearestEgg; 
@@ -729,7 +715,9 @@
                 liftedEgg.element.style.zIndex = '110';
                 actionBtn.innerText = "놓기"; 
                 actionBtn.className = 'is-lifting';
-            } else {
+            } 
+            // 3. 알 놓기 및 부화 타이머 시작 감지
+            else {
                 const dropEgg = liftedEgg; 
                 liftedEgg = null;
                 
@@ -739,6 +727,7 @@
                 dropEgg.element.style.left = `${playerX}px`; 
                 dropEgg.element.style.top = `${playerY}px`; 
 
+                // 울타리 범위에 놓았는지 체크
                 const isInFence = (
                     dropEgg.worldX >= FENCE_BOUNDS.left && 
                     dropEgg.worldX <= FENCE_BOUNDS.right && 
@@ -746,7 +735,7 @@
                     dropEgg.worldY <= FENCE_BOUNDS.bottom
                 );
 
-                if (isInFence && !dropEgg.isIncubating) {
+                if (isInFence && !dropEgg.isIncubating && !dropEgg.isHatchReady) {
                     startIncubation(dropEgg);
                 }
 
@@ -759,10 +748,12 @@
 
         function startIncubation(egg) {
             egg.isIncubating = true;
-            const totalSeconds = Math.round((egg.zoneLevel * 60) + egg.weight);
+            // 부화 테스트용: (zoneLevel * 3)초로 조정 (빠른 테스트 원할시 숫자를 줄이세요)
+            const totalSeconds = Math.round((egg.zoneLevel * 5) + (egg.weight * 0.2));
             egg.remainingTime = totalSeconds;
         }
 
+        /* --- 부화 처리 개선 --- */
         function hatchEgg(egg) {
             if (egg.element && egg.element.parentNode) {
                 egg.element.parentNode.removeChild(egg.element);
@@ -773,13 +764,15 @@
             }
         }
 
+        /* --- 타이머 로직 수정 (isIncubating 해제 보장) --- */
         function updateIncubationTimers() {
             eggList.forEach(egg => {
                 if (egg.isIncubating && !egg.isHatchReady) {
                     egg.remainingTime -= 1;
                     if (egg.remainingTime <= 0) {
                         egg.remainingTime = 0;
-                        egg.isHatchReady = true;
+                        egg.isIncubating = false; // 부화 대기 종료
+                        egg.isHatchReady = true;  // 부화 준비 완료
                         egg.hatchIcon.style.display = 'block';
                         egg.weightLabel.style.display = 'none';
                     } else {
@@ -895,4 +888,4 @@
         initRandomEggs(); setZoom(50); updateSpeedDisplay(); renderMap(); requestAnimationFrame(gameLoop);
     </script>
 </body>
-    </html>
+</html>
