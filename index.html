@@ -3,235 +3,167 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D 펫 타이쿤 & 스피드 런</title>
+    <title>2D 펫 타이쿤 & 스피드 런</title>
     <style>
         body {
             margin: 0;
             padding: 0;
+            background-color: #222;
             overflow: hidden;
             font-family: 'Arial', sans-serif;
-            background-color: #000;
             user-select: none;
         }
 
-        #canvas-container {
-            width: 100vw;
-            height: 100vh;
+        #gameCanvas {
+            display: block;
+            margin: 0 auto;
+            background-color: #55aa55; /* Default Grassland */
         }
 
-        /* UI Layer */
-        #ui-layer {
+        /* UI Overlays */
+        #ui-container {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
             pointer-events: none;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            box-sizing: border-box;
-            padding: 20px;
         }
 
-        /* Stage Title */
-        #stage-title-container {
+        /* Stage Title in Top Center */
+        #stage-title {
             position: absolute;
-            top: 20px;
+            top: 15px;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.6);
+            background: rgba(0, 0, 0, 0.7);
             border: 3px solid #ffcc00;
             border-radius: 20px;
-            padding: 8px 30px;
+            padding: 8px 25px;
             color: #fff;
-            font-size: 26px;
+            font-size: 24px;
             font-weight: bold;
-            text-shadow: 2px 2px 4px #000;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
             pointer-events: auto;
         }
 
-        /* Top HUD */
-        .hud-top {
+        /* HUD Top Left */
+        .hud {
+            position: absolute;
+            top: 15px;
+            left: 15px;
             display: flex;
-            gap: 15px;
+            gap: 10px;
             pointer-events: auto;
         }
 
         .hud-card {
-            background: rgba(255, 255, 255, 0.25);
-            backdrop-filter: blur(10px);
-            border: 2px solid rgba(255, 255, 255, 0.4);
-            border-radius: 15px;
-            padding: 10px 20px;
+            background: rgba(0, 0, 0, 0.6);
+            border: 2px solid #fff;
+            border-radius: 12px;
+            padding: 8px 15px;
             color: white;
-            font-size: 20px;
+            font-size: 18px;
             font-weight: bold;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
         }
 
-        /* Floating Text Effects Container */
-        #floating-text-container {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            overflow: hidden;
-        }
-
-        .floating-text {
-            position: absolute;
-            color: #7cfc00;
-            font-size: 22px;
-            font-weight: 900;
-            text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 2px 5px rgba(0,0,0,0.8);
-            transform: translate(-50%, -100%);
-            animation: floatUpFade 1.2s ease-out forwards;
-        }
-
-        @keyframes floatUpFade {
-            0% {
-                opacity: 1;
-                transform: translate(-50%, 0);
-            }
-            100% {
-                opacity: 0;
-                transform: translate(-50%, -60px);
-            }
-        }
-
-        /* Modal / Gacha System */
+        /* Gacha Modal Window */
         .modal {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: rgba(20, 20, 35, 0.95);
+            background: #222;
             border: 4px solid #ffcc00;
-            border-radius: 25px;
-            padding: 30px;
-            width: 340px;
+            border-radius: 20px;
+            padding: 25px;
+            width: 300px;
             text-align: center;
             color: white;
-            box-shadow: 0 0 30px rgba(255, 204, 0, 0.4);
             display: none;
             pointer-events: auto;
-            z-index: 100;
+            box-shadow: 0 0 20px rgba(0,0,0,0.8);
         }
 
         .modal h2 {
             margin-top: 0;
             color: #ffcc00;
-            font-size: 28px;
         }
 
         .btn {
-            background: linear-gradient(135deg, #ff9900, #ff5500);
+            background: #ff9900;
             border: none;
             color: white;
-            padding: 12px 25px;
-            font-size: 18px;
+            padding: 10px 20px;
+            font-size: 16px;
             font-weight: bold;
-            border-radius: 50px;
+            border-radius: 25px;
             cursor: pointer;
-            box-shadow: 0 5px 15px rgba(255, 85, 0, 0.4);
-            transition: all 0.2s;
             margin-top: 15px;
         }
 
         .btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 8px 20px rgba(255, 85, 0, 0.6);
+            background: #ffaa22;
         }
 
-        .btn:active {
-            transform: scale(0.95);
-        }
-
-        /* Gacha Animation Display */
         #gacha-result {
-            margin: 20px 0;
-            font-size: 24px;
+            margin: 15px 0;
+            font-size: 20px;
             font-weight: bold;
-            min-height: 50px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        /* Bottom Controls Info */
-        .controls-info {
-            background: rgba(0, 0, 0, 0.5);
-            color: #ccc;
-            padding: 8px 15px;
-            border-radius: 10px;
-            font-size: 14px;
-            align-self: center;
-            pointer-events: auto;
+            min-height: 30px;
         }
     </style>
 </head>
 <body>
-    <div id="canvas-container"></div>
 
-    <div id="ui-layer">
-        <div class="hud-top">
-            <div class="hud-card">💰 골드: <span id="gold-display">0</span></div>
-            <div class="hud-card">⚡ 속도: <span id="speed-display">10</span></div>
-            <div class="hud-card">🐾 펫: <span id="pet-count-display">0/3</span></div>
-        </div>
+    <canvas id="gameCanvas"></canvas>
 
-        <div id="stage-title-container">
-            <span id="stage-title-text">1단계: 잔디밭</span>
-        </div>
+    <div id="ui-container">
+        <!-- Stage Title -->
+        <div id="stage-title">1단계: 잔디밭</div>
 
-        <div class="controls-info">
-            W, A, S, D 또는 화살표 키로 이동 | 런닝머신 위에서 이동 속도 증가!
+        <!-- HUD -->
+        <div class="hud">
+            <div class="hud-card">💰 <span id="gold-val">0</span></div>
+            <div class="hud-card">⚡ 속도: <span id="speed-val">5</span></div>
+            <div class="hud-card">🐾 펫: <span id="pet-val">0/3</span></div>
         </div>
     </div>
-
-    <div id="floating-text-container"></div>
 
     <!-- Gacha Modal -->
     <div id="gacha-modal" class="modal">
         <h2>🥚 신비한 알 뽑기</h2>
-        <p>새로운 펫을 뽑아 골드 수급을 늘리세요!</p>
-        <p>비용: <span style="color: #ffcc00; font-weight: bold;">100 골드</span></p>
+        <p>비용: <span style="color:#ffcc00;">100 골드</span></p>
         <div id="gacha-result">?</div>
-        <button id="gacha-btn" class="btn" onclick="buyPet()">뽑기!</button>
-        <button class="btn" style="background: #555; box-shadow: none;" onclick="closeGachaModal()">닫기</button>
+        <button class="btn" onclick="buyPet()">뽑기!</button>
+        <button class="btn" style="background:#555;" onclick="closeModal()">닫기</button>
     </div>
 
-    <!-- Three.js & Libraries -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
-        // --- Web Audio API (Sound System) ---
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Canvas Size Adjust
+        canvas.width = Math.min(window.innerWidth, 1000);
+        canvas.height = Math.min(window.innerHeight, 700);
+
+        // --- Audio System ---
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         let audioCtx = null;
 
         function initAudio() {
-            if (!audioCtx) {
-                audioCtx = new AudioContext();
-            }
+            if (!audioCtx) audioCtx = new AudioContext();
         }
 
-        // 런닝머신 속도 업 효과음 ("똥!" 소리)
+        // 런닝머신 속도 상승 효과음 ("똥!" 소리)
         function playSpeedUpSound() {
             if (!audioCtx) return;
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
-            
+
             osc.type = 'sine';
-            // 통 하고 유쾌하게 튀는 피치 (500Hz -> 800Hz)
-            osc.frequency.setValueAtTime(500, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(850, audioCtx.currentTime + 0.08);
+            osc.frequency.setValueAtTime(450, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.08);
 
             gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
@@ -243,508 +175,318 @@
             osc.stop(audioCtx.currentTime + 0.08);
         }
 
-        // 골드 획득 효과음
-        function playCoinSound() {
-            if (!audioCtx) return;
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-
-            osc.type = 'triangle';
-            osc.frequency.setValueAtTime(987.77, audioCtx.currentTime); // B5
-            osc.frequency.setValueAtTime(1318.51, audioCtx.currentTime + 0.08); // E6
-
-            gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
-
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.25);
-        }
-
-        // --- Game Data & Setup ---
+        // --- Stage Definitions ---
         const STAGES = [
-            { id: 1, name: "1단계: 잔디밭", color: 0x55aa55, wallColor: 0x338833 },
-            { id: 2, name: "2단계: 정글", color: 0x226622, wallColor: 0x114411 },
-            { id: 3, name: "3단계: 설산", color: 0xddffff, wallColor: 0xbbdddd },
-            { id: 4, name: "4단계: 용암지대", color: 0x441111, wallColor: 0x882200 },
-            { id: 5, name: "5단계: 바다", color: 0x115599, wallColor: 0x003366 },
-            { id: 6, name: "6단계: 선사시대", color: 0x886644, wallColor: 0x553311 }
+            { name: "1단계: 잔디밭", color: "#55aa55" },
+            { name: "2단계: 정글", color: "#226622" },
+            { name: "3단계: 설산", color: "#aabbcc" },
+            { name: "4단계: 용암지대", color: "#551111" },
+            { name: "5단계: 바다", color: "#115599" },
+            { name: "6단계: 선사시대", color: "#775533" }
         ];
 
         const PET_TYPES = [
-            { name: "🧋 아기 곰", color: 0x8B4513, income: 5, rarity: "일반" },
-            { name: "🐰 분홍 토끼", color: 0xFFC0CB, income: 12, rarity: "희귀" },
-            { name: "🦊 여우", color: 0xFF4500, income: 25, rarity: "영웅" },
-            { name: "🐲 아기 드래곤", color: 0x9370DB, income: 60, rarity: "전설" }
+            { name: "🐻 아기곰", emoji: "🐻", income: 5 },
+            { name: "🐰 분홍토끼", emoji: "🐰", income: 12 },
+            { name: "🦊 여우", emoji: "🦊", income: 25 },
+            { name: "🐲 드래곤", emoji: "🐲", income: 60 }
         ];
 
+        // --- Game State ---
         let state = {
             gold: 0,
-            baseSpeed: 10,
-            currentSpeed: 10,
+            baseSpeed: 5,
+            currentSpeed: 5,
+            hasEgg: false,
             pets: [],
             maxPets: 3,
-            hasEgg: false,
             currentStageIdx: 0,
-            lastTreadmillStep: 0
+            lastTreadmillSound: 0
         };
 
-        // --- Scene, Camera, Renderer ---
-        const container = document.getElementById('canvas-container');
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(STAGES[0].color);
+        // --- Objects ---
+        const player = {
+            x: canvas.width / 2,
+            y: canvas.height / 2,
+            radius: 20,
+            emoji: "🐥"
+        };
 
-        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.shadowMap.enabled = true;
-        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-        container.appendChild(renderer.domElement);
+        const baseZone = {
+            x: 100,
+            y: 100,
+            radius: 50
+        };
 
-        // --- Lighting ---
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-        scene.add(ambientLight);
+        const treadmill = {
+            x: canvas.width - 150,
+            y: 100,
+            width: 100,
+            height: 120
+        };
 
-        const dirLight = new THREE.DirectionalLight(0xffffff, 0.7);
-        dirLight.position.set(20, 40, 20);
-        dirLight.castShadow = true;
-        dirLight.shadow.mapSize.width = 2048;
-        dirLight.shadow.mapSize.height = 2048;
-        dirLight.shadow.camera.near = 0.5;
-        dirLight.shadow.camera.far = 150;
-        const d = 40;
-        dirLight.shadow.camera.left = -d;
-        dirLight.shadow.camera.right = d;
-        dirLight.shadow.camera.top = d;
-        dirLight.shadow.camera.bottom = -d;
-        scene.add(dirLight);
+        const gachaStation = {
+            x: canvas.width - 150,
+            y: canvas.height - 150,
+            radius: 40
+        };
 
-        // --- World Creation ---
-        let groundMaterial, groundMesh;
-        function createWorld() {
-            // Floor
-            const groundGeo = new THREE.PlaneGeometry(100, 100);
-            groundMaterial = new THREE.MeshStandardMaterial({ 
-                color: STAGES[0].color, 
-                roughness: 0.8 
-            });
-            groundMesh = new THREE.Mesh(groundGeo, groundMaterial);
-            groundMesh.rotation.x = -Math.PI / 2;
-            groundMesh.receiveShadow = true;
-            scene.add(groundMesh);
+        const eggZone = {
+            x: 100,
+            y: canvas.height - 150,
+            radius: 40
+        };
 
-            // Grid decoration
-            const grid = new THREE.GridHelper(100, 20, 0x000000, 0x000000);
-            grid.position.y = 0.01;
-            grid.material.opacity = 0.1;
-            grid.material.transparent = true;
-            scene.add(grid);
-        }
-        createWorld();
+        // Floating Text Effects List
+        let floatingTexts = [];
 
-        // --- Game Objects ---
-        // 1. Player (동물 형태: 병아리/강아지 느낌의 귀여운 모습)
-        const playerGroup = new THREE.Group();
-        
-        // Body
-        const bodyGeo = new THREE.SphereGeometry(0.8, 16, 16);
-        const bodyMat = new THREE.MeshStandardMaterial({ color: 0xffdd00, roughness: 0.3 });
-        const body = new THREE.Mesh(bodyGeo, bodyMat);
-        body.position.y = 0.8;
-        body.castShadow = true;
-        playerGroup.add(body);
-
-        // Eyes
-        const eyeGeo = new THREE.SphereGeometry(0.1, 8, 8);
-        const eyeMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
-        const leftEye = new THREE.Mesh(eyeGeo, eyeMat);
-        leftEye.position.set(0.3, 1.0, 0.65);
-        const rightEye = leftEye.clone();
-        rightEye.position.x = -0.3;
-        playerGroup.add(leftEye);
-        playerGroup.add(rightEye);
-
-        // Beak / Nose
-        const noseGeo = new THREE.ConeGeometry(0.15, 0.3, 8);
-        const noseMat = new THREE.MeshStandardMaterial({ color: 0xff6600 });
-        const nose = new THREE.Mesh(noseGeo, noseMat);
-        nose.rotation.x = Math.PI / 2;
-        nose.position.set(0, 0.8, 0.85);
-        playerGroup.add(nose);
-
-        playerGroup.position.set(0, 0, 0);
-        scene.add(playerGroup);
-
-        // Carried Egg Object (hidden initially)
-        const carriedEggGeo = new THREE.SphereGeometry(0.5, 16, 16);
-        carriedEggGeo.scale(1, 1.3, 1);
-        const carriedEggMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2 });
-        const carriedEgg = new THREE.Mesh(carriedEggGeo, carriedEggMat);
-        carriedEgg.position.set(0, 2.2, 0);
-        carriedEgg.castShadow = true;
-        carriedEgg.visible = false;
-        playerGroup.add(carriedEgg);
-
-        // 2. Base Zone (알을 제출하는 곳)
-        const baseZoneGeo = new THREE.CylinderGeometry(4, 4, 0.1, 32);
-        const baseZoneMat = new THREE.MeshStandardMaterial({ color: 0x00ff88, transparent: true, opacity: 0.5 });
-        const baseZone = new THREE.Mesh(baseZoneGeo, baseZoneMat);
-        baseZone.position.set(0, 0.05, -15);
-        scene.add(baseZone);
-
-        // Base Marker
-        const baseRing = new THREE.Mesh(
-            new THREE.RingGeometry(3.8, 4, 32),
-            new THREE.MeshBasicMaterial({ color: 0x00ff88, side: THREE.DoubleSide })
-        );
-        baseRing.rotation.x = Math.PI / 2;
-        baseRing.position.set(0, 0.08, -15);
-        scene.add(baseRing);
-
-        // 3. Treadmill Zone (런닝머신)
-        const treadmillGroup = new THREE.Group();
-        const tmBase = new THREE.Mesh(
-            new THREE.BoxGeometry(6, 0.3, 10),
-            new THREE.MeshStandardMaterial({ color: 0x333333 })
-        );
-        tmBase.position.y = 0.15;
-        tmBase.receiveShadow = true;
-        treadmillGroup.add(tmBase);
-
-        const tmBelt = new THREE.Mesh(
-            new THREE.BoxGeometry(5, 0.32, 9),
-            new THREE.MeshStandardMaterial({ color: 0x111111 })
-        );
-        tmBelt.position.y = 0.16;
-        treadmillGroup.add(tmBelt);
-
-        treadmillGroup.position.set(-15, 0, 0);
-        scene.add(treadmillGroup);
-
-        // 4. Gacha Egg Station (알 뽑기 상점)
-        const gachaStationGroup = new THREE.Group();
-        const pedestal = new THREE.Mesh(
-            new THREE.CylinderGeometry(2, 2.5, 1, 16),
-            new THREE.MeshStandardMaterial({ color: 0xffcc00 })
-        );
-        pedestal.position.y = 0.5;
-        pedestal.castShadow = true;
-        gachaStationGroup.add(pedestal);
-
-        const displayEggGeo = new THREE.SphereGeometry(1, 16, 16);
-        displayEggGeo.scale(1, 1.3, 1);
-        const displayEgg = new THREE.Mesh(
-            displayEggGeo,
-            new THREE.MeshStandardMaterial({ color: 0xff5588, roughness: 0.3 })
-        );
-        displayEgg.position.y = 2.2;
-        displayEgg.castShadow = true;
-        gachaStationGroup.add(displayEgg);
-
-        gachaStationGroup.position.set(15, 0, 0);
-        scene.add(gachaStationGroup);
-
-        // 5. Egg Pickup Field (알을 주울 수 있는 지역)
-        const eggPickupGroup = new THREE.Group();
-        const eggPickupPad = new THREE.Mesh(
-            new THREE.CylinderGeometry(3, 3, 0.1, 32),
-            new THREE.MeshStandardMaterial({ color: 0xffaa00, transparent: true, opacity: 0.6 })
-        );
-        eggPickupPad.position.y = 0.05;
-        eggPickupGroup.add(eggPickupPad);
-
-        const wildEgg = new THREE.Mesh(
-            displayEggGeo,
-            new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2 })
-        );
-        wildEgg.position.y = 1.3;
-        wildEgg.castShadow = true;
-        eggPickupGroup.add(wildEgg);
-
-        eggPickupGroup.position.set(0, 0, 20);
-        scene.add(eggPickupGroup);
-
-        // --- Pet System Visuals ---
-        class PetMesh {
-            constructor(petData, index) {
-                this.data = petData;
-                this.index = index;
-
-                this.group = new THREE.Group();
-                
-                // Pet Body
-                const geo = new THREE.SphereGeometry(0.5, 16, 16);
-                const mat = new THREE.MeshStandardMaterial({ color: petData.color, roughness: 0.4 });
-                this.mesh = new THREE.Mesh(geo, mat);
-                this.mesh.position.y = 0.5;
-                this.mesh.castShadow = true;
-                this.group.add(this.mesh);
-
-                // Ears (동물 느낌 내기)
-                const earGeo = new THREE.ConeGeometry(0.15, 0.4, 8);
-                const leftEar = new THREE.Mesh(earGeo, mat);
-                leftEar.position.set(0.2, 0.9, 0);
-                const rightEar = leftEar.clone();
-                rightEar.position.x = -0.2;
-                this.group.add(leftEar);
-                this.group.add(rightEar);
-
-                scene.add(this.group);
-
-                this.timer = 0;
-            }
-
-            update(delta, playerPos) {
-                // Follow Player
-                const angle = (this.index / state.pets.length) * Math.PI * 2 + Date.now() * 0.002;
-                const targetX = playerPos.x + Math.cos(angle) * 2.5;
-                const targetZ = playerPos.z + Math.sin(angle) * 2.5;
-
-                this.group.position.x += (targetX - this.group.position.x) * 0.1;
-                this.group.position.z += (targetZ - this.group.position.z) * 0.1;
-                this.group.position.y = Math.sin(Date.now() * 0.008 + this.index) * 0.2;
-
-                // Gold Generation Timer
-                this.timer += delta;
-                if (this.timer >= 3) { // 3초마다 돈 버는 펫
-                    this.timer = 0;
-                    addGold(this.data.income);
-                    spawnFloatingText(`+${this.data.income}`, this.group.position);
-                }
-            }
-
-            destroy() {
-                scene.remove(this.group);
-            }
-        }
-
-        let petMeshes = [];
-
-        function updatePetMeshes() {
-            petMeshes.forEach(p => p.destroy());
-            petMeshes = [];
-            state.pets.forEach((petData, idx) => {
-                petMeshes.push(new PetMesh(petData, idx));
-            });
-            document.getElementById('pet-count-display').innerText = `${state.pets.length}/${state.maxPets}`;
-        }
-
-        // --- Floating Text Effect for Pet Earnings ---
-        function spawnFloatingText(text, worldPos) {
-            // World to Screen coordinate conversion
-            const vector = worldPos.clone();
-            vector.y += 1.2; // 펫 머리 위
-            vector.project(camera);
-
-            const x = (vector.x * .5 + .5) * window.innerWidth;
-            const y = (-(vector.y * .5) + .5) * window.innerHeight;
-
-            const el = document.createElement('div');
-            el.className = 'floating-text';
-            el.innerText = text;
-            el.style.left = `${x}px`;
-            el.style.top = `${y}px`;
-
-            document.getElementById('floating-text-container').appendChild(el);
-
-            setTimeout(() => {
-                el.remove();
-            }, 1200);
-        }
-
-        // --- Input Handling ---
+        // Keys Input
         const keys = {};
-        window.addEventListener('keydown', (e) => {
-            initAudio();
-            keys[e.code] = true;
-        });
-        window.addEventListener('keyup', (e) => {
-            keys[e.code] = false;
-        });
+        window.addEventListener('keydown', e => { initAudio(); keys[e.code] = true; });
+        window.addEventListener('keyup', e => { keys[e.code] = false; });
 
-        // --- Game Logic Functions ---
+        // --- Game Logic ---
         function addGold(amount) {
             state.gold += amount;
-            document.getElementById('gold-display').innerText = state.gold;
-            playCoinSound();
+            document.getElementById('gold-val').innerText = state.gold;
+            checkStageProgress();
         }
 
         function checkStageProgress() {
-            // 500골드마다 다음 단계로 진입
-            const newStageIdx = Math.min(Math.floor(state.gold / 500), STAGES.length - 1);
-            if (newStageIdx !== state.currentStageIdx) {
-                state.currentStageIdx = newStageIdx;
-                const stage = STAGES[newStageIdx];
-                
-                // 배경색 변경
-                scene.background.setHex(stage.color);
-                groundMaterial.color.setHex(stage.color);
-
-                // UI 업데이트
-                document.getElementById('stage-title-text').innerText = stage.name;
+            // 300 골드마다 다음 스테이지로 변경
+            const newIdx = Math.min(Math.floor(state.gold / 300), STAGES.length - 1);
+            if (newIdx !== state.currentStageIdx) {
+                state.currentStageIdx = newIdx;
+                canvas.style.backgroundColor = STAGES[newIdx].color;
+                document.getElementById('stage-title').innerText = STAGES[newIdx].name;
             }
         }
 
-        // --- Gacha Modal System ---
-        let gachaAutoCloseTimer = null;
+        function addFloatingText(text, x, y) {
+            floatingTexts.push({
+                text: text,
+                x: x,
+                y: y,
+                alpha: 1.0,
+                offsetY: 0
+            });
+        }
 
-        function openGachaModal() {
+        // --- Modal & Gacha ---
+        let autoCloseTimer = null;
+
+        function openModal() {
             document.getElementById('gacha-modal').style.display = 'block';
         }
 
-        function closeGachaModal() {
+        function closeModal() {
             document.getElementById('gacha-modal').style.display = 'none';
-            if (gachaAutoCloseTimer) clearTimeout(gachaAutoCloseTimer);
+            if (autoCloseTimer) clearTimeout(autoCloseTimer);
         }
 
         function buyPet() {
             if (state.gold < 100) {
-                alert("골드가 부족합니다! (100 골드 필요)");
+                alert("골드가 부족합니다!");
                 return;
             }
             if (state.pets.length >= state.maxPets) {
-                alert("펫 소지 칸이 가득 찼습니다!");
+                alert("펫 슬롯이 가득 찼습니다!");
                 return;
             }
 
             state.gold -= 100;
-            document.getElementById('gold-display').innerText = state.gold;
+            document.getElementById('gold-val').innerText = state.gold;
 
-            // 랜덤 펫 가챠
-            const rand = Math.random();
-            let selectedPet = PET_TYPES[0];
-            if (rand > 0.95) selectedPet = PET_TYPES[3];
-            else if (rand > 0.8) selectedPet = PET_TYPES[2];
-            else if (rand > 0.5) selectedPet = PET_TYPES[1];
+            const rand = Math.floor(Math.random() * PET_TYPES.length);
+            const petData = PET_TYPES[rand];
 
-            state.pets.push(selectedPet);
-            updatePetMeshes();
+            state.pets.push({
+                ...petData,
+                timer: 0
+            });
 
-            const resultEl = document.getElementById('gacha-result');
-            resultEl.innerText = `🎉 ${selectedPet.name} (${selectedPet.rarity}) 획득!`;
-            resultEl.style.color = `#${selectedPet.color.toString(16)}`;
+            document.getElementById('pet-val').innerText = `${state.pets.length}/${state.maxPets}`;
+            const resEl = document.getElementById('gacha-result');
+            resEl.innerText = `🎉 ${petData.name} 획득!`;
 
-            // 펫 뽑은 후 1초 뒤 자동 나가기
-            if (gachaAutoCloseTimer) clearTimeout(gachaAutoCloseTimer);
-            gachaAutoCloseTimer = setTimeout(() => {
-                closeGachaModal();
-                resultEl.innerText = "?";
+            // 펫을 뽑고 1초 뒤에 알 뽑기창 자동 닫기
+            if (autoCloseTimer) clearTimeout(autoCloseTimer);
+            autoCloseTimer = setTimeout(() => {
+                closeModal();
+                resEl.innerText = "?";
             }, 1000);
         }
 
-        // --- Main Game Loop ---
-        const clock = new THREE.Clock();
+        // --- Render Functions ---
+        function drawCircle(x, y, radius, color) {
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
+            ctx.fillStyle = color;
+            ctx.fill();
+            ctx.closePath();
+        }
 
-        function animate() {
-            requestAnimationFrame(animate);
-            const delta = clock.getDelta();
+        function drawEmoji(emoji, x, y, size = 30) {
+            ctx.font = `${size}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(emoji, x, y);
+        }
 
-            // 1. Movement Logic
-            let moveX = 0;
-            let moveZ = 0;
+        // --- Main Loop ---
+        let lastTime = performance.now();
 
-            if (keys['KeyW'] || keys['ArrowUp']) moveZ -= 1;
-            if (keys['KeyS'] || keys['ArrowDown']) moveZ += 1;
-            if (keys['KeyA'] || keys['ArrowLeft']) moveX -= 1;
-            if (keys['KeyD'] || keys['ArrowRight']) moveX += 1;
+        function gameLoop(now) {
+            const dt = (now - lastTime) / 1000;
+            lastTime = now;
 
-            if (moveX !== 0 || moveZ !== 0) {
-                const len = Math.sqrt(moveX * moveX + moveZ * moveZ);
-                const actualSpeed = state.currentSpeed;
-                
-                playerGroup.position.x += (moveX / len) * actualSpeed * delta;
-                playerGroup.position.z += (moveZ / len) * actualSpeed * delta;
+            // 1. Movement
+            let dx = 0;
+            let dy = 0;
+            if (keys['KeyW'] || keys['ArrowUp']) dy -= 1;
+            if (keys['KeyS'] || keys['ArrowDown']) dy += 1;
+            if (keys['KeyA'] || keys['ArrowLeft']) dx -= 1;
+            if (keys['KeyD'] || keys['ArrowRight']) dx += 1;
 
-                // Look Direction
-                const angle = Math.atan2(moveX, moveZ);
-                playerGroup.rotation.y = angle;
-
-                // Bounce Walking Anim
-                playerGroup.position.y = Math.abs(Math.sin(Date.now() * 0.015)) * 0.3;
-            } else {
-                playerGroup.position.y = 0;
+            if (dx !== 0 || dy !== 0) {
+                const len = Math.hypot(dx, dy);
+                player.x += (dx / len) * state.currentSpeed;
+                player.y += (dy / len) * state.currentSpeed;
             }
 
-            // Map Bounds
-            playerGroup.position.x = Math.max(-48, Math.min(48, playerGroup.position.x));
-            playerGroup.position.z = Math.max(-48, Math.min(48, playerGroup.position.z));
+            // Canvas Boundary
+            player.x = Math.max(player.radius, Math.min(canvas.width - player.radius, player.x));
+            player.y = Math.max(player.radius, Math.min(canvas.height - player.radius, player.y));
 
-            // Camera Tracking
-            camera.position.x = playerGroup.position.x;
-            camera.position.z = playerGroup.position.z + 18;
-            camera.position.y = playerGroup.position.y + 15;
-            camera.lookAt(playerGroup.position.x, playerGroup.position.y, playerGroup.position.z);
-
-            // 2. Treadmill Zone (속도 증가)
-            const distToTM = playerGroup.position.distanceTo(treadmillGroup.position);
-            if (distToTM < 4) {
-                state.baseSpeed += delta * 8; // 런닝머신 위에서 속도 상승
+            // 2. Treadmill Check (속도 증가)
+            if (player.x > treadmill.x && player.x < treadmill.x + treadmill.width &&
+                player.y > treadmill.y && player.y < treadmill.y + treadmill.height) {
+                
+                state.baseSpeed += 0.03; // 속도 상승
                 state.currentSpeed = state.hasEgg ? state.baseSpeed * 0.5 : state.baseSpeed;
-                document.getElementById('speed-display').innerText = Math.floor(state.baseSpeed);
+                document.getElementById('speed-val').innerText = Math.floor(state.baseSpeed);
 
-                // 속도가 올라갈 때마다 "똥!" 효과음 재생
-                if (Date.now() - state.lastTreadmillStep > 180) {
+                // 속도 올라갈 때 "똥!" 소리 재생
+                if (now - state.lastTreadmillSound > 200) {
                     playSpeedUpSound();
-                    state.lastTreadmillStep = Date.now();
+                    state.lastTreadmillSound = now;
                 }
             }
 
             // 3. Egg Pickup Zone
-            const distToEggPad = playerGroup.position.distanceTo(eggPickupGroup.position);
-            if (distToEggPad < 2.5 && !state.hasEgg) {
+            const distToEgg = Math.hypot(player.x - eggZone.x, player.y - eggZone.y);
+            if (distToEgg < eggZone.radius && !state.hasEgg) {
                 state.hasEgg = true;
-                carriedEgg.visible = false; // 등 뒤에 알 표시
-                carriedEgg.visible = true;
-                state.currentSpeed = state.baseSpeed * 0.5; // 알 들면 속도 감소
+                state.currentSpeed = state.baseSpeed * 0.5; // 알 들면 속도 절반
             }
 
             // 4. Base Zone (알 제출 & 원래 속도로 복구)
-            const distToBase = playerGroup.position.distanceTo(baseZone.position);
-            if (distToBase < 3.5) {
+            const distToBase = Math.hypot(player.x - baseZone.x, player.y - baseZone.y);
+            if (distToBase < baseZone.radius) {
                 if (state.hasEgg) {
                     state.hasEgg = false;
-                    carriedEgg.visible = false;
                     
-                    // 원래 속도로 즉시 회복!
+                    // 원래 속도로 정상 회복!
                     state.currentSpeed = state.baseSpeed;
                     
-                    // 알 제출 보상
                     addGold(50);
                 }
             }
 
-            // 5. Gacha Station Modal Trigger
-            const distToGacha = playerGroup.position.distanceTo(gachaStationGroup.position);
-            if (distToGacha < 3) {
+            // 5. Gacha Station Contact
+            const distToGacha = Math.hypot(player.x - gachaStation.x, player.y - gachaStation.y);
+            if (distToGacha < gachaStation.radius) {
                 if (document.getElementById('gacha-modal').style.display !== 'block') {
-                    openGachaModal();
+                    openModal();
                 }
             }
 
-            // Display Egg Rotation Animation
-            displayEgg.rotation.y += delta * 1.5;
-            wildEgg.rotation.y += delta * 2.0;
+            // 6. Update Pets Income & Positions
+            state.pets.forEach((pet, idx) => {
+                pet.timer += dt;
+                if (pet.timer >= 3) { // 3초마다 골드 생성
+                    pet.timer = 0;
+                    addGold(pet.income);
 
-            // Update Pets
-            petMeshes.forEach(pet => pet.update(delta, playerGroup.position));
+                    // 펫 위치 계산 후 연두색 Floating Text 생성
+                    const angle = (idx / state.pets.length) * Math.PI * 2 + now * 0.002;
+                    const petX = player.x + Math.cos(angle) * 50;
+                    const petY = player.y + Math.sin(angle) * 50;
+                    addFloatingText(`+${pet.income}`, petX, petY);
+                }
+            });
 
-            // Stage Check
-            checkStageProgress();
+            // --- DRAWING ---
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            renderer.render(scene, camera);
+            // Draw Base Zone
+            drawCircle(baseZone.x, baseZone.y, baseZone.radius, 'rgba(0, 255, 136, 0.4)');
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = '#00ff88';
+            ctx.stroke();
+            drawEmoji("🏠", baseZone.x, baseZone.y);
+
+            // Draw Treadmill
+            ctx.fillStyle = '#333';
+            ctx.fillRect(treadmill.x, treadmill.y, treadmill.width, treadmill.height);
+            ctx.fillStyle = '#ffaa00';
+            ctx.font = '16px Arial';
+            ctx.fillText("런닝머신", treadmill.x + 50, treadmill.y + 60);
+
+            // Draw Egg Field
+            drawCircle(eggZone.x, eggZone.y, eggZone.radius, 'rgba(255, 170, 0, 0.4)');
+            drawEmoji("🥚", eggZone.x, eggZone.y);
+
+            // Draw Gacha Station
+            drawCircle(gachaStation.x, gachaStation.y, gachaStation.radius, 'rgba(255, 204, 0, 0.5)');
+            drawEmoji("🎁", gachaStation.x, gachaStation.y);
+
+            // Draw Pets
+            state.pets.forEach((pet, idx) => {
+                const angle = (idx / state.pets.length) * Math.PI * 2 + now * 0.002;
+                const petX = player.x + Math.cos(angle) * 50;
+                const petY = player.y + Math.sin(angle) * 50;
+                drawEmoji(pet.emoji, petX, petY, 25);
+            });
+
+            // Draw Player
+            drawCircle(player.x, player.y, player.radius, '#ffdd00');
+            drawEmoji(player.emoji, player.x, player.y, 28);
+
+            // Draw Carried Egg
+            if (state.hasEgg) {
+                drawEmoji("🥚", player.x, player.y - 25, 20);
+            }
+
+            // Draw Floating Green Money Texts (+100 둥실 올라가며 흐려짐)
+            for (let i = floatingTexts.length - 1; i >= 0; i--) {
+                const ft = floatingTexts[i];
+                ft.offsetY += 1; // 위로 이동
+                ft.alpha -= 0.015; // 흐려짐
+
+                if (ft.alpha <= 0) {
+                    floatingTexts.splice(i, 1);
+                    continue;
+                }
+
+                ctx.save();
+                ctx.globalAlpha = ft.alpha;
+                ctx.font = 'bold 20px Arial';
+                ctx.fillStyle = '#7cfc00'; // 연두색 글자
+                ctx.strokeStyle = '#000000';
+                ctx.lineWidth = 3;
+                ctx.textAlign = 'center';
+                
+                const curY = ft.y - 20 - ft.offsetY;
+                ctx.strokeText(ft.text, ft.x, curY);
+                ctx.fillText(ft.text, ft.x, curY);
+                ctx.restore();
+            }
+
+            requestAnimationFrame(gameLoop);
         }
 
-        // Window Resize Handling
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
-
-        // Start Loop
-        animate();
+        requestAnimationFrame(gameLoop);
     </script>
 </body>
 </html>
