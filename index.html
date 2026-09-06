@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-select=none">
-    <title>Steal An Egg - Treadmill Floating Text</title>
+    <title>Steal An Egg - Treadmill Floating Text Fixed</title>
     <style>
         * {
             box-sizing: border-box;
@@ -28,7 +28,6 @@
             overflow: hidden;
         }
 
-        /* 줌 축소 시점 (0.65배율) */
         #camera {
             position: absolute;
             top: 50%;
@@ -40,7 +39,6 @@
             will-change: transform;
         }
 
-        /* 월드 맵 전체 */
         #world-map {
             position: absolute;
             top: 0;
@@ -50,7 +48,6 @@
             will-change: transform;
         }
 
-        /* 1~6 구역 */
         .zone-container {
             position: absolute;
             top: 0;
@@ -76,7 +73,6 @@
         .zone-2 { background-color: #1e5c1e; }
         .zone-1 { background-color: #72bf44; }
 
-        /* 베이스 경계 빨간선 */
         .red-divider {
             position: absolute;
             top: 4192px;
@@ -88,7 +84,6 @@
             box-shadow: 0 0 8px rgba(255, 0, 0, 0.8);
         }
 
-        /* 메인 베이스 영역 */
         .base-wrapper {
             position: absolute;
             top: 4200px;
@@ -108,7 +103,6 @@
             border-radius: 0 0 32px 32px;
         }
 
-        /* 직사각형 울타리 */
         .inner-fence-rect {
             position: absolute;
             bottom: 60px;
@@ -122,7 +116,7 @@
             pointer-events: none;
         }
 
-        /* 런닝머신 모델링 (울타리 위쪽 왼쪽) */
+        /* 런닝머신 */
         .treadmill {
             position: absolute;
             top: 4860px;
@@ -211,22 +205,26 @@
             background-color: #000000;
         }
 
-        /* Floating pop-up text on Treadmill */
+        /* 선명하게 잘 보이는 하늘색 Pop-up 텍스트 (런닝머신 위에서 출력) */
         .speed-popup {
             position: absolute;
-            font-size: 16px;
+            font-size: 24px;
             font-weight: 900;
-            color: #00d4ff;
-            text-shadow: 0 0 6px rgba(0, 212, 255, 0.8), 0 2px 4px #000000;
+            color: #00e5ff;
+            text-shadow: 
+                -2px -2px 0 #000,  
+                 2px -2px 0 #000,
+                -2px  2px 0 #000,
+                 2px  2px 0 #000,
+                 0 0 10px rgba(0, 229, 255, 0.9);
             pointer-events: none;
-            z-index: 150;
+            z-index: 250;
             font-family: 'Arial Black', sans-serif;
             white-space: nowrap;
-            transition: transform 0.8s ease-out, opacity 0.8s ease-out;
+            transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.8s ease-out;
             opacity: 1;
         }
 
-        /* 플레이어 캐릭 */
         #player {
             position: absolute;
             top: 50%;
@@ -253,7 +251,7 @@
             box-shadow: 18px 0 0 #333;
         }
 
-        /* 좌측 상단 뭉툭한 정사각형 설정 버튼 */
+        /* 좌측 상단 정사각형 설정 버튼 */
         #settings-btn {
             position: absolute;
             top: 20px;
@@ -323,18 +321,13 @@
             text-shadow: 0 2px 5px rgba(0,0,0,0.9), 0 0 2px rgba(0,0,0,0.9);
         }
 
-        #speed-display {
-            color: #3a86ff;
-        }
+        #speed-display { color: #3a86ff; }
+        #money-display { color: #70e000; }
 
-        #money-display {
-            color: #70e000;
-        }
-
-        /* 조이스틱 UI */
+        /* 조이스틱 위치 상향 조절 (bottom: 120px) */
         #joystick-wrapper {
             position: absolute;
-            bottom: 60px;
+            bottom: 120px;
             left: 50%;
             transform: translateX(-50%);
             width: 120px;
@@ -362,7 +355,6 @@
 <body>
 
     <div id="game-viewport">
-        <!-- 왼쪽 위 구석 작고 뭉툭한 정사각형 설정 버튼 -->
         <div id="settings-btn">
             <svg viewBox="0 0 24 24">
                 <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
@@ -402,7 +394,6 @@
 
         <div id="player"></div>
 
-        <!-- 좌측 하단 스탯 UI -->
         <div id="hud-container">
             <div class="hud-item">
                 <div class="hud-icon">
@@ -426,6 +417,7 @@
             </div>
         </div>
 
+        <!-- 위로 옮겨진 조이스틱 -->
         <div id="joystick-wrapper">
             <div id="joystick-stick"></div>
         </div>
@@ -457,33 +449,33 @@
             bottom: 5020
         };
 
-        let treadmillTimer = null;
+        let lastTreadmillTime = 0;
 
         function updateSpeedDisplay() {
             speedDisplay.innerText = `:${speedValue.toFixed(1)}`;
         }
 
-        /* Floating 텍스트 애니메이션 생성 (+0.1 하늘색) */
+        /* 런닝머신 위에서 정확히 사방으로 퍼지며 사라지는 팝업 */
         function createSpeedPopup(amount) {
             const popup = document.createElement('div');
             popup.className = 'speed-popup';
             popup.innerText = `👟 +${amount.toFixed(1)}`;
 
-            // 런닝머신 중심 위치에 생성
-            const startX = TM_BOUNDS.left + 30 + (Math.random() * 40 - 20);
-            const startY = TM_BOUNDS.top + 50;
+            // 런닝머신 중심 상단 위치
+            const startX = TM_BOUNDS.left + 25;
+            const startY = TM_BOUNDS.top - 10;
 
             popup.style.left = `${startX}px`;
             popup.style.top = `${startY}px`;
 
             map.appendChild(popup);
 
-            // 무작위 방향 이동 계산
-            const randomX = (Math.random() - 0.5) * 80; // 좌/우 -40 ~ +40
-            const randomY = - (50 + Math.random() * 40); // 위쪽 -50 ~ -90
+            // 무작위 퍼짐 좌표 (좌우 -50 ~ +50, 상단 -60 ~ -100)
+            const randomX = (Math.random() - 0.5) * 100; 
+            const randomY = - (60 + Math.random() * 40);
 
             requestAnimationFrame(() => {
-                popup.style.transform = `translate(${randomX}px, ${randomY}px)`;
+                popup.style.transform = `translate(${randomX}px, ${randomY}px) scale(1.15)`;
                 popup.style.opacity = '0';
             });
 
@@ -491,10 +483,11 @@
                 if (popup.parentNode) {
                     popup.parentNode.removeChild(popup);
                 }
-            }, 850);
+            }, 800);
         }
 
-        function checkTreadmill() {
+        /* 박자 오차 없는 0.1초 정밀 훈련 로직 */
+        function checkTreadmill(now) {
             const isOnTM = (
                 playerX >= TM_BOUNDS.left &&
                 playerX <= TM_BOUNDS.right &&
@@ -503,19 +496,21 @@
             );
 
             if (isOnTM) {
-                if (!treadmillTimer) {
+                if (tmScreen.innerText !== "TRAIN..") {
                     tmScreen.innerText = "TRAIN..";
                     tmScreen.style.color = "#00ff66";
-                    treadmillTimer = setInterval(() => {
-                        speedValue += 0.1;
-                        updateSpeedDisplay();
-                        createSpeedPopup(0.1);
-                    }, 100);
+                    lastTreadmillTime = now;
+                }
+
+                // 0.1초(100ms) 지날 때마다 정박자로 증가 및 팝업 출력
+                while (now - lastTreadmillTime >= 100) {
+                    speedValue += 0.1;
+                    updateSpeedDisplay();
+                    createSpeedPopup(0.1);
+                    lastTreadmillTime += 100;
                 }
             } else {
-                if (treadmillTimer) {
-                    clearInterval(treadmillTimer);
-                    treadmillTimer = null;
+                if (tmScreen.innerText !== "READY") {
                     tmScreen.innerText = "READY";
                     tmScreen.style.color = "#00ffcc";
                 }
@@ -557,8 +552,6 @@
                     playerY += stepY;
                 }
             }
-
-            checkTreadmill();
         }
 
         function renderMap() {
@@ -611,19 +604,18 @@
         window.addEventListener('touchmove', handleMove);
         window.addEventListener('touchend', handleEnd);
 
-        function gameLoop() {
+        function gameLoop(now) {
             if (isDragging) {
                 movePlayer(moveX, moveY);
                 renderMap();
-            } else {
-                checkTreadmill();
             }
+            checkTreadmill(now);
             requestAnimationFrame(gameLoop);
         }
 
         updateSpeedDisplay();
         renderMap();
-        gameLoop();
+        requestAnimationFrame(gameLoop);
     </script>
 </body>
 </html>
