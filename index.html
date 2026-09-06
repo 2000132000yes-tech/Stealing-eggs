@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-select=none">
-    <title>Steal An Egg - Joystick Fixed</title>
+    <title>Steal An Egg - Joystick Visible Fixed</title>
     <style>
         * {
             box-sizing: border-box;
@@ -240,28 +240,29 @@
         #speed-display { color: #3a86ff; }
         #money-display { color: #70e000; }
 
-        /* --- 컨트롤 UI 레이아웃 (우측 하단 정렬, 버그 수정) --- */
+        /* --- 컨트롤 UI 레이아웃 완전히 복구 (화면 내부 배치) --- */
         #controls-container {
             position: absolute;
-            bottom: 30px; /* 화면 하단 여백 */
-            right: 30px;  /* 화면 우측 여백 */
+            bottom: 60px; /* 화면 하단에서 여백 */
+            right: 60px;  /* 화면 우측에서 여백 */
             display: flex;
-            flex-direction: column; /* 세로 배치 (위: 버튼, 아래: 조이스틱) */
+            flex-direction: column; /* 세로 배치 */
             align-items: center;
-            gap: 10px; /* 버튼과 조이스틱 사이 간격 좁힘 */
-            pointer-events: none; /* 컨테이너 자체는 뚫리게 */
-            z-index: 200;
+            gap: 15px; /* 버튼과 조이스틱 간격 */
+            pointer-events: none; /* 컨테이너 자체는 클릭 무시 */
+            z-index: 300;
         }
 
-        /* 조이스틱 (60px * 60px) 시인성 및 클릭 버그 수정 */
+        /* 조이스틱 (반지름 30px 단축 버전): 완전히 보이도록 수정 */
         #joystick-wrapper {
-            width: 60px;
+            width: 60px; /* 지름 60px */
             height: 60px;
-            background: rgba(255, 255, 255, 0.3); /* 배경 약간 불투명하게 */
-            border: 3px solid rgba(255, 255, 255, 0.6); /* 테두리 굵게 */
+            background: rgba(255, 255, 255, 0.5); /* 배경 명확히 */
+            border: 4px solid rgba(0, 0, 0, 0.8); /* 검은색 테두리 추가로 시인성 확보 */
             border-radius: 50%;
             touch-action: none;
             pointer-events: auto; /* 클릭 인식 */
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
             position: relative;
         }
 
@@ -269,9 +270,10 @@
             position: absolute;
             top: 50%;
             left: 50%;
-            width: 28px; /* 스틱 크기 약간 조정 */
-            height: 28px;
-            background: rgba(255, 255, 255, 0.9);
+            width: 26px; /* 스틱 크기도 단축 */
+            height: 26px;
+            background: rgba(0, 0, 0, 1); /* 스틱 검은색으로 */
+            border: 2px solid #fff; /* 스틱 테두리 흰색 */
             border-radius: 50%;
             transform: translate(-50%, -50%);
             pointer-events: none;
@@ -280,11 +282,11 @@
 
         /* 집기/놓기 버튼 */
         #action-btn {
-            display: none; /* 평소엔 숨김 */
+            display: none;
             width: 70px;
             height: 70px;
-            background-color: rgba(255, 218, 121, 0.7);
-            border: 5px solid #ccae4f;
+            background-color: rgba(255, 218, 121, 0.9); /* 버튼 명확히 */
+            border: 6px solid #ccae4f;
             color: #7d6b31;
             border-radius: 50%;
             font-size: 17px;
@@ -293,13 +295,13 @@
             pointer-events: auto; /* 클릭 인식 */
             align-items: center;
             justify-content: center;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
             transition: background-color 0.1s, transform 0.1s;
         }
 
         #action-btn:active { transform: scale(0.95); }
         #action-btn.can-pick { display: flex; } /* 근처에 알이 있을 때만 표시 */
-        #action-btn.is-lifting { background-color: rgba(230, 57, 70, 0.7); border-color: #b32e38; color: #fff; }
+        #action-btn.is-lifting { background-color: rgba(230, 57, 70, 0.9); border-color: #b32e38; color: #fff; }
 
     </style>
 </head>
@@ -372,12 +374,12 @@
             </div>
         </div>
 
-        <!-- 우측 하단 컨트롤 컨테이너 (버그 수정됨) -->
+        <!-- 우측 하단 컨트롤 컨테이너 (복구됨) -->
         <div id="controls-container">
             <!-- 집기/놓기 버튼 (위) -->
             <button id="action-btn">집기</button>
             
-            <!-- 조이스틱 (아래, 크기 축소됨) -->
+            <!-- 조이스틱 (아래, 반지름 30px 단축 버전) -->
             <div id="joystick-wrapper">
                 <div id="joystick-stick"></div>
             </div>
@@ -491,7 +493,6 @@
 
         function checkNearestEgg() {
             if (liftedEgg) return;
-            // 알 크기가 커졌으므로 감지 거리 약간 확대
             const detectDist = 110; 
             let minPlayerDist = Infinity;
             let currentNearest = null;
@@ -499,10 +500,7 @@
             eggList.forEach(egg => {
                 if (egg.isLifted) return;
                 const dist = Math.hypot(playerX - egg.worldX, playerY - egg.worldY);
-                if (dist < detectDist && dist < minPlayerDist) {
-                    minPlayerDist = dist;
-                    currentNearest = egg;
-                }
+                if (dist < detectDist && dist < minPlayerDist) { minPlayerDist = dist; currentNearest = egg; }
             });
 
             nearestEgg = currentNearest;
@@ -517,72 +515,36 @@
 
             if (!liftedEgg) {
                 if (!nearestEgg) return;
-                liftedEgg = nearestEgg;
-                liftedEgg.isLifted = true;
-                nearestEgg = null;
-                isActionFrozen = true;
-                player.classList.add('player-picking');
-                actionBtn.innerText = "놓기";
-                actionBtn.classList.add('is-lifting');
+                liftedEgg = nearestEgg; liftedEgg.isLifted = true; nearestEgg = null;
+                isActionFrozen = true; player.classList.add('player-picking'); actionBtn.innerText = "놓기"; actionBtn.classList.add('is-lifting');
                 setTimeout(() => { liftedEgg.element.style.zIndex = '110'; isActionFrozen = false; }, 200);
                 setTimeout(() => { player.classList.remove('player-picking'); }, 300);
             } else {
-                const dropEgg = liftedEgg;
-                liftedEgg = null;
-                isActionFrozen = true;
-                player.classList.add('player-picking');
-                actionBtn.innerText = "집기";
-                actionBtn.classList.remove('is-lifting');
-                setTimeout(() => {
-                    dropEgg.worldX = playerX; dropEgg.worldY = playerY;
-                    dropEgg.element.style.zIndex = '80';
-                    dropEgg.element.style.left = `${playerX}px`;
-                    dropEgg.element.style.top = `${playerY}px`;
-                    renderSingleEgg(dropEgg);
-                    isActionFrozen = false;
-                }, 200);
+                const dropEgg = liftedEgg; liftedEgg = null;
+                isActionFrozen = true; player.classList.add('player-picking'); actionBtn.innerText = "집기"; actionBtn.classList.remove('is-lifting');
+                setTimeout(() => { dropEgg.worldX = playerX; dropEgg.worldY = playerY; dropEgg.element.style.zIndex = '80'; dropEgg.element.style.left = `${playerX}px`; dropEgg.element.style.top = `${playerY}px`; renderSingleEgg(dropEgg); isActionFrozen = false; }, 200);
                 setTimeout(() => { player.classList.remove('player-picking'); }, 300);
             }
         }
 
         function renderSingleEgg(eggData) {
             if (eggData.isLifted && liftedEgg === eggData) {
-                eggData.element.style.left = `${playerX}px`;
-                eggData.element.style.top = `${playerY}px`;
-                // 들고 있을 때 높이 조정 (scale 반영)
-                const yOffset = -110 - (eggData.scale * 15); 
-                eggData.element.style.transform = `translate(-50%, ${yOffset}%) scale(${eggData.scale})`;
-            } else {
-                eggData.element.style.transform = `translate(-50%, -100%) scale(${eggData.scale})`;
-                eggData.isLifted = false;
-            }
+                eggData.element.style.left = `${playerX}px`; eggData.element.style.top = `${playerY}px`;
+                const yOffset = -110 - (eggData.scale * 15); eggData.element.style.transform = `translate(-50%, ${yOffset}%) scale(${eggData.scale})`;
+            } else { eggData.element.style.transform = `translate(-50%, -100%) scale(${eggData.scale})`; eggData.isLifted = false; }
         }
 
         let currentScale = 0.65;
-        function setZoom(val) {
-            currentScale = 1.2 - (val - 1) * (1.0 / 99);
-            camera.style.transform = `scale(${currentScale.toFixed(3)})`;
-            zoomValueText.innerText = val;
-        }
+        function setZoom(val) { currentScale = 1.2 - (val - 1) * (1.0 / 99); camera.style.transform = `scale(${currentScale.toFixed(3)})`; zoomValueText.innerText = val; }
         zoomRange.addEventListener('input', (e) => { setZoom(e.target.value); });
         settingsBtn.addEventListener('click', () => { settingsModal.style.display = 'flex'; });
         closeSettingsBtn.addEventListener('click', () => { settingsModal.style.display = 'none'; });
-        speedToggleSwitch.addEventListener('click', () => {
-            isSpeedFixed = !isSpeedFixed;
-            speedToggleSwitch.classList.toggle('active', isSpeedFixed);
-        });
+        speedToggleSwitch.addEventListener('click', () => { isSpeedFixed = !isSpeedFixed; speedToggleSwitch.classList.toggle('active', isSpeedFixed); });
         function updateSpeedDisplay() { speedDisplay.innerText = `:${speedValue.toFixed(2)}`; }
         function createSpeedPopup(amount) {
-            const popup = document.createElement('div');
-            popup.className = 'speed-popup';
-            popup.innerText = `👟 +${amount.toFixed(2)}`;
-            popup.style.left = `${TM_BOUNDS.left + 25}px`;
-            popup.style.top = `${TM_BOUNDS.top - 10}px`;
-            map.appendChild(popup);
-            requestAnimationFrame(() => {
-                popup.style.transform = `translate(${(Math.random() - 0.5) * 100}px, ${-(60 + Math.random() * 40)}px) scale(1.15)`;
-                popup.style.opacity = '0';
-            });
+            const popup = document.createElement('div'); popup.className = 'speed-popup'; popup.innerText = `👟 +${amount.toFixed(2)}`;
+            popup.style.left = `${TM_BOUNDS.left + 25}px`; popup.style.top = `${TM_BOUNDS.top - 10}px`; map.appendChild(popup);
+            requestAnimationFrame(() => { popup.style.transform = `translate(${(Math.random() - 0.5) * 100}px, ${-(60 + Math.random() * 40)}px) scale(1.15)`; popup.style.opacity = '0'; });
             setTimeout(() => { if (popup.parentNode) popup.parentNode.removeChild(popup); }, 800);
         }
         function checkTreadmill(now) {
@@ -601,65 +563,36 @@
         function movePlayer(dx, dy) {
             if (isActionFrozen) return;
             const currentMoveSpeed = isSpeedFixed ? 10.0 : speedValue;
-            const actualDx = dx * currentMoveSpeed;
-            const actualDy = dy * currentMoveSpeed;
-            const steps = Math.ceil(Math.hypot(actualDx, actualDy));
-            if (steps === 0) return;
+            const actualDx = dx * currentMoveSpeed; const actualDy = dy * currentMoveSpeed;
+            const steps = Math.ceil(Math.hypot(actualDx, actualDy)); if (steps === 0) return;
             for (let i = 0; i < steps; i++) {
                 if (isValidPosition(playerX + actualDx / steps, playerY)) playerX += actualDx / steps;
                 if (isValidPosition(playerX, playerY + actualDy / steps)) playerY += actualDy / steps;
             }
         }
-        function renderMap() {
-            map.style.transform = `translate3d(${-playerX}px, ${-playerY}px, 0)`;
-            player.style.left = `${playerX}px`;
-            player.style.top = `${playerY}px`;
-            if (liftedEgg) renderSingleEgg(liftedEgg);
-        }
+        function renderMap() { map.style.transform = `translate3d(${-playerX}px, ${-playerY}px, 0)`; player.style.left = `${playerX}px`; player.style.top = `${playerY}px`; if (liftedEgg) renderSingleEgg(liftedEgg); }
         function handleStart(e) { isDragging = true; handleMove(e); }
         function handleMove(e) {
             if (!isDragging) return;
             const rect = joystickWrapper.getBoundingClientRect();
             const clientX = e.touches ? e.touches[0].clientX : e.clientX;
             const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            
-            // 조이스틱 중심 좌표 (축소된 크기 반영)
-            const centerX = rect.left + rect.width / 2;
-            const centerY = rect.top + rect.height / 2;
-            
-            let deltaX = clientX - centerX;
-            let deltaY = clientY - centerY;
+            const centerX = rect.left + rect.width / 2; const centerY = rect.top + rect.height / 2;
+            let deltaX = clientX - centerX; let deltaY = clientY - centerY;
             const distance = Math.hypot(deltaX, deltaY);
             
-            // --- 조이스틱 버그 수정: Max Radius를 축소된 크기(반지름 30px)로 정확히 제한 ---
-            const maxRadius = 30; // 축소된 조이스틱의 반지름
-
-            if (distance > maxRadius) {
-                deltaX = (deltaX / distance) * maxRadius;
-                deltaY = (deltaY / distance) * maxRadius;
-            }
-
-            // 스틱 이동 렌더링
+            // --- 조이스틱 위치 및 스케일 버그 해결 ---
+            // Max Radius를 축소된 크기(반지름 30px)로 정확히 제한
+            const maxRadius = 30; 
+            if (distance > maxRadius) { deltaX = (deltaX / distance) * maxRadius; deltaY = (deltaY / distance) * maxRadius; }
+            // 스틱 이동 렌더링 (translate50% 유지하며 중앙 기준 deltaX 이동)
             joystickStick.style.transform = `translate(calc(-50% + ${deltaX}px), calc(-50% + ${deltaY}px))`;
-            
             // 이동 비율 계산 (축소된 반지름 기준)
-            moveX = deltaX / maxRadius;
-            moveY = deltaY / maxRadius;
+            moveX = deltaX / maxRadius; moveY = deltaY / maxRadius;
         }
         function handleEnd() { isDragging = false; moveX = 0; moveY = 0; joystickStick.style.transform = 'translate(-50%, -50%)'; }
-        
-        joystickWrapper.addEventListener('mousedown', handleStart);
-        window.addEventListener('mousemove', handleMove);
-        window.addEventListener('mouseup', handleEnd);
-        joystickWrapper.addEventListener('touchstart', handleStart);
-        window.addEventListener('touchmove', handleMove);
-        window.addEventListener('touchend', handleEnd);
-
-        function gameLoop(now) {
-            if (isDragging && !isActionFrozen) { movePlayer(moveX, moveY); renderMap(); }
-            else if (liftedEgg || isActionFrozen) renderMap();
-            checkTreadmill(now); checkNearestEgg(); requestAnimationFrame(gameLoop);
-        }
+        joystickWrapper.addEventListener('mousedown', handleStart); window.addEventListener('mousemove', handleMove); window.addEventListener('mouseup', handleEnd); joystickWrapper.addEventListener('touchstart', handleStart); joystickWrapper.addEventListener('touchmove', handleMove); joystickWrapper.addEventListener('touchend', handleEnd);
+        function gameLoop(now) { if (isDragging && !isActionFrozen) { movePlayer(moveX, moveY); renderMap(); } else if (liftedEgg || isActionFrozen) renderMap(); checkTreadmill(now); checkNearestEgg(); requestAnimationFrame(gameLoop); }
         initRandomEggs(); setZoom(50); updateSpeedDisplay(); renderMap(); requestAnimationFrame(gameLoop);
     </script>
 </body>
