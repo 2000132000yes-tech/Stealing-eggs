@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-select=none">
-    <title>Steal An Egg - Progressive Zone Map with Settings</title>
+    <title>Steal An Egg - Camera & Player Size Fixed</title>
     <style>
         * {
             box-sizing: border-box;
@@ -39,7 +39,7 @@
             will-change: transform;
         }
 
-        /* 전체 맵 세로 길이: 상단(22,600px) + 하단(1,500px) = 24,100px */
+        /* 전체 맵 세로 길이: 24,100px */
         #world-map {
             position: absolute;
             top: 0;
@@ -49,7 +49,7 @@
             will-change: transform;
         }
 
-        /* Zone 전체 컨테이너 */
+        /* Zone 컨테이너 */
         .zone-container {
             position: absolute;
             top: 0;
@@ -63,7 +63,7 @@
             border-right: 24px solid #000000;
         }
 
-        /* 단계별 세로 높이 점진적 증가 */
+        /* 단계별 세로 높이 */
         .zone-6 { height: 7500px; background-color: #f7a37b; }
         .zone-5 { height: 5500px; background-color: #00a8e8; }
         .zone-4 { height: 4000px; background-color: #262626; }
@@ -71,7 +71,7 @@
         .zone-2 { height: 1800px; background-color: #1e5c1e; }
         .zone-1 { height: 1000px; background-color: #72bf44; }
 
-        /* 빨간 구별선 위치 변경 (22,592px 지점) */
+        /* 빨간 구별선 */
         .red-divider {
             position: absolute;
             top: 22592px;
@@ -83,7 +83,7 @@
             box-shadow: 0 0 8px rgba(255, 0, 0, 0.8);
         }
 
-        /* 하단 베이스 위치 변경 (22,600px 지점) */
+        /* 하단 베이스 */
         .base-wrapper {
             position: absolute;
             top: 22600px;
@@ -116,7 +116,7 @@
             pointer-events: none;
         }
 
-        /* 런닝머신 위치 (23,260px 지점) */
+        /* 런닝머신 (가로 110px * 세로 160px) */
         .treadmill {
             position: absolute;
             top: 23260px;
@@ -225,15 +225,16 @@
             opacity: 1;
         }
 
+        /* 캐릭터: 런닝머신보다 작도록 40px * 40px로 수정 */
         #player {
             position: absolute;
             top: 50%;
             left: 50%;
-            width: 50px;
-            height: 50px;
+            width: 40px;
+            height: 40px;
             background-color: #ffda79;
             border: 3px solid #ccae4f;
-            border-radius: 12px;
+            border-radius: 10px;
             transform: translate(-50%, -50%);
             z-index: 100;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
@@ -242,16 +243,16 @@
         #player::after {
             content: '';
             position: absolute;
-            top: 12px;
-            left: 10px;
-            width: 8px;
-            height: 8px;
+            top: 9px;
+            left: 7px;
+            width: 7px;
+            height: 7px;
             background-color: #333;
             border-radius: 50%;
-            box-shadow: 18px 0 0 #333;
+            box-shadow: 15px 0 0 #333;
         }
 
-        /* UI 버튼 */
+        /* UI */
         #settings-btn {
             position: absolute;
             top: 20px;
@@ -314,7 +315,7 @@
             transform: translateX(20px);
         }
 
-        /* 설정 창 (Modal) */
+        /* 설정 Modal */
         #settings-modal {
             display: none;
             position: absolute;
@@ -596,7 +597,6 @@
         const zoomRange = document.getElementById('zoom-range');
         const zoomValueText = document.getElementById('zoom-value-text');
 
-        // 시작 위치 (확장된 하단 베이스 내)
         let playerX = 1000;
         let playerY = 23100;
         
@@ -607,11 +607,11 @@
         let moveX = 0;
         let moveY = 0;
 
-        const RADIUS = 25;
+        // 플레이어 크기 40px 기준 반지름 20px 적용
+        const RADIUS = 20;
         const WALL_THICK = 24;
         const MAP_HEIGHT = 24100;
 
-        /* 런닝머신 충돌 위치 */
         const TM_BOUNDS = {
             left: 540,
             right: 650,
@@ -621,10 +621,11 @@
 
         let lastTreadmillTime = 0;
 
-        // 시야(Zoom) 설정 조절
+        /* 시야(Zoom) 로직 정상 반전:
+           수치(1) = 좁은 시야 (화면 1.2x 확대)
+           수치(100) = 넓은 시야 (화면 0.2x 축소) */
         function setZoom(val) {
-            // 최소(1) = 0.2x ~ 최대(100) = 1.2x 변환
-            const scale = 0.2 + (val - 1) * (1.0 / 99);
+            const scale = 1.2 - (val - 1) * (1.0 / 99);
             camera.style.transform = `scale(${scale.toFixed(3)})`;
             zoomValueText.innerText = val;
         }
@@ -711,11 +712,9 @@
         function isValidPosition(x, y) {
             if (y < WALL_THICK + RADIUS || y > MAP_HEIGHT - WALL_THICK - RADIUS) return false;
 
-            // 22,600px 상단 Zone 영역
             if (y < 22600) {
                 if (x < 500 + WALL_THICK + RADIUS || x > 1500 - WALL_THICK - RADIUS) return false;
             } else {
-                // 22,600px 하단 Base 영역
                 if (x < WALL_THICK + RADIUS || x > 2000 - WALL_THICK - RADIUS) return false;
 
                 if (y - RADIUS < 22600 + WALL_THICK) {
@@ -807,7 +806,6 @@
             requestAnimationFrame(gameLoop);
         }
 
-        // 초기화
         setZoom(50);
         updateSpeedDisplay();
         renderMap();
