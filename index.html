@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-select=none">
-    <title>Steal An Egg - World Map</title>
+    <title>Steal An Egg - World Map Expansion</title>
     <style>
         * {
             box-sizing: border-box;
@@ -40,13 +40,13 @@
             will-change: transform;
         }
 
-        /* 월드 맵 전체 */
+        /* 월드 맵 전체 (높이 5700px로 증가) */
         #world-map {
             position: absolute;
             top: 0;
             left: 0;
             width: 2000px;
-            height: 5200px;
+            height: 5700px;
             will-change: transform;
         }
 
@@ -88,13 +88,13 @@
             box-shadow: 0 0 8px rgba(255, 0, 0, 0.8);
         }
 
-        /* 메인 베이스 영역 */
+        /* 메인 베이스 영역 (세로 길이를 1500px로 확장) */
         .base-wrapper {
             position: absolute;
             top: 4200px;
             left: 0;
             width: 2000px;
-            height: 1000px;
+            height: 1500px;
         }
 
         .main-base {
@@ -109,50 +109,53 @@
             overflow: hidden;
         }
 
-        /* 베이스 뒤쪽(하단) 울타리 디자인 */
+        /* 직사각형 뒤쪽 울타리 디자인 */
         .fence-container {
             position: absolute;
             bottom: 0;
             left: 0;
             width: 100%;
-            height: 45px;
+            height: 50px;
             display: flex;
-            justify-content: space-around;
+            justify-content: space-between;
             align-items: flex-end;
             padding: 0 10px;
             pointer-events: none;
             z-index: 10;
         }
 
+        /* 완전히 직사각형인 울타리 기둥 */
         .fence-post {
-            width: 18px;
-            height: 40px;
+            width: 20px;
+            height: 48px;
             background-color: #8b5a2b;
-            border: 2px solid #5c3a1e;
-            border-radius: 4px 4px 0 0;
-            position: relative;
-        }
-
-        .fence-rail {
-            position: absolute;
-            bottom: 12px;
-            left: 0;
-            width: 100%;
-            height: 8px;
-            background-color: #a0522d;
-            border-top: 2px solid #5c3a1e;
-            border-bottom: 2px solid #5c3a1e;
+            border: 2px solid #3d2311;
+            border-radius: 0px; /* 완벽한 직사각형 */
+            box-shadow: inset 0 0 4px rgba(0,0,0,0.3);
         }
 
         .fence-rail-top {
             position: absolute;
-            bottom: 26px;
+            bottom: 30px;
             left: 0;
             width: 100%;
-            height: 8px;
+            height: 10px;
             background-color: #a0522d;
-            border-top: 2px solid #5c3a1e;
-            border-bottom: 2px solid #5c3a1e;
+            border-top: 2px solid #3d2311;
+            border-bottom: 2px solid #3d2311;
+            z-index: 11;
+        }
+
+        .fence-rail-bottom {
+            position: absolute;
+            bottom: 10px;
+            left: 0;
+            width: 100%;
+            height: 10px;
+            background-color: #a0522d;
+            border-top: 2px solid #3d2311;
+            border-bottom: 2px solid #3d2311;
+            z-index: 11;
         }
 
         .shoulder-wall-left {
@@ -247,9 +250,9 @@
             color: #3a86ff;
         }
 
-        /* 돈 글씨: 초록색 */
+        /* 돈 글씨: 연두색 */
         #money-display {
-            color: #2ec4b6;
+            color: #70e000;
         }
 
         /* 조이스틱 UI */
@@ -298,10 +301,11 @@
                     <div class="shoulder-wall-left"></div>
                     <div class="shoulder-wall-right"></div>
                     <div class="main-base">
-                        <!-- 베이스 뒤쪽 울타리 -->
+                        <!-- 직사각형 울타리 난간 -->
                         <div class="fence-rail-top"></div>
-                        <div class="fence-rail"></div>
+                        <div class="fence-rail-bottom"></div>
                         <div class="fence-container">
+                            <div class="fence-post"></div><div class="fence-post"></div>
                             <div class="fence-post"></div><div class="fence-post"></div>
                             <div class="fence-post"></div><div class="fence-post"></div>
                             <div class="fence-post"></div><div class="fence-post"></div>
@@ -337,13 +341,13 @@
                 <div class="hud-text" id="speed-display">:10</div>
             </div>
 
-            <!-- 초록색 돈 텍스트 -->
+            <!-- 연두색 돈 텍스트 -->
             <div class="hud-item">
                 <div class="hud-icon">
                     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="12" cy="12" r="9" fill="#2ec4b6" stroke="#0f9f90" stroke-width="2"/>
-                        <circle cx="12" cy="12" r="6" fill="#cbf3f0" stroke="#0f9f90" stroke-width="1"/>
-                        <text x="12" y="16" font-size="11" font-weight="900" fill="#0f9f90" text-anchor="middle">$</text>
+                        <circle cx="12" cy="12" r="9" fill="#70e000" stroke="#38b000" stroke-width="2"/>
+                        <circle cx="12" cy="12" r="6" fill="#ccff33" stroke="#38b000" stroke-width="1"/>
+                        <text x="12" y="16" font-size="11" font-weight="900" fill="#208b00" text-anchor="middle">$</text>
                     </svg>
                 </div>
                 <div class="hud-text" id="money-display">:000</div>
@@ -373,16 +377,21 @@
 
         const RADIUS = 25;
         const WALL_THICK = 24;
+        const MAP_HEIGHT = 5700; // 넓어진 베이스 크기에 맞춰 총 맵 높이 변경 (4200 + 1500)
 
         function isValidPosition(x, y) {
-            if (y < WALL_THICK + RADIUS || y > 5200 - WALL_THICK - RADIUS) return false;
+            // 상/하단 외곽 벽 충돌 체크
+            if (y < WALL_THICK + RADIUS || y > MAP_HEIGHT - WALL_THICK - RADIUS) return false;
 
+            // 1~6 구역 내부 (y < 4200)
             if (y < 4200) {
                 return (x >= 500 + WALL_THICK + RADIUS && x <= 1500 - WALL_THICK - RADIUS);
             }
 
+            // 베이스 내부 (y >= 4200)
             if (x < WALL_THICK + RADIUS || x > 2000 - WALL_THICK - RADIUS) return false;
 
+            // 베이스 좌/우 상단 꺾이는 벽(어깨 벽) 충돌 체크
             if (y - RADIUS < 4200 + WALL_THICK) {
                 const inLeftShoulder = (x - RADIUS < 500 + WALL_THICK);
                 const inRightShoulder = (x + RADIUS > 1500 - WALL_THICK);
