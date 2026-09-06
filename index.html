@@ -289,7 +289,7 @@
         .hud-item { display: flex; align-items: center; }
         .hud-icon { width: 24px; height: 24px; margin-right: 6px; }
         .hud-icon svg { width: 100%; height: 100%; }
-        .hud-text { font-size: 18px; font-weight: 900; font-family: 'Arial Black', sans-serif; text-shadow: 0 2px 5px rgba(0,0,0,0.9); }
+        .hud-text { font-size: 22px; font-weight: 900; font-family: 'Arial Black', sans-serif; text-shadow: 0 2px 5px rgba(0,0,0,0.9); }
 
         #speed-display { color: #3a86ff; }
         #money-display { color: #70e000; }
@@ -419,7 +419,7 @@
                         <path d="M2 18H22V20H2V18Z" fill="#e0e1dd"/>
                     </svg>
                 </div>
-                <div class="hud-text" id="speed-display">10.00</div>
+                <div class="hud-text" id="speed-display">:10.00</div>
             </div>
 
             <div class="hud-item">
@@ -478,7 +478,7 @@
         let playerX = 1000;
         let playerY = 23100;
         
-        let speedValue = 10.0;
+        let speedValue = 10.00;
         let isSpeedFixed = false;
 
         let isDragging = false;
@@ -705,11 +705,16 @@
             }
         }
 
-        /* --- 공식 반영: 크기(무게) + 등급(ZoneLevel * 60초) --- */
+        /* --- 소수점 표기 반영 부화 공식 --- */
         function startIncubation(egg) {
             egg.isIncubating = true;
-            const baseZoneSeconds = egg.zoneLevel * 60; // Zone 1=60초, Zone 2=120초...
-            const weightSeconds = Math.round(egg.weight); // 크기(무게) 초
+            const baseZoneSeconds = egg.zoneLevel * 60; // Zone 1 = 60초(1분)
+            
+            // 무게 소수점 계산: 17.6kg -> 정수 17초 + 소수점(.6 * 10 = 6초)
+            const integerWeight = Math.floor(egg.weight);
+            const decimalWeight = Math.round((egg.weight - integerWeight) * 10);
+            const weightSeconds = integerWeight + decimalWeight;
+
             egg.remainingTime = baseZoneSeconds + weightSeconds;
         }
 
@@ -787,12 +792,12 @@
 
         speedToggleSwitch.addEventListener('click', () => { isSpeedFixed = !isSpeedFixed; speedToggleSwitch.classList.toggle('active', isSpeedFixed); });
         
-        /* --- HUD 속도 숫자 실시간 업데이트 함수 --- */
+        /* --- HUD 실시간 속도 표기 개선 --- */
         function updateSpeedDisplay() { 
-            speedDisplay.innerText = speedValue.toFixed(2); 
+            speedDisplay.innerText = `:${speedValue.toFixed(2)}`; 
         }
         
-        /* --- 런닝머신 속도 증가 로직 --- */
+        /* --- 런닝머신 속도 상승 매 프레임 감지 --- */
         function checkTreadmill(now) {
             const isOnTM = (playerX >= TM_BOUNDS.left && playerX <= TM_BOUNDS.right && playerY >= TM_BOUNDS.top && playerY <= TM_BOUNDS.bottom);
             if (isOnTM) {
@@ -800,13 +805,19 @@
                     tmScreen.innerText = "TRAIN.."; 
                     lastTreadmillTime = now; 
                 }
-                while (now - lastTreadmillTime >= 100) { 
-                    speedValue += 0.01; 
-                    updateSpeedDisplay(); // HUD 숫자 변경
-                    lastTreadmillTime += 100; 
+                
+                if (lastTreadmillTime === 0) lastTreadmillTime = now;
+                
+                const delta = now - lastTreadmillTime;
+                if (delta >= 100) {
+                    const increments = Math.floor(delta / 100);
+                    speedValue += increments * 0.01;
+                    updateSpeedDisplay(); // 실시간 HUD 업뎃
+                    lastTreadmillTime = now - (delta % 100);
                 }
             } else { 
                 tmScreen.innerText = "READY"; 
+                lastTreadmillTime = 0;
             }
         }
 
@@ -856,7 +867,19 @@
         function handleEnd() { isDragging = false; moveX = 0; moveY = 0; joystickStick.style.transform = 'translate(-50%, -50%)'; }
         
         joystickWrapper.addEventListener('mousedown', handleStart); window.addEventListener('mousemove', handleMove); window.addEventListener('mouseup', handleEnd); joystickWrapper.addEventListener('touchstart', handleStart); joystickWrapper.addEventListener('touchmove', handleMove); joystickWrapper.addEventListener('touchend', handleEnd);
-        function gameLoop(now) { if (isDragging) { movePlayer(moveX, moveY); renderMap(); } else if (liftedEgg) renderMap(); checkTreadmill(now); checkNearestEgg(); requestAnimationFrame(gameLoop); }
+        
+        function gameLoop(now) { 
+            if (isDragging) { 
+                movePlayer(moveX, moveY); 
+                renderMap(); 
+            } else if (liftedEgg) {
+                renderMap(); 
+            }
+            checkTreadmill(now); 
+            checkNearestEgg(); 
+            requestAnimationFrame(gameLoop); 
+        }
+
         initRandomEggs(); setZoom(50); updateSpeedDisplay(); renderMap(); requestAnimationFrame(gameLoop);
     </script>
 </body>
