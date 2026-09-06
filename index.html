@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-select=none">
-    <title>Steal An Egg - Camera Bug Fixed</title>
+    <title>Steal An Egg - Speed Increment Updated</title>
     <style>
         * {
             box-sizing: border-box;
@@ -225,7 +225,7 @@
             opacity: 1;
         }
 
-        /* 캐릭터: 맵 요소 내부에 배치되도록 절대 위치 수정 */
+        /* 캐릭터 */
         #player {
             position: absolute;
             width: 40px;
@@ -534,7 +534,6 @@
                     <div class="treadmill-belt"></div>
                 </div>
 
-                <!-- 플레이어를 world-map 내부로 이동 -->
                 <div id="player"></div>
             </div>
         </div>
@@ -547,7 +546,7 @@
                         <path d="M2 18H22V20H2V18Z" fill="#e0e1dd"/>
                     </svg>
                 </div>
-                <div class="hud-text" id="speed-display">:10.0</div>
+                <div class="hud-text" id="speed-display">:10.00</div>
             </div>
 
             <div class="hud-item">
@@ -621,9 +620,6 @@
 
         let lastTreadmillTime = 0;
 
-        /* 시야(Zoom) 설정:
-           수치(1) = 좁은 시야 (1.2x 확대)
-           수치(100) = 넓은 시야 (0.2x 축소) */
         function setZoom(val) {
             const scale = 1.2 - (val - 1) * (1.0 / 99);
             camera.style.transform = `scale(${scale.toFixed(3)})`;
@@ -647,15 +643,17 @@
             speedToggleSwitch.classList.toggle('active', isSpeedFixed);
         });
 
+        /* 소수점 둘째 자리(toFixed(2))까지 표기 */
         function updateSpeedDisplay() {
-            speedDisplay.innerText = `:${speedValue.toFixed(1)}`;
+            speedDisplay.innerText = `:${speedValue.toFixed(2)}`;
             speedDisplay.style.color = `#3a86ff`;
         }
 
+        /* 팝업도 소수점 둘째 자리 표기 */
         function createSpeedPopup(amount) {
             const popup = document.createElement('div');
             popup.className = 'speed-popup';
-            popup.innerText = `👟 +${amount.toFixed(1)}`;
+            popup.innerText = `👟 +${amount.toFixed(2)}`;
 
             const startX = TM_BOUNDS.left + 25;
             const startY = TM_BOUNDS.top - 10;
@@ -696,9 +694,10 @@
                 }
 
                 while (now - lastTreadmillTime >= 100) {
-                    speedValue += 0.1;
+                    /* 0.01씩 속도 증가 */
+                    speedValue += 0.01;
                     updateSpeedDisplay();
-                    createSpeedPopup(0.1);
+                    createSpeedPopup(0.01);
                     lastTreadmillTime += 100;
                 }
             } else {
@@ -747,7 +746,6 @@
             }
         }
 
-        /* 맵과 플레이어 위치 렌더링 */
         function renderMap() {
             map.style.transform = `translate3d(${-playerX}px, ${-playerY}px, 0)`;
             player.style.left = `${playerX}px`;
