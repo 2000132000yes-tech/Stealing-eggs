@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-select=none">
-    <title>Steal An Egg - Optimized Pickup & Egg Scales</title>
+    <title>Steal An Egg - Unique Eggs & Weight Display</title>
     <style>
         * {
             box-sizing: border-box;
@@ -83,7 +83,26 @@
             will-change: transform, left, top;
         }
 
-        .egg-item svg { width: 100%; height: 100%; }
+        .egg-item svg { width: 100%; height: 100%; overflow: visible; }
+
+        /* 알 상단 무게 라벨 */
+        .egg-weight-label {
+            position: absolute;
+            top: -28px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 15px;
+            font-weight: 900;
+            color: #ffffff;
+            background-color: rgba(0, 0, 0, 0.75);
+            padding: 2px 8px;
+            border-radius: 6px;
+            border: 1px solid #ffda79;
+            white-space: nowrap;
+            display: none;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+            z-index: 120;
+        }
 
         /* 빨간 구별선 */
         .red-divider {
@@ -427,6 +446,7 @@
         const RADIUS = 20; 
         const WALL_THICK = 24;
         const MAP_HEIGHT = 24100;
+        const RED_LINE_Y = 22592; // 빨간 선 위치
 
         const TM_BOUNDS = { left: 540, right: 650, top: 23260, bottom: 23420 };
 
@@ -437,40 +457,72 @@
         let liftedEgg = null;
 
         const ZONES_CONFIG = [
-            { name: "Zone 6", minY: 24, maxY: 7524 },
-            { name: "Zone 5", minY: 7524, maxY: 13024 },
-            { name: "Zone 4", minY: 13024, maxY: 17024 },
-            { name: "Zone 3", minY: 17024, maxY: 19824 },
-            { name: "Zone 2", minY: 19824, maxY: 21624 },
-            { name: "Zone 1", minY: 21624, maxY: 22600 }
+            { level: 6, name: "Zone 6", minY: 24, maxY: 7524 },
+            { level: 5, name: "Zone 5", minY: 7524, maxY: 13024 },
+            { level: 4, name: "Zone 4", minY: 13024, maxY: 17024 },
+            { level: 3, name: "Zone 3", minY: 17024, maxY: 19824 },
+            { level: 2, name: "Zone 2", minY: 19824, maxY: 21624 },
+            { level: 1, name: "Zone 1", minY: 21624, maxY: 22600 }
         ];
 
-        function getEggSvgHTML(id) {
+        // 단계(Zone)별로 모양/색상/패턴이 다른 알 SVG 생성
+        function getEggSvgHTML(id, zoneLevel) {
+            let gradContent = '';
+            let patternSVG = '';
+
+            switch(zoneLevel) {
+                case 1: // 기본 따뜻한 노란알 + 점박이
+                    gradContent = `<stop offset="0%" stop-color="#ffffff"/><stop offset="60%" stop-color="#fbc531"/><stop offset="100%" stop-color="#e1b12c"/>`;
+                    patternSVG = `<circle cx="35" cy="70" r="6" fill="#e84118" opacity="0.6"/><circle cx="65" cy="85" r="8" fill="#e84118" opacity="0.6"/><circle cx="50" cy="100" r="5" fill="#e84118" opacity="0.6"/>`;
+                    break;
+                case 2: // 자연의 초록알 + 물결 패턴
+                    gradContent = `<stop offset="0%" stop-color="#eccc68"/><stop offset="50%" stop-color="#2ed573"/><stop offset="100%" stop-color="#26af5f"/>`;
+                    patternSVG = `<path d="M 20 60 Q 50 50, 80 60 Q 50 70, 20 60" fill="#1e90ff" opacity="0.5"/><path d="M 15 85 Q 50 75, 85 85 Q 50 95, 15 85" fill="#1e90ff" opacity="0.5"/>`;
+                    break;
+                case 3: // 신비로운 보라알 + 세로 줄무늬
+                    gradContent = `<stop offset="0%" stop-color="#ffffff"/><stop offset="40%" stop-color="#a29bfe"/><stop offset="100%" stop-color="#6c5ce7"/>`;
+                    patternSVG = `<path d="M 50 5 C 30 40, 30 90, 50 125" stroke="#fd79a8" stroke-width="6" fill="none" opacity="0.7"/><path d="M 35 15 C 15 45, 15 85, 30 115" stroke="#fd79a8" stroke-width="5" fill="none" opacity="0.7"/><path d="M 65 15 C 85 45, 85 85, 70 115" stroke="#fd79a8" stroke-width="5" fill="none" opacity="0.7"/>`;
+                    break;
+                case 4: // 다크/네온 알 + 대각선 테크 패턴
+                    gradContent = `<stop offset="0%" stop-color="#636e72"/><stop offset="50%" stop-color="#2d3436"/><stop offset="100%" stop-color="#000000"/>`;
+                    patternSVG = `<line x1="20" y1="40" x2="80" y2="100" stroke="#00cec9" stroke-width="6" opacity="0.8"/><line x1="30" y1="30" x2="90" y2="90" stroke="#ff7675" stroke-width="4" opacity="0.8"/>`;
+                    break;
+                case 5: // 얼음/수정 알 + 다이아몬드 패턴
+                    gradContent = `<stop offset="0%" stop-color="#ffffff"/><stop offset="50%" stop-color="#81ecec"/><stop offset="100%" stop-color="#0984e3"/>`;
+                    patternSVG = `<polygon points="50,30 65,50 50,70 35,50" fill="#ffffff" opacity="0.7"/><polygon points="50,75 65,95 50,115 35,95" fill="#ffffff" opacity="0.7"/>`;
+                    break;
+                case 6: // 황금/마그마 알 + 번개 패턴
+                    gradContent = `<stop offset="0%" stop-color="#fff200"/><stop offset="50%" stop-color="#ff3838"/><stop offset="100%" stop-color="#c56cf0"/>`;
+                    patternSVG = `<path d="M 55 20 L 35 60 L 55 60 L 40 105 L 70 50 L 50 50 Z" fill="#fff" opacity="0.85"/>`;
+                    break;
+            }
+
             return `
                 <svg viewBox="0 0 100 130" xmlns="http://www.w3.org/2000/svg">
                     <defs>
                         <radialGradient id="eggGrad_${id}" cx="35%" cy="30%" r="70%">
-                            <stop offset="0%" stop-color="#ffffff"/>
-                            <stop offset="40%" stop-color="#ffeaa7"/>
-                            <stop offset="85%" stop-color="#fdcb6e"/>
-                            <stop offset="100%" stop-color="#e17055"/>
+                            ${gradContent}
                         </radialGradient>
                     </defs>
                     <path d="M 50 5 C 20 5, 5 45, 5 80 C 5 110, 25 125, 50 125 C 75 125, 95 110, 95 80 C 95 45, 80 5, 50 5 Z" 
-                          fill="url(#eggGrad_${id})" stroke="#d63031" stroke-width="4"/>
-                    <ellipse cx="38" cy="35" rx="10" ry="16" fill="#ffffff" opacity="0.6" transform="rotate(-15 38 35)"/>
+                          fill="url(#eggGrad_${id})" stroke="#222222" stroke-width="4"/>
+                    ${patternSVG}
+                    <ellipse cx="38" cy="35" rx="10" ry="16" fill="#ffffff" opacity="0.5" transform="rotate(-15 38 35)"/>
                 </svg>
             `;
         }
 
-        // 큰 알이 나올 확률 감소 (지수 5로 증가시켜 작은 알 분포 확대)
+        // 큰 알이 나올 확률 극단적으로 감소 (지수 power = 12 적용)
         function getRandomEggSize() {
             const minScale = 0.2; 
             const maxScale = 1.5; 
-            const weightedRand = Math.pow(Math.random(), 5); 
+            // 지수를 12로 대폭 올려 아주 아주 작은 알이 대부분 나오게 만듦
+            const weightedRand = Math.pow(Math.random(), 12); 
             const scale = minScale + (weightedRand * (maxScale - minScale));
-            const displaySize = 1 + ((scale - minScale) / (maxScale - minScale)) * 99;
-            return { scale: parseFloat(scale.toFixed(3)), display: parseFloat(displaySize.toFixed(2)) };
+            
+            // 크기(scale)에 따른 무게(kg) 계산식 (0.2scale -> 약 1.5kg, 1.5scale -> 약 98.5kg)
+            const weight = (Math.pow(scale, 2.5) * 35).toFixed(1);
+            return { scale: parseFloat(scale.toFixed(3)), weight: weight };
         }
 
         function initRandomEggs() {
@@ -489,7 +541,10 @@
                     
                     const eggItem = document.createElement('div');
                     eggItem.className = 'egg-item';
-                    eggItem.innerHTML = getEggSvgHTML(eggIdCounter);
+                    eggItem.innerHTML = `
+                        <div class="egg-weight-label" id="weight-label-${eggIdCounter}">${sizeData.weight}kg</div>
+                        ${getEggSvgHTML(eggIdCounter, zone.level)}
+                    `;
                     eggItem.style.left = `${randX}px`;
                     eggItem.style.top = `${randY}px`;
                     eggItem.style.transform = `translate(-50%, -100%) scale(${sizeData.scale})`;
@@ -498,10 +553,11 @@
                     eggList.push({ 
                         id: eggIdCounter, 
                         element: eggItem, 
+                        weightLabel: eggItem.querySelector('.egg-weight-label'),
                         worldX: randX, 
                         worldY: randY, 
                         scale: sizeData.scale, 
-                        displaySize: sizeData.display, 
+                        weight: sizeData.weight, 
                         isLifted: false 
                     });
 
@@ -529,7 +585,6 @@
 
         actionBtn.addEventListener('click', handleAction);
 
-        // 애니메이션 없이 즉시 집기/놓기 실행
         function handleAction() {
             if (!liftedEgg) {
                 if (!nearestEgg) return;
@@ -562,9 +617,22 @@
                 eggData.element.style.top = `${playerY}px`;
                 const yOffset = -110 - (eggData.scale * 15); 
                 eggData.element.style.transform = `translate(-50%, ${yOffset}%) scale(${eggData.scale})`;
+                
+                // 빨간 선(RED_LINE_Y)을 넘었을 때만 무게 표시
+                if (playerY >= RED_LINE_Y) {
+                    eggData.weightLabel.style.display = 'block';
+                } else {
+                    eggData.weightLabel.style.display = 'none';
+                }
             } else { 
                 eggData.element.style.transform = `translate(-50%, -100%) scale(${eggData.scale})`; 
                 eggData.isLifted = false; 
+                // 내려놓았거나 빨간선 위일 경우 무게 숨김
+                if (eggData.worldY < RED_LINE_Y) {
+                    eggData.weightLabel.style.display = 'none';
+                } else {
+                    eggData.weightLabel.style.display = 'block';
+                }
             }
         }
 
@@ -595,14 +663,12 @@
             return true;
         }
 
-        // 알 크기(scale)에 따라 속도가 느려지도록 계산
         function movePlayer(dx, dy) {
             let currentMoveSpeed = isSpeedFixed ? 10.0 : speedValue;
             
-            // 알을 들고 있을 때 크기에 비례하여 이동 속도 디버프 적용
             if (liftedEgg) {
                 const scale = liftedEgg.scale; 
-                const slowFactor = Math.max(0.1, 1 - (scale * 0.5)); // 크기가 클수록 최대 90%까지 느려짐
+                const slowFactor = Math.max(0.1, 1 - (scale * 0.5)); 
                 currentMoveSpeed *= slowFactor;
             }
 
