@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-select=none">
-    <title>Steal An Egg - Hatch Bug Fixed</title>
+    <title>Steal An Egg - Fixed Version</title>
     <style>
         * {
             box-sizing: border-box;
@@ -97,7 +97,7 @@
             display: none;
             box-shadow: 0 2px 6px rgba(0,0,0,0.6);
             z-index: 150;
-            pointer-events: none; /* 클릭 이벤트를 방해하지 않도록 추가 */
+            pointer-events: none;
         }
 
         .hatch-ready-icon {
@@ -112,7 +112,7 @@
             animation: bounceReady 0.6s infinite alternate ease-in-out;
             display: none;
             z-index: 160;
-            pointer-events: none; /* 클릭 이벤트를 방해하지 않도록 추가 */
+            pointer-events: none;
         }
 
         @keyframes bounceReady {
@@ -272,47 +272,13 @@
             box-shadow: 0 10px 25px rgba(0,0,0,0.8);
         }
 
-        .modal-title {
-            font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 20px;
-            text-align: center;
-            color: #fff;
-        }
-
-        .setting-row {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .setting-label {
-            font-size: 14px;
-            color: #aaa;
-        }
-
-        .slider-container {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
+        .modal-title { font-size: 18px; font-weight: bold; margin-bottom: 20px; text-align: center; color: #fff; }
+        .setting-row { display: flex; flex-direction: column; gap: 10px; }
+        .setting-label { font-size: 14px; color: #aaa; }
+        .slider-container { display: flex; align-items: center; gap: 12px; }
 
         #close-settings-btn { 
-            position: absolute; 
-            top: 12px; 
-            right: 12px; 
-            width: 32px; 
-            height: 32px; 
-            background: #e63946; 
-            color: #fff; 
-            border: none; 
-            border-radius: 8px; 
-            cursor: pointer; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center;
-            font-size: 16px;
-            font-weight: bold;
+            position: absolute; top: 12px; right: 12px; width: 32px; height: 32px; background: #e63946; color: #fff; border: none; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: bold;
         }
 
         .zoom-slider { -webkit-appearance: none; width: 100%; height: 8px; border-radius: 4px; background: #2b2d42; outline: none; }
@@ -453,7 +419,7 @@
                         <path d="M2 18H22V20H2V18Z" fill="#e0e1dd"/>
                     </svg>
                 </div>
-                <div class="hud-text" id="speed-display">:10.00</div>
+                <div class="hud-text" id="speed-display">10.00</div>
             </div>
 
             <div class="hud-item">
@@ -464,7 +430,7 @@
                         <text x="12" y="16" font-size="11" font-weight="900" fill="#208b00" text-anchor="middle">$</text>
                     </svg>
                 </div>
-                <div class="hud-text" id="money-display">:000</div>
+                <div class="hud-text" id="money-display">000</div>
             </div>
         </div>
 
@@ -524,7 +490,6 @@
         const MAP_HEIGHT = 24100;
         const RED_LINE_Y = 22592;
 
-        // 울타리 부화 영역 설정
         const FENCE_BOUNDS = { left: 500, right: 1500, top: 23440, bottom: 24040 };
         const TM_BOUNDS = { left: 540, right: 650, top: 23260, bottom: 23420 };
 
@@ -654,7 +619,6 @@
             });
         }
 
-        /* --- 근처 알 감지 및 버튼 상태 업데이트 --- */
         function checkNearestEgg() {
             if (liftedEgg) {
                 actionBtn.innerText = "놓기";
@@ -697,7 +661,6 @@
         actionBtn.addEventListener('click', handleAction);
 
         function handleAction() {
-            // 1. 부화 시도
             if (nearestHatchEgg) {
                 hatchEgg(nearestHatchEgg);
                 nearestHatchEgg = null;
@@ -705,7 +668,6 @@
                 return;
             }
 
-            // 2. 알 집기
             if (!liftedEgg) {
                 if (!nearestEgg) return;
                 liftedEgg = nearestEgg; 
@@ -715,9 +677,7 @@
                 liftedEgg.element.style.zIndex = '110';
                 actionBtn.innerText = "놓기"; 
                 actionBtn.className = 'is-lifting';
-            } 
-            // 3. 알 놓기 및 부화 타이머 시작 감지
-            else {
+            } else {
                 const dropEgg = liftedEgg; 
                 liftedEgg = null;
                 
@@ -727,7 +687,6 @@
                 dropEgg.element.style.left = `${playerX}px`; 
                 dropEgg.element.style.top = `${playerY}px`; 
 
-                // 울타리 범위에 놓았는지 체크
                 const isInFence = (
                     dropEgg.worldX >= FENCE_BOUNDS.left && 
                     dropEgg.worldX <= FENCE_BOUNDS.right && 
@@ -746,14 +705,14 @@
             }
         }
 
+        /* --- 공식 반영: 크기(무게) + 등급(ZoneLevel * 60초) --- */
         function startIncubation(egg) {
             egg.isIncubating = true;
-            // 부화 테스트용: (zoneLevel * 3)초로 조정 (빠른 테스트 원할시 숫자를 줄이세요)
-            const totalSeconds = Math.round((egg.zoneLevel * 5) + (egg.weight * 0.2));
-            egg.remainingTime = totalSeconds;
+            const baseZoneSeconds = egg.zoneLevel * 60; // Zone 1=60초, Zone 2=120초...
+            const weightSeconds = Math.round(egg.weight); // 크기(무게) 초
+            egg.remainingTime = baseZoneSeconds + weightSeconds;
         }
 
-        /* --- 부화 처리 개선 --- */
         function hatchEgg(egg) {
             if (egg.element && egg.element.parentNode) {
                 egg.element.parentNode.removeChild(egg.element);
@@ -764,15 +723,14 @@
             }
         }
 
-        /* --- 타이머 로직 수정 (isIncubating 해제 보장) --- */
         function updateIncubationTimers() {
             eggList.forEach(egg => {
                 if (egg.isIncubating && !egg.isHatchReady) {
                     egg.remainingTime -= 1;
                     if (egg.remainingTime <= 0) {
                         egg.remainingTime = 0;
-                        egg.isIncubating = false; // 부화 대기 종료
-                        egg.isHatchReady = true;  // 부화 준비 완료
+                        egg.isIncubating = false;
+                        egg.isHatchReady = true;
                         egg.hatchIcon.style.display = 'block';
                         egg.weightLabel.style.display = 'none';
                     } else {
@@ -828,14 +786,28 @@
         closeSettingsBtn.addEventListener('click', () => { settingsModal.style.display = 'none'; });
 
         speedToggleSwitch.addEventListener('click', () => { isSpeedFixed = !isSpeedFixed; speedToggleSwitch.classList.toggle('active', isSpeedFixed); });
-        function updateSpeedDisplay() { speedDisplay.innerText = `:${speedValue.toFixed(2)}`; }
         
+        /* --- HUD 속도 숫자 실시간 업데이트 함수 --- */
+        function updateSpeedDisplay() { 
+            speedDisplay.innerText = speedValue.toFixed(2); 
+        }
+        
+        /* --- 런닝머신 속도 증가 로직 --- */
         function checkTreadmill(now) {
             const isOnTM = (playerX >= TM_BOUNDS.left && playerX <= TM_BOUNDS.right && playerY >= TM_BOUNDS.top && playerY <= TM_BOUNDS.bottom);
             if (isOnTM) {
-                if (tmScreen.innerText !== "TRAIN..") { tmScreen.innerText = "TRAIN.."; lastTreadmillTime = now; }
-                while (now - lastTreadmillTime >= 100) { speedValue += 0.01; updateSpeedDisplay(); lastTreadmillTime += 100; }
-            } else { tmScreen.innerText = "READY"; }
+                if (tmScreen.innerText !== "TRAIN..") { 
+                    tmScreen.innerText = "TRAIN.."; 
+                    lastTreadmillTime = now; 
+                }
+                while (now - lastTreadmillTime >= 100) { 
+                    speedValue += 0.01; 
+                    updateSpeedDisplay(); // HUD 숫자 변경
+                    lastTreadmillTime += 100; 
+                }
+            } else { 
+                tmScreen.innerText = "READY"; 
+            }
         }
 
         function isValidPosition(x, y) {
