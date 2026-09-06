@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-select=none">
-    <title>Steal An Egg - Treadmill Training</title>
+    <title>Steal An Egg - Treadmill Floating Text</title>
     <style>
         * {
             box-sizing: border-box;
@@ -136,7 +136,6 @@
             z-index: 60;
         }
 
-        /* 벨트 부분 */
         .treadmill-belt {
             position: absolute;
             top: 35px;
@@ -160,7 +159,6 @@
             100% { background-position: 0 14px; }
         }
 
-        /* 디스플레이/계기판 */
         .treadmill-console {
             position: absolute;
             top: 6px;
@@ -183,7 +181,6 @@
             letter-spacing: 0.5px;
         }
 
-        /* 손잡이 라인 */
         .treadmill-handle-left, .treadmill-handle-right {
             position: absolute;
             top: 25px;
@@ -214,6 +211,21 @@
             background-color: #000000;
         }
 
+        /* Floating pop-up text on Treadmill */
+        .speed-popup {
+            position: absolute;
+            font-size: 16px;
+            font-weight: 900;
+            color: #00d4ff;
+            text-shadow: 0 0 6px rgba(0, 212, 255, 0.8), 0 2px 4px #000000;
+            pointer-events: none;
+            z-index: 150;
+            font-family: 'Arial Black', sans-serif;
+            white-space: nowrap;
+            transition: transform 0.8s ease-out, opacity 0.8s ease-out;
+            opacity: 1;
+        }
+
         /* 플레이어 캐릭 */
         #player {
             position: absolute;
@@ -239,6 +251,34 @@
             background-color: #333;
             border-radius: 50%;
             box-shadow: 18px 0 0 #333;
+        }
+
+        /* 좌측 상단 뭉툭한 정사각형 설정 버튼 */
+        #settings-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 44px;
+            height: 44px;
+            background: #2b2d42;
+            border: 3px solid #141522;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 300;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+        }
+
+        #settings-btn:active {
+            transform: scale(0.92);
+        }
+
+        #settings-btn svg {
+            width: 24px;
+            height: 24px;
+            fill: #edf2f4;
         }
 
         /* 좌측 하단 스탯 UI */
@@ -322,6 +362,13 @@
 <body>
 
     <div id="game-viewport">
+        <!-- 왼쪽 위 구석 작고 뭉툭한 정사각형 설정 버튼 -->
+        <div id="settings-btn">
+            <svg viewBox="0 0 24 24">
+                <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
+            </svg>
+        </div>
+
         <div id="camera">
             <div id="world-map">
                 <div class="zone-container">
@@ -337,12 +384,11 @@
                     <div class="shoulder-wall-left"></div>
                     <div class="shoulder-wall-right"></div>
                     <div class="main-base">
-                        <!-- 직사각형 울타리 -->
                         <div class="inner-fence-rect"></div>
                     </div>
                 </div>
 
-                <!-- 런닝머신 (울타리 위쪽 왼쪽) -->
+                <!-- 런닝머신 -->
                 <div class="treadmill" id="treadmill">
                     <div class="treadmill-console">
                         <span class="treadmill-display" id="tm-screen">RUNNING</span>
@@ -363,8 +409,6 @@
                     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M2 17C2 17 4 17 6 15C8 13 10 9 13 9C15 9 17 10 18 12C19 13 21 13.5 22 14V18H2V17Z" fill="#3a86ff" stroke="#004e92" stroke-width="1.5"/>
                         <path d="M2 18H22V20H2V18Z" fill="#e0e1dd"/>
-                        <path d="M10 12L12 14" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"/>
-                        <path d="M12 10.5L14 12.5" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"/>
                     </svg>
                 </div>
                 <div class="hud-text" id="speed-display">:10.0</div>
@@ -396,8 +440,6 @@
 
         let playerX = 1000;
         let playerY = 4700;
-
-        // 속도 기본 스탯 설정
         let speedValue = 10.0;
 
         let isDragging = false;
@@ -408,7 +450,6 @@
         const WALL_THICK = 24;
         const MAP_HEIGHT = 5700;
 
-        // 런닝머신 영역 좌표 범위 (top: 4860, left: 540, w: 110, h: 160)
         const TM_BOUNDS = {
             left: 540,
             right: 650,
@@ -420,6 +461,37 @@
 
         function updateSpeedDisplay() {
             speedDisplay.innerText = `:${speedValue.toFixed(1)}`;
+        }
+
+        /* Floating 텍스트 애니메이션 생성 (+0.1 하늘색) */
+        function createSpeedPopup(amount) {
+            const popup = document.createElement('div');
+            popup.className = 'speed-popup';
+            popup.innerText = `👟 +${amount.toFixed(1)}`;
+
+            // 런닝머신 중심 위치에 생성
+            const startX = TM_BOUNDS.left + 30 + (Math.random() * 40 - 20);
+            const startY = TM_BOUNDS.top + 50;
+
+            popup.style.left = `${startX}px`;
+            popup.style.top = `${startY}px`;
+
+            map.appendChild(popup);
+
+            // 무작위 방향 이동 계산
+            const randomX = (Math.random() - 0.5) * 80; // 좌/우 -40 ~ +40
+            const randomY = - (50 + Math.random() * 40); // 위쪽 -50 ~ -90
+
+            requestAnimationFrame(() => {
+                popup.style.transform = `translate(${randomX}px, ${randomY}px)`;
+                popup.style.opacity = '0';
+            });
+
+            setTimeout(() => {
+                if (popup.parentNode) {
+                    popup.parentNode.removeChild(popup);
+                }
+            }, 850);
         }
 
         function checkTreadmill() {
@@ -437,7 +509,8 @@
                     treadmillTimer = setInterval(() => {
                         speedValue += 0.1;
                         updateSpeedDisplay();
-                    }, 100); // 0.1초마다 0.1 증가
+                        createSpeedPopup(0.1);
+                    }, 100);
                 }
             } else {
                 if (treadmillTimer) {
@@ -450,17 +523,13 @@
         }
 
         function isValidPosition(x, y) {
-            // 외곽 벽 충돌 체크
             if (y < WALL_THICK + RADIUS || y > MAP_HEIGHT - WALL_THICK - RADIUS) return false;
 
-            // 구역 1~6 내부
             if (y < 4200) {
                 if (x < 500 + WALL_THICK + RADIUS || x > 1500 - WALL_THICK - RADIUS) return false;
             } else {
-                // 베이스 내부
                 if (x < WALL_THICK + RADIUS || x > 2000 - WALL_THICK - RADIUS) return false;
 
-                // 어깨 벽 충돌 체크
                 if (y - RADIUS < 4200 + WALL_THICK) {
                     if (x - RADIUS < 500 + WALL_THICK || x + RADIUS > 1500 - WALL_THICK) return false;
                 }
@@ -470,7 +539,6 @@
         }
 
         function movePlayer(dx, dy) {
-            // 스탯의 speedValue를 이동속도로 직접 사용
             const currentMoveSpeed = speedValue;
             const actualDx = dx * currentMoveSpeed;
             const actualDy = dy * currentMoveSpeed;
