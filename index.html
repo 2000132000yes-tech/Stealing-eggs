@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-select=none">
-    <title>Steal An Egg - Egg Placement Update</title>
+    <title>Steal An Egg - Random Eggs & Lifting</title>
     <style>
         * {
             box-sizing: border-box;
@@ -71,55 +71,22 @@
         .zone-2 { height: 1800px; background-color: #1e5c1e; position: relative; }
         .zone-1 { height: 1000px; background-color: #72bf44; position: relative; }
 
-        /* --- 알(Egg) 스타일 및 애니메이션 --- */
-        .egg-group-container {
-            position: absolute;
-            width: 160px;
-            height: 160px;
-            transform: translate(-50%, -50%);
-            z-index: 80;
-            pointer-events: none;
-        }
-
-        .egg-ring {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            animation: spinRing 12s linear infinite;
-        }
-
-        @keyframes spinRing {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-
+        /* --- 알(Egg) 스타일 --- */
         .egg-item {
             position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 36px;
+            /* 기본 크기는 1.0 기준, JS에서 transform scale로 무작위 크기 조정 */
+            width: 36px; 
             height: 46px;
-            margin-left: -18px;
-            margin-top: -23px;
+            transform-origin: center bottom; /* 크기 조정 기준점: 하단 중앙 */
             filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4));
-            transition: transform 0.2s ease, opacity 0.3s ease;
+            z-index: 80;
+            pointer-events: none;
+            will-change: transform, left, top;
         }
 
-        /* SVG 내부 아이콘 반대 회전 (알 정방향 유지) */
         .egg-item svg {
             width: 100%;
             height: 100%;
-            animation: unspinRing 12s linear infinite;
-        }
-
-        @keyframes unspinRing {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(-360deg); }
-        }
-
-        .egg-collected {
-            transform: scale(1.6) translateY(-30px) !important;
-            opacity: 0 !important;
         }
 
         /* 빨간 구별선 */
@@ -288,6 +255,7 @@
             z-index: 100;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
             will-change: left, top;
+            transition: transform 0.2s ease, height 0.2s ease; /* 집기 모션용 */
         }
 
         #player::after {
@@ -302,7 +270,18 @@
             box-shadow: 15px 0 0 #333;
         }
 
-        /* UI */
+        /* 알 들기 모션 애니메이션 (굽혔다 펴기) */
+        @keyframes pickUpActive {
+            0% { transform: translate(-50%, -50%) scaleY(1); }
+            50% { transform: translate(-50%, -30%) scaleY(0.7); } /* 굽힘 */
+            100% { transform: translate(-50%, -50%) scaleY(1); } /* 원복 */
+        }
+
+        .player-picking {
+            animation: pickUpActive 0.3s ease-out;
+        }
+
+        /* UI 버튼 */
         #settings-btn {
             position: absolute;
             top: 20px;
@@ -517,18 +496,30 @@
         #speed-display { color: #3a86ff; }
         #money-display { color: #70e000; }
 
-        #joystick-wrapper {
+        /* 조이스틱 및 집기 버튼 영역 */
+        #controls-container {
             position: absolute;
             bottom: 120px;
             left: 50%;
             transform: translateX(-50%);
+            width: 100%;
+            max-width: 600px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 80px; /* 조이스틱과 버튼 사이 간격 */
+            pointer-events: none;
+            z-index: 200;
+        }
+
+        #joystick-wrapper {
             width: 120px;
             height: 120px;
             background: rgba(255, 255, 255, 0.2);
             border: 2px solid rgba(255, 255, 255, 0.4);
             border-radius: 50%;
             touch-action: none;
-            z-index: 200;
+            pointer-events: auto;
         }
 
         #joystick-stick {
@@ -542,6 +533,40 @@
             transform: translate(-50%, -50%);
             pointer-events: none;
         }
+
+        /* 집기/놓기 버튼 */
+        #action-btn {
+            display: none; /* 근처에 알이 있을 때만 표시 */
+            width: 100px;
+            height: 100px;
+            background-color: rgba(255, 218, 121, 0.6);
+            border: 6px solid #ccae4f;
+            color: #ccae4f;
+            border-radius: 50%;
+            font-size: 20px;
+            font-weight: 900;
+            cursor: pointer;
+            pointer-events: auto;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            transition: background-color 0.1s, transform 0.1s;
+        }
+
+        #action-btn:active {
+            background-color: rgba(255, 218, 121, 0.9);
+            transform: scale(0.95);
+        }
+
+        #action-btn.can-pick {
+            display: flex; /* 알 근처에 가면 표시 */
+        }
+        #action-btn.is-lifting {
+            background-color: rgba(230, 57, 70, 0.6); /* 놓기 상태는 빨간색 계열 */
+            border-color: #b32e38;
+            color: #b32e38;
+        }
+
     </style>
 </head>
 <body>
@@ -585,6 +610,9 @@
                     <div class="treadmill-belt"></div>
                 </div>
 
+                <!-- 알(Egg)들이 생성될 곳 -->
+                <div id="egg-layer"></div>
+
                 <div id="player"></div>
             </div>
         </div>
@@ -612,11 +640,16 @@
             </div>
         </div>
 
-        <div id="joystick-wrapper">
-            <div id="joystick-stick"></div>
+        <!-- 하단 컨트롤 영역 (조이스틱 + 집기 버튼) -->
+        <div id="controls-container">
+            <div id="joystick-wrapper">
+                <div id="joystick-stick"></div>
+            </div>
+            <!-- 집기/놓기 버튼 -->
+            <button id="action-btn">집기</button>
         </div>
 
-        <!-- 설정 Modal -->
+        <!-- 설정 창 Modal -->
         <div id="settings-modal">
             <div id="settings-card">
                 <button id="close-settings-btn">✕</button>
@@ -636,8 +669,11 @@
         const map = document.getElementById('world-map');
         const camera = document.getElementById('camera');
         const player = document.getElementById('player');
+        const eggLayer = document.getElementById('egg-layer');
         const joystickWrapper = document.getElementById('joystick-wrapper');
         const joystickStick = document.getElementById('joystick-stick');
+        const actionBtn = document.getElementById('action-btn'); // 집기 버튼
+
         const speedDisplay = document.getElementById('speed-display');
         const tmScreen = document.getElementById('tm-screen');
         const speedToggleSwitch = document.getElementById('speed-toggle-switch');
@@ -653,6 +689,7 @@
         
         let speedValue = 10.0;
         let isSpeedFixed = false;
+        let isActionFrozen = false; // 집기/놓기 동작 중 이동 멈춤
 
         let isDragging = false;
         let moveX = 0;
@@ -671,15 +708,18 @@
 
         let lastTreadmillTime = 0;
 
-        /* 관리 중인 알 데이터 목록 */
-        const eggList = [];
+        // --- 알(Egg) 상호작용 관련 변수 ---
+        const TOTAL_EGGS = 50; // 생성할 알의 총 개수
+        const eggList = [];    // 전역 알 데이터 목록
+        let nearestEgg = null; // 현재 가장 가까운 알 데이터
+        let liftedEgg = null;  // 현재 들고 있는 알 데이터
 
-        /* 달걀 SVG 템플릿 생성기 */
-        function getEggSvgHTML() {
+        /* 달걀 SVG 템플릿 생성기 (id 중복 방지 위해 인자 추가) */
+        function getEggSvgHTML(id) {
             return `
                 <svg viewBox="0 0 100 130" xmlns="http://www.w3.org/2000/svg">
                     <defs>
-                        <radialGradient id="eggGrad" cx="35%" cy="30%" r="70%">
+                        <radialGradient id="eggGrad_${id}" cx="35%" cy="30%" r="70%">
                             <stop offset="0%" stop-color="#ffffff"/>
                             <stop offset="40%" stop-color="#ffeaa7"/>
                             <stop offset="85%" stop-color="#fdcb6e"/>
@@ -687,87 +727,195 @@
                         </radialGradient>
                     </defs>
                     <path d="M 50 5 C 20 5, 5 45, 5 80 C 5 110, 25 125, 50 125 C 75 125, 95 110, 95 80 C 95 45, 80 5, 50 5 Z" 
-                          fill="url(#eggGrad)" stroke="#d63031" stroke-width="4"/>
+                          fill="url(#eggGrad_${id})" stroke="#d63031" stroke-width="4"/>
                     <ellipse cx="38" cy="35" rx="10" ry="16" fill="#ffffff" opacity="0.6" transform="rotate(-15 38 35)"/>
                 </svg>
             `;
         }
 
-        /* 각 단계의 끝지점(상단) 중심에 원형으로 알 5개 배치 */
-        function initEggs() {
-            const zones = [
-                { id: 1, selector: '.zone-1' },
-                { id: 2, selector: '.zone-2' },
-                { id: 3, selector: '.zone-3' },
-                { id: 4, selector: '.zone-4' },
-                { id: 5, selector: '.zone-5' },
-                { id: 6, selector: '.zone-6' }
-            ];
-
-            const count = 5;       // 알 5개
-            const radius = 55;     // 배치 원 반지름(px)
-
-            zones.forEach(z => {
-                const zoneElem = document.querySelector(z.selector);
-                if (!zoneElem) return;
-
-                const groupContainer = document.createElement('div');
-                groupContainer.className = 'egg-group-container';
-                groupContainer.style.top = `110px`; 
-                groupContainer.style.left = `50%`;
-
-                const ring = document.createElement('div');
-                ring.className = 'egg-ring';
-
-                for (let i = 0; i < count; i++) {
-                    const angle = (i * (360 / count)) * (Math.PI / 180);
-                    const itemX = Math.cos(angle) * radius;
-                    const itemY = Math.sin(angle) * radius;
-
-                    const eggItem = document.createElement('div');
-                    eggItem.className = 'egg-item';
-                    eggItem.style.transform = `translate(${itemX}px, ${itemY}px)`;
-                    eggItem.innerHTML = getEggSvgHTML();
-
-                    ring.appendChild(eggItem);
-
-                    /* 전역 좌표 계산 및 관리 배열에 추가 */
-                    eggList.push({
-                        zoneId: z.id,
-                        element: eggItem,
-                        ringElement: groupContainer,
-                        relX: itemX,
-                        relY: itemY,
-                        isCollected: false
-                    });
-                }
-
-                groupContainer.appendChild(ring);
-                zoneElem.appendChild(groupContainer);
-            });
+        /* 크기 확률 계산: 작은 것이 많이 나오고 큰 것이 적게 나오도록 가중치 적용
+            Math.random()^3을 이용해 0에 가까운 값이 나올 확률을 높임 */
+        function getRandomEggSize() {
+            // 최소 1.00 ~ 최대 100.00
+            const min = 1.0;
+            const max = 100.0;
+            
+            // 0~1 사이 가중치 무작위값 (세제곱)
+            const weightedRand = Math.pow(Math.random(), 3);
+            
+            // 범위로 변환
+            const size = min + (weightedRand * (max - min));
+            
+            // 소수점 둘째 자리까지 반올림
+            return parseFloat(size.toFixed(2));
         }
 
-        /* 플레이어와 알의 상호작용 (획득 처리) */
-        function checkEggCollisions() {
-            const collectDist = 45; // 충돌 거리
+        /* 맵 전체 영역에 무작위 알 생성 */
+        function initRandomEggs() {
+            // Zone 컨테이너 영역: x(500~1500), y(0~22600)
+            const minX = 500 + WALL_THICK + RADIUS;
+            const maxX = 1500 - WALL_THICK - RADIUS;
+            const minY = WALL_THICK + RADIUS;
+            const maxY = 22600 - RADIUS; // 빨간 구별선 바로 위까지
+
+            for (let i = 0; i < TOTAL_EGGS; i++) {
+                // 무작위 좌표
+                const randX = minX + Math.random() * (maxX - minX);
+                const randY = minY + Math.random() * (maxY - minY);
+                
+                // 확률 가중치 적용된 무작위 크기
+                const randSize = getRandomEggSize();
+
+                const eggItem = document.createElement('div');
+                eggItem.className = 'egg-item';
+                eggItem.innerHTML = getEggSvgHTML(i);
+                
+                // DOM 렌더링 좌표 및 크기 설정 (원래 크기 36x46 기준 scale 적용)
+                // 크기가 크더라도 충돌 기준점은 하단 중앙이므로 y좌표는 그대로 사용
+                eggItem.style.left = `${randX}px`;
+                eggItem.style.top = `${randY}px`;
+                eggItem.style.transform = `translate(-50%, -100%) scale(${randSize / 100})`; // scale 0.01~1.0
+
+                eggLayer.appendChild(eggItem);
+
+                /* 알 데이터 저장 (충돌 감지 및 상호작용용) */
+                eggList.push({
+                    id: i,
+                    element: eggItem,
+                    worldX: randX,
+                    worldY: randY,
+                    size: randSize,
+                    isLifted: false // 들고 있는 상태인지 여부
+                });
+            }
+        }
+
+        /* 플레이어 근처의 알 감지 및 인터페이스 업데이트 */
+        function checkNearestEgg() {
+            // 이미 알을 들고 있다면 감지 안 함
+            if (liftedEgg) return;
+
+            const detectDist = 80; // 알을 감지하여 버튼을 띄울 거리
+            let minPlayerDist = Infinity;
+            let currentNearest = null;
 
             eggList.forEach(egg => {
-                if (egg.isCollected) return;
+                // 이미 다른 사람이 들고 있는 알은 감지 안 함 (멀티플레이 대비)
+                if (egg.isLifted) return;
 
-                const rect = egg.element.getBoundingClientRect();
-                const mapRect = map.getBoundingClientRect();
+                // 플레이어 하단 중앙(발밑)과 알 하단 중앙 좌표 사이 거리 계산
+                const dist = Math.hypot(playerX - egg.worldX, playerY - egg.worldY);
 
-                // 맵 전체 스케일 감안한 전역 위치 계산
-                const eggWorldX = (rect.left + rect.width / 2 - mapRect.left) / currentScale;
-                const eggWorldY = (rect.top + rect.height / 2 - mapRect.top) / currentScale;
-
-                const dist = Math.hypot(playerX - eggWorldX, playerY - eggWorldY);
-
-                if (dist < collectDist) {
-                    egg.isCollected = true;
-                    egg.element.classList.add('egg-collected');
+                if (dist < detectDist && dist < minPlayerDist) {
+                    minPlayerDist = dist;
+                    currentNearest = egg;
                 }
             });
+
+            nearestEgg = currentNearest;
+
+            // 버튼 UI 업데이트
+            if (nearestEgg) {
+                actionBtn.innerText = "집기";
+                actionBtn.classList.add('can-pick'); // 버튼 표시
+                actionBtn.classList.remove('is-lifting');
+            } else {
+                actionBtn.classList.remove('can-pick'); // 버튼 숨김
+            }
+        }
+
+        /* [집기/놓기] 버튼 동작 */
+        actionBtn.addEventListener('click', handleAction);
+
+        function handleAction() {
+            // 버튼 광클 방지 및 동작 중 정지
+            if (isActionFrozen) return;
+
+            if (!liftedEgg) {
+                // --- 알 집기 동작 ---
+                if (!nearestEgg) return; // 근처에 알이 없으면 무시
+
+                liftedEgg = nearestEgg;
+                liftedEgg.isLifted = true; // 알 상태 변경 (다른 감지에서 제외)
+                nearestEgg = null; // 감지된 알 초기화
+
+                isActionFrozen = true; // 이동 멈춤
+
+                // 플레이어 집기 애니메이션 트리거
+                player.classList.add('player-picking');
+                
+                // 버튼 상태 변경
+                actionBtn.innerText = "놓기";
+                actionBtn.classList.add('is-lifting');
+
+                // 0.2초 굽혔다 펴는 동작 후 알을 머리 위로 연결
+                setTimeout(() => {
+                    // 알의 z-index를 높여 플레이어보다 위에 오도록 함
+                    liftedEgg.element.style.zIndex = '110';
+                    isActionFrozen = false; // 이동 가능
+                }, 200);
+
+                // 애니메이션 클래스 제거 (0.3초 후)
+                setTimeout(() => {
+                    player.classList.remove('player-picking');
+                }, 300);
+
+            } else {
+                // --- 알 놓기 동작 ---
+                const dropEgg = liftedEgg;
+                liftedEgg = null; // 드는 상태 해제
+
+                isActionFrozen = true; // 이동 멈춤
+
+                // 플레이어 굽히기 애니메이션 트리거 (놓는 동작)
+                player.classList.add('player-picking');
+
+                // 버튼 상태 변경
+                actionBtn.innerText = "집기";
+                actionBtn.classList.remove('is-lifting');
+
+                // 0.2초 후 알을 발밑 좌표에 배치
+                setTimeout(() => {
+                    dropEgg.worldX = playerX;
+                    dropEgg.worldY = playerY;
+                    
+                    // 알 스타일 복구 (원래 위치 및 scale)
+                    dropEgg.element.style.zIndex = '80'; // 원래 z-index
+
+                    // 물리 좌표 업데이트
+                    dropEgg.element.style.left = `${playerX}px`;
+                    dropEgg.element.style.top = `${playerY}px`;
+                    
+                    // 맵 좌표 업데이트 적용 위해 렌더링
+                    renderSingleEgg(dropEgg);
+
+                    isActionFrozen = false; // 이동 가능
+                }, 200);
+
+                // 애니메이션 클래스 제거
+                setTimeout(() => {
+                    player.classList.remove('player-picking');
+                    // 놓은 직후 바로 감지되지 않도록 잠시 대기 후 감지 재개는 루프에서 처리
+                }, 300);
+            }
+        }
+
+        /* 알 하나에 대한 렌더링 업데이트 (위치 및 들고 있는 상태) */
+        function renderSingleEgg(eggData) {
+            if (eggData.isLifted && liftedEgg === eggData) {
+                // 들고 있는 상태: 플레이어 좌표 기준 머리 위 고정 위치 (CSS transform translate 사용)
+                // 원래 scale 값을 유지하면서 위치만 부드럽게 조정
+                eggData.element.style.left = `${playerX}px`;
+                eggData.element.style.top = `${playerY}px`;
+                
+                // 머리 위 고정 좌표 (플레이어 중심 y-40 ~ y-60 정도, 크기 scale 감안)
+                // scale 1.0 기준 46px 높이이므로 머리 위 적당한 높이로 translate
+                eggData.element.style.transform = `translate(-50%, -130%) scale(${eggData.size / 100})`;
+            } else {
+                // 놓여 있는 상태: 자기 전역 좌표에 고정 (transform scale만 유지)
+                eggData.element.style.transform = `translate(-50%, -100%) scale(${eggData.size / 100})`;
+                eggData.isLifted = false; // 혹시 모를 상태 동기화
+            }
         }
 
         let currentScale = 0.65;
@@ -874,6 +1022,9 @@
         }
 
         function movePlayer(dx, dy) {
+            // 동작 중이거나 끄는 중이면 이동 불가
+            if (isActionFrozen) return;
+
             const currentMoveSpeed = isSpeedFixed ? 10.0 : speedValue;
             
             const actualDx = dx * currentMoveSpeed;
@@ -899,6 +1050,11 @@
             map.style.transform = `translate3d(${-playerX}px, ${-playerY}px, 0)`;
             player.style.left = `${playerX}px`;
             player.style.top = `${playerY}px`;
+            
+            // 들고 있는 알이 있다면 같이 이동 렌더링
+            if (liftedEgg) {
+                renderSingleEgg(liftedEgg);
+            }
         }
 
         function handleStart(e) {
@@ -948,17 +1104,20 @@
         window.addEventListener('touchend', handleEnd);
 
         function gameLoop(now) {
-            if (isDragging) {
+            if (isDragging && !isActionFrozen) {
                 movePlayer(moveX, moveY);
+                renderMap();
+            } else if (liftedEgg || isActionFrozen) {
+                // 움직이지 않더라도 들고 있는 알 좌표 업데이트 위해 렌더링
                 renderMap();
             }
             checkTreadmill(now);
-            checkEggCollisions();
+            checkNearestEgg(); // 주기적으로 근처 알 감지
             requestAnimationFrame(gameLoop);
         }
 
         // 초기화
-        initEggs();
+        initRandomEggs(); // 알 무작위 생성
         setZoom(50);
         updateSpeedDisplay();
         renderMap();
