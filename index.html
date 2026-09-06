@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-select=none">
-    <title>Steal An Egg - Walk Through Fence</title>
+    <title>Steal An Egg - Extended Fence</title>
     <style>
         * {
             box-sizing: border-box;
@@ -108,13 +108,13 @@
             border-radius: 0 0 32px 32px;
         }
 
-        /* 통과 가능한 1/4 직사각형 울타리 */
+        /* 세로로 늘어난 직사각형 울타리 (height: 600px) */
         .inner-fence-rect {
             position: absolute;
             bottom: 60px;
             left: 500px;
             width: 1000px;
-            height: 380px;
+            height: 600px;
             border: 12px solid #5c3a1e;
             background-color: rgba(139, 90, 43, 0.12);
             box-shadow: inset 0 0 15px rgba(0,0,0,0.3);
@@ -209,12 +209,10 @@
             text-shadow: 0 2px 5px rgba(0,0,0,0.9), 0 0 2px rgba(0,0,0,0.9);
         }
 
-        /* 속도 글씨: 파란색 */
         #speed-display {
             color: #3a86ff;
         }
 
-        /* 돈 글씨: 연두색 */
         #money-display {
             color: #70e000;
         }
@@ -265,7 +263,7 @@
                     <div class="shoulder-wall-left"></div>
                     <div class="shoulder-wall-right"></div>
                     <div class="main-base">
-                        <!-- 넘어가기 가능한 직사각형 울타리 -->
+                        <!-- 세로 길이가 늘어난 직사각형 울타리 -->
                         <div class="inner-fence-rect"></div>
                     </div>
                 </div>
@@ -276,7 +274,6 @@
 
         <!-- 좌측 하단 스탯 UI -->
         <div id="hud-container">
-            <!-- 파란색 속도 텍스트 -->
             <div class="hud-item">
                 <div class="hud-icon">
                     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -289,7 +286,6 @@
                 <div class="hud-text" id="speed-display">:10</div>
             </div>
 
-            <!-- 연두색 돈 텍스트 -->
             <div class="hud-item">
                 <div class="hud-icon">
                     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -344,7 +340,6 @@
                 }
             }
 
-            // 울타리는 자유 통과 가능 (충돌 검사 미적용)
             return true;
         }
 
