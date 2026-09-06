@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-select=none">
-    <title>Steal An Egg - Center Large Joystick</title>
+    <title>Steal An Egg - Fixed Joystick & Zone Eggs</title>
     <style>
         * {
             box-sizing: border-box;
@@ -240,34 +240,34 @@
         #speed-display { color: #3a86ff; }
         #money-display { color: #70e000; }
 
-        /* --- 컨트롤 UI 레이아웃 (하단 중앙, 대폭 확대) --- */
+        /* --- 컨트롤 UI 레이아웃 (위치 위로 조정) --- */
         #controls-container {
             position: absolute;
-            bottom: 40px; /* 화면 하단 여백 */
-            left: 50%;   /* 화면 가로 중앙 */
-            transform: translateX(-50%); /* 정확한 중앙 정렬 */
-            width: 250px; /* 컨테이너 너비 확보 */
-            height: 180px; /* 컨테이너 높이 확보 */
+            bottom: 100px; /* 기존 40px에서 위로 60px 올림 */
+            left: 50%;
+            transform: translateX(-50%);
+            width: 250px;
+            height: 180px;
             display: flex;
             align-items: center;
             justify-content: center;
-            pointer-events: none; /* 컨테이너 자체는 클릭 무시 */
+            pointer-events: none;
             z-index: 300;
         }
 
-        /* 조이스틱 (대폭 확대: 지름 120px) */
+        /* 조이스틱 */
         #joystick-wrapper {
             position: absolute;
             bottom: 0;
             left: 50%;
             transform: translateX(-50%);
-            width: 120px; /* 지름 120px로 확대 */
+            width: 120px;
             height: 120px;
-            background: rgba(255, 255, 255, 0.6); /* 배경 더 명확히 */
-            border: 6px solid rgba(0, 0, 0, 0.9); /* 검은색 테두리 */
+            background: rgba(255, 255, 255, 0.6);
+            border: 6px solid rgba(0, 0, 0, 0.9);
             border-radius: 50%;
             touch-action: none;
-            pointer-events: auto; /* 클릭 인식 */
+            pointer-events: auto;
             box-shadow: 0 6px 15px rgba(0,0,0,0.6);
         }
 
@@ -275,23 +275,23 @@
             position: absolute;
             top: 50%;
             left: 50%;
-            width: 50px; /* 스틱 크기도 확대 */
+            width: 50px;
             height: 50px;
-            background: rgba(0, 0, 0, 1); /* 스틱 검은색 */
-            border: 3px solid #fff; /* 스틱 흰색 테두리 */
+            background: rgba(0, 0, 0, 1);
+            border: 3px solid #fff;
             border-radius: 50%;
             transform: translate(-50%, -50%);
             pointer-events: none;
             box-shadow: 0 4px 8px rgba(0,0,0,0.4);
         }
 
-        /* 집기/놓기 버튼: 조이스틱 우측 상단으로 배치 최적화 */
+        /* 집기/놓기 버튼 */
         #action-btn {
             display: none;
             position: absolute;
-            top: 0; /* 컨테이너 상단 */
-            right: 0; /* 컨테이너 우측 */
-            width: 80px; /* 크기 약간 확대 */
+            top: 0;
+            right: 0;
+            width: 80px;
             height: 80px;
             background-color: rgba(255, 218, 121, 0.95);
             border: 7px solid #ccae4f;
@@ -300,15 +300,15 @@
             font-size: 19px;
             font-weight: 900;
             cursor: pointer;
-            pointer-events: auto; /* 클릭 인식 */
+            pointer-events: auto;
             align-items: center;
             justify-content: center;
             box-shadow: 0 5px 12px rgba(0, 0, 0, 0.6);
-            transition: background-color 0.1s, transform 0.1s, top 0.1s, right 0.1s;
+            transition: background-color 0.1s, transform 0.1s;
         }
 
         #action-btn:active { transform: scale(0.95); }
-        #action-btn.can-pick { display: flex; } /* 근처에 알이 있을 때만 표시 */
+        #action-btn.can-pick { display: flex; }
         #action-btn.is-lifting { background-color: rgba(230, 57, 70, 0.95); border-color: #b32e38; color: #fff; }
 
     </style>
@@ -318,7 +318,7 @@
     <div id="game-viewport">
         <div id="settings-btn">
             <svg viewBox="0 0 24 24">
-                <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7; height: 180px; flex-direction: column-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
+                <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
             </svg>
         </div>
 
@@ -382,14 +382,10 @@
             </div>
         </div>
 
-        <!-- 하단 중앙 컨트롤 컨테이너 (복구 및 확대됨) -->
         <div id="controls-container">
-            <!-- 조이스틱 (중앙 아래, 지름 120px 대형) -->
             <div id="joystick-wrapper">
                 <div id="joystick-stick"></div>
             </div>
-            
-            <!-- 집기/놓기 버튼 (우측 상단 배치 최적화) -->
             <button id="action-btn">집기</button>
         </div>
 
@@ -446,10 +442,19 @@
 
         let lastTreadmillTime = 0;
 
-        const TOTAL_EGGS = 50;
         const eggList = [];
         let nearestEgg = null;
         let liftedEgg = null;
+
+        // 구역(Zone)별 Y 영역 높이 및 Y 범위 정의
+        const ZONES_CONFIG = [
+            { name: "Zone 6", minY: 24, maxY: 7524 },
+            { name: "Zone 5", minY: 7524, maxY: 13024 },
+            { name: "Zone 4", minY: 13024, maxY: 17024 },
+            { name: "Zone 3", minY: 17024, maxY: 19824 },
+            { name: "Zone 2", minY: 19824, maxY: 21624 },
+            { name: "Zone 1", minY: 21624, maxY: 22600 }
+        ];
 
         function getEggSvgHTML(id) {
             return `
@@ -478,25 +483,43 @@
             return { scale: parseFloat(scale.toFixed(3)), display: parseFloat(displaySize.toFixed(2)) };
         }
 
+        // 각 단계마다 5개씩 알 스폰 기능
         function initRandomEggs() {
-            const minX = 500 + WALL_THICK + 50;
-            const maxX = 1500 - WALL_THICK - 50;
-            const minY = WALL_THICK + 50;
-            const maxY = 22600 - 50;
+            const minX = 500 + WALL_THICK + 60;
+            const maxX = 1500 - WALL_THICK - 60;
+            let eggIdCounter = 0;
 
-            for (let i = 0; i < TOTAL_EGGS; i++) {
-                const randX = minX + Math.random() * (maxX - minX);
-                const randY = minY + Math.random() * (maxY - minY);
-                const sizeData = getRandomEggSize();
-                const eggItem = document.createElement('div');
-                eggItem.className = 'egg-item';
-                eggItem.innerHTML = getEggSvgHTML(i);
-                eggItem.style.left = `${randX}px`;
-                eggItem.style.top = `${randY}px`;
-                eggItem.style.transform = `translate(-50%, -100%) scale(${sizeData.scale})`;
-                eggLayer.appendChild(eggItem);
-                eggList.push({ id: i, element: eggItem, worldX: randX, worldY: randY, scale: sizeData.scale, displaySize: sizeData.display, isLifted: false });
-            }
+            ZONES_CONFIG.forEach(zone => {
+                const zoneMinY = zone.minY + 60;
+                const zoneMaxY = zone.maxY - 60;
+
+                // 단계마다 정확히 5개 스폰
+                for (let i = 0; i < 5; i++) {
+                    const randX = minX + Math.random() * (maxX - minX);
+                    const randY = zoneMinY + Math.random() * (zoneMaxY - zoneMinY);
+                    const sizeData = getRandomEggSize();
+                    
+                    const eggItem = document.createElement('div');
+                    eggItem.className = 'egg-item';
+                    eggItem.innerHTML = getEggSvgHTML(eggIdCounter);
+                    eggItem.style.left = `${randX}px`;
+                    eggItem.style.top = `${randY}px`;
+                    eggItem.style.transform = `translate(-50%, -100%) scale(${sizeData.scale})`;
+                    eggLayer.appendChild(eggItem);
+
+                    eggList.push({ 
+                        id: eggIdCounter, 
+                        element: eggItem, 
+                        worldX: randX, 
+                        worldY: randY, 
+                        scale: sizeData.scale, 
+                        displaySize: sizeData.display, 
+                        isLifted: false 
+                    });
+
+                    eggIdCounter++;
+                }
+            });
         }
 
         function checkNearestEgg() {
@@ -589,12 +612,9 @@
             let deltaX = clientX - centerX; let deltaY = clientY - centerY;
             const distance = Math.hypot(deltaX, deltaY);
             
-            // --- 조이스틱 확대(지름 120px)에 맞게 Max Radius 수정 (60px) ---
-            const maxRadius = 60; // 반지름 60px
+            const maxRadius = 60;
             if (distance > maxRadius) { deltaX = (deltaX / distance) * maxRadius; deltaY = (deltaY / distance) * maxRadius; }
-            // 스틱 이동 렌더링
             joystickStick.style.transform = `translate(calc(-50% + ${deltaX}px), calc(-50% + ${deltaY}px))`;
-            // 이동 비율 계산 (확대된 반지름 기준)
             moveX = deltaX / maxRadius; moveY = deltaY / maxRadius;
         }
         function handleEnd() { isDragging = false; moveX = 0; moveY = 0; joystickStick.style.transform = 'translate(-50%, -50%)'; }
