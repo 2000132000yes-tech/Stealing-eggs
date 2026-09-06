@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-select=none">
-    <title>Steal An Egg - Fixed Label Size & Persistent Weight</title>
+    <title>Steal An Egg - Fence Incubation & Hatch System</title>
     <style>
         * {
             box-sizing: border-box;
@@ -85,7 +85,7 @@
 
         .egg-item svg { width: 100%; height: 100%; overflow: visible; }
 
-        /* 알 상단 무게 라벨 (스케일 역산으로 고정 크기 유지) */
+        /* 알 상단 무게 / 타이머 라벨 */
         .egg-weight-label {
             position: absolute;
             top: -28px;
@@ -102,6 +102,26 @@
             display: none;
             box-shadow: 0 2px 6px rgba(0,0,0,0.6);
             z-index: 150;
+        }
+
+        /* 부화 완료 느낌표 아이콘 */
+        .hatch-ready-icon {
+            position: absolute;
+            top: -55px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 32px;
+            font-weight: 900;
+            color: #ff2222;
+            text-shadow: -2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff, 2px 2px 0 #fff;
+            animation: bounceReady 0.6s infinite alternate ease-in-out;
+            display: none;
+            z-index: 160;
+        }
+
+        @keyframes bounceReady {
+            0% { transform: translateX(-50%) translateY(0); }
+            100% { transform: translateX(-50%) translateY(-10px); }
         }
 
         /* 빨간 구별선 */
@@ -206,7 +226,7 @@
             pointer-events: none; z-index: 250; font-family: 'Arial Black', sans-serif; white-space: nowrap; transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.8s ease-out; opacity: 1;
         }
 
-        /* 캐릭터 (40px * 40px) */
+        /* 캐릭터 */
         #player {
             position: absolute; width: 40px; height: 40px; background-color: #ffda79; border: 3px solid #ccae4f; border-radius: 10px; transform: translate(-50%, -50%); z-index: 100; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5); will-change: left, top;
         }
@@ -295,7 +315,7 @@
             box-shadow: 0 4px 8px rgba(0,0,0,0.4);
         }
 
-        /* 집기/놓기 버튼 */
+        /* 액션 버튼 (집기/놓기/부화) */
         #action-btn {
             display: none;
             position: absolute;
@@ -320,6 +340,7 @@
         #action-btn:active { transform: scale(0.95); }
         #action-btn.can-pick { display: flex; }
         #action-btn.is-lifting { background-color: rgba(230, 57, 70, 0.95); border-color: #b32e38; color: #fff; }
+        #action-btn.can-hatch { display: flex; background-color: rgba(45, 198, 83, 0.95); border-color: #1b8a37; color: #fff; }
 
     </style>
 </head>
@@ -328,7 +349,7 @@
     <div id="game-viewport">
         <div id="settings-btn">
             <svg viewBox="0 0 24 24">
-                <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
+                <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6-3.6z"/>
             </svg>
         </div>
 
@@ -446,7 +467,10 @@
         const RADIUS = 20; 
         const WALL_THICK = 24;
         const MAP_HEIGHT = 24100;
-        const RED_LINE_Y = 22592; // 빨간 선 위치
+        const RED_LINE_Y = 22592;
+
+        // 울타리 내부 영역 경계 정의
+        const FENCE_BOUNDS = { left: 1000, right: 2000, top: 23440, bottom: 24040 };
 
         const TM_BOUNDS = { left: 540, right: 650, top: 23260, bottom: 23420 };
 
@@ -454,6 +478,7 @@
 
         const eggList = [];
         let nearestEgg = null;
+        let nearestHatchEgg = null;
         let liftedEgg = null;
 
         const ZONES_CONFIG = [
@@ -517,7 +542,7 @@
             const weightedRand = Math.pow(Math.random(), 12); 
             const scale = minScale + (weightedRand * (maxScale - minScale));
             const weight = (Math.pow(scale, 2.5) * 35).toFixed(1);
-            return { scale: parseFloat(scale.toFixed(3)), weight: weight };
+            return { scale: parseFloat(scale.toFixed(3)), weight: parseFloat(weight) };
         }
 
         function initRandomEggs() {
@@ -537,17 +562,19 @@
                     const eggItem = document.createElement('div');
                     eggItem.className = 'egg-item';
                     eggItem.innerHTML = `
-                        <div class="egg-weight-label" id="weight-label-${eggIdCounter}">${sizeData.weight}kg</div>
+                        <div class="hatch-ready-icon" id="hatch-icon-${eggIdCounter}">!</div>
+                        <div class="egg-weight-label" id="weight-label-${eggIdCounter}">${sizeData.weight.toFixed(1)}kg</div>
                         ${getEggSvgHTML(eggIdCounter, zone.level)}
                     `;
                     eggItem.style.left = `${randX}px`;
                     eggItem.style.top = `${randY}px`;
                     eggItem.style.transform = `translate(-50%, -100%) scale(${sizeData.scale})`;
 
-                    // 글자 크기를 일정하게 고정하기 위해 (1 / scale)로 역할산 트랜스폼 설정
                     const weightLabel = eggItem.querySelector('.egg-weight-label');
+                    const hatchIcon = eggItem.querySelector('.hatch-ready-icon');
                     const invScale = (1 / sizeData.scale).toFixed(3);
                     weightLabel.style.transform = `translateX(-50%) scale(${invScale})`;
+                    hatchIcon.style.transform = `translateX(-50%) scale(${invScale})`;
 
                     eggLayer.appendChild(eggItem);
 
@@ -555,12 +582,17 @@
                         id: eggIdCounter, 
                         element: eggItem, 
                         weightLabel: weightLabel,
+                        hatchIcon: hatchIcon,
                         worldX: randX, 
                         worldY: randY, 
                         scale: sizeData.scale, 
                         weight: sizeData.weight, 
+                        zoneLevel: zone.level,
                         isLifted: false,
-                        hasCrossedRedLine: false // 빨간선 통과 여부 저장 플래그
+                        hasCrossedRedLine: false,
+                        isIncubating: false, // 울타리 부화 여부
+                        remainingTime: 0,
+                        isHatchReady: false
                     });
 
                     eggIdCounter++;
@@ -571,23 +603,49 @@
         function checkNearestEgg() {
             if (liftedEgg) return;
             const detectDist = 110; 
-            let minPlayerDist = Infinity;
-            let currentNearest = null;
+            let minDist = Infinity;
+            let currentPickable = null;
+            let currentHatchable = null;
 
             eggList.forEach(egg => {
                 if (egg.isLifted) return;
                 const dist = Math.hypot(playerX - egg.worldX, playerY - egg.worldY);
-                if (dist < detectDist && dist < minPlayerDist) { minPlayerDist = dist; currentNearest = egg; }
+                if (dist < detectDist && dist < minDist) { 
+                    minDist = dist; 
+                    if (egg.isHatchReady) {
+                        currentHatchable = egg;
+                    } else if (!egg.isIncubating) {
+                        currentPickable = egg;
+                    }
+                }
             });
 
-            nearestEgg = currentNearest;
-            if (nearestEgg) { actionBtn.innerText = "집기"; actionBtn.classList.add('can-pick'); actionBtn.classList.remove('is-lifting'); }
-            else { actionBtn.classList.remove('can-pick'); }
+            nearestHatchEgg = currentHatchable;
+            nearestEgg = currentPickable;
+
+            if (nearestHatchEgg) {
+                actionBtn.innerText = "부화";
+                actionBtn.className = 'can-hatch';
+            } else if (nearestEgg) {
+                actionBtn.innerText = "집기";
+                actionBtn.className = 'can-pick';
+            } else {
+                actionBtn.className = '';
+            }
         }
 
         actionBtn.addEventListener('click', handleAction);
 
         function handleAction() {
+            // 1. 부화 가능 상태
+            if (nearestHatchEgg) {
+                hatchEgg(nearestHatchEgg);
+                nearestHatchEgg = null;
+                actionBtn.className = '';
+                return;
+            }
+
+            // 2. 알 집기 / 놓기
             if (!liftedEgg) {
                 if (!nearestEgg) return;
                 liftedEgg = nearestEgg; 
@@ -596,25 +654,77 @@
                 
                 liftedEgg.element.style.zIndex = '110';
                 actionBtn.innerText = "놓기"; 
-                actionBtn.classList.add('is-lifting');
+                actionBtn.className = 'is-lifting';
             } else {
                 const dropEgg = liftedEgg; 
                 liftedEgg = null;
-                
-                actionBtn.innerText = "집기"; 
-                actionBtn.classList.remove('is-lifting');
                 
                 dropEgg.worldX = playerX; 
                 dropEgg.worldY = playerY; 
                 dropEgg.element.style.zIndex = '80'; 
                 dropEgg.element.style.left = `${playerX}px`; 
                 dropEgg.element.style.top = `${playerY}px`; 
+
+                // 울타리 안인지 검사
+                const isInFence = (
+                    dropEgg.worldX >= FENCE_BOUNDS.left && 
+                    dropEgg.worldX <= FENCE_BOUNDS.right && 
+                    dropEgg.worldY >= FENCE_BOUNDS.top && 
+                    dropEgg.worldY <= FENCE_BOUNDS.bottom
+                );
+
+                if (isInFence && !dropEgg.isIncubating) {
+                    startIncubation(dropEgg);
+                }
+
+                actionBtn.innerText = "집기"; 
+                actionBtn.className = '';
+                
                 renderSingleEgg(dropEgg);
             }
         }
 
+        function startIncubation(egg) {
+            egg.isIncubating = true;
+            // 부화 공식: (등급 * 60초) + 무게(초)
+            const totalSeconds = Math.round((egg.zoneLevel * 60) + egg.weight);
+            egg.remainingTime = totalSeconds;
+        }
+
+        function hatchEgg(egg) {
+            if (egg.element && egg.element.parentNode) {
+                egg.element.parentNode.removeChild(egg.element);
+            }
+            const index = eggList.indexOf(egg);
+            if (index > -1) {
+                eggList.splice(index, 1);
+            }
+        }
+
+        function updateIncubationTimers() {
+            eggList.forEach(egg => {
+                if (egg.isIncubating && !egg.isHatchReady) {
+                    egg.remainingTime -= 1;
+                    if (egg.remainingTime <= 0) {
+                        egg.remainingTime = 0;
+                        egg.isHatchReady = true;
+                        egg.hatchIcon.style.display = 'block';
+                        egg.weightLabel.style.display = 'none';
+                    } else {
+                        const m = Math.floor(egg.remainingTime / 60);
+                        const s = egg.remainingTime % 60;
+                        const timeStr = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+                        egg.weightLabel.innerText = timeStr;
+                        egg.weightLabel.style.display = 'block';
+                    }
+                }
+            });
+        }
+
+        // 1초 간격 부화 타이머 작동
+        setInterval(updateIncubationTimers, 1000);
+
         function renderSingleEgg(eggData) {
-            // 들고 있거나 놓았을 때 플레이어/알 위치가 빨간선보다 아래에 위치하면 '영구 공개' 설정
             if (playerY >= RED_LINE_Y && eggData.isLifted) {
                 eggData.hasCrossedRedLine = true;
             } else if (eggData.worldY >= RED_LINE_Y) {
@@ -631,11 +741,19 @@
                 eggData.isLifted = false; 
             }
 
-            // 한번이라도 빨간선 아래로 내려왔다면 글씨는 계속 표시
-            if (eggData.hasCrossedRedLine) {
+            // 라벨 표시 여부 제어
+            if (eggData.isHatchReady) {
+                eggData.hatchIcon.style.display = 'block';
+                eggData.weightLabel.style.display = 'none';
+            } else if (eggData.isIncubating) {
                 eggData.weightLabel.style.display = 'block';
+                eggData.hatchIcon.style.display = 'none';
+            } else if (eggData.hasCrossedRedLine) {
+                eggData.weightLabel.style.display = 'block';
+                eggData.hatchIcon.style.display = 'none';
             } else {
                 eggData.weightLabel.style.display = 'none';
+                eggData.hatchIcon.style.display = 'none';
             }
         }
 
